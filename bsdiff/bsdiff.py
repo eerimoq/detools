@@ -10,14 +10,14 @@ class _PatchBZ2Reader(object):
         self._decompressor = BZ2Decompressor()
         self._fpatch = fpatch
 
-    def decompress(self, length):
-        """Decompress `length` bytes.
+    def decompress(self, size):
+        """Decompress `size` bytes.
 
         """
 
         buf = b''
 
-        while len(buf) < length:
+        while len(buf) < size:
             if self._decompressor.eof:
                 raise Error('Early end of patch bz2.')
 
@@ -30,7 +30,7 @@ class _PatchBZ2Reader(object):
                 data = b''
 
             try:
-                buf += self._decompressor.decompress(data, length - len(buf))
+                buf += self._decompressor.decompress(data, size - len(buf))
             except Exception:
                 raise Error('Patch bz2 decompression failed.')
 
@@ -57,12 +57,12 @@ def _read_header(fpatch):
         raise Error(
             "Expected header magic b'bsdiff01', but got {}.".format(magic))
 
-    new_length = _unpack_i64(header[8:16])
+    new_size = _unpack_i64(header[8:16])
 
-    if new_length < 0:
-        raise Error('Expected new length >= 0, but got {}.'.format(new_length))
+    if new_size < 0:
+        raise Error('Expected new size >= 0, but got {}.'.format(new_size))
 
-    return new_length
+    return new_size
 
 
 def patch(fold, fpatch, fnew):
@@ -71,40 +71,45 @@ def patch(fold, fpatch, fnew):
 
     """
 
-    new_length = _read_header(fpatch)
+    new_size = _read_header(fpatch)
     patch_bz2 = _PatchBZ2Reader(fpatch)
     new_pos = 0
 
-    while new_pos < new_length:
+    while new_pos < new_size:
         # Diff data.
-        length = _unpack_i64(patch_bz2.decompress(8))
+        size = _unpack_i64(patch_bz2.decompress(8))
 
-        if new_pos + length > new_length:
+        if new_pos + size > new_size:
             raise Error("Patch diff data too long.")
 
-        for _ in range(length):
-            byte = patch_bz2.decompress(1)[0]
-            byte += fold.read(1)[0]
-            byte %= 256
-            fnew.write(bytearray([byte]))
+        offset = 0
 
-        new_pos += length
+        while offset < size:
+            chunk_size = min(size - offset, 4096)
+            offset += chunk_size
+            patch_data = patch_bz2.decompress(chunk_size)
+            old_data = fold.read(chunk_size)
+            fnew.write(bytearray(
+                (pb + ob) & 0xff for pb, ob in zip(patch_data, old_data)
+            ))
+
+        new_pos += size
 
         # Extra data.
-        length = _unpack_i64(patch_bz2.decompress(8))
+        size = _unpack_i64(patch_bz2.decompress(8))
 
-        if new_pos + length > new_length:
+        if new_pos + size > new_size:
             raise Error("Patch extra data too long.")
 
-        fnew.write(patch_bz2.decompress(length))
-        new_pos += length
+        fnew.write(patch_bz2.decompress(size))
+        new_pos += size
 
         # Adjustment.
-        length = _unpack_i64(patch_bz2.decompress(8))
-        fold.seek(length, os.SEEK_CUR)
+        size = _unpack_i64(patch_bz2.decompress(8))
+        fold.seek(size, os.SEEK_CUR)
 
-    if new_pos != new_length:
-        raise Error('New data length mismatch.')
+    if new_pos != new_size:
+        raise Error('New data size mismatch.')
 
     if not patch_bz2.eof:
         raise Error('End of patch bz2 not found.')
