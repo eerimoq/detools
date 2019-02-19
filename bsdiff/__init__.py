@@ -1,6 +1,7 @@
 import sys
 import argparse
 from .bsdiff import patch
+from .errors import Error
 from .version import __version__
 
 
