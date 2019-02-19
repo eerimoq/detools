@@ -19,7 +19,7 @@ setup(name='bsdiff',
       author_email='erik.moqvist@gmail.com',
       license='MIT',
       classifiers=[
-          'License :: OSI Approved :: BSD 2-Clause License',
+          'License :: OSI Approved :: BSD License',
           'Programming Language :: Python :: 3',
       ],
       url='https://github.com/eerimoq/bsdiff',
