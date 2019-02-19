@@ -1,7 +1,7 @@
 import sys
 import argparse
-from .bsdiff import create_patch
-from .bsdiff import apply_patch
+from .create_patch import create_patch
+from .apply_patch import apply_patch
 from .errors import Error
 from .version import __version__
 
