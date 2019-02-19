@@ -32,6 +32,17 @@ class BsdiffTest(unittest.TestCase):
                     str(cm.exception),
                     "Expected header magic b'bsdiff01', but got b'csdiff01'.")
 
+    def test_patch_empty(self):
+        fnew = BytesIO()
+
+        with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/empty.patch', 'rb') as fpatch:
+                with self.assertRaises(bsdiff.Error) as cm:
+                    bsdiff.patch(fold, fpatch, fnew)
+
+                self.assertEqual(str(cm.exception),
+                                 "Failed to read the patch header.")
+
 
 if __name__ == '__main__':
     unittest.main()

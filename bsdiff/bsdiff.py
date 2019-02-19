@@ -46,7 +46,7 @@ def _read_header(fpatch):
     header = fpatch.read(16)
 
     if len(header) != 16:
-        raise Error('Failed to read the header.')
+        raise Error('Failed to read the patch header.')
 
     magic = header[0:8]
 
