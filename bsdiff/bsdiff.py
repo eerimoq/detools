@@ -19,7 +19,7 @@ class _PatchBZ2Reader(object):
 
         while len(buf) < length:
             if self._decompressor.eof:
-                raise Error('Early end of BZ2.')
+                raise Error('Early end of patch bz2.')
 
             if self._decompressor.needs_input:
                 data = self._fpatch.read(4096)
@@ -29,7 +29,10 @@ class _PatchBZ2Reader(object):
             else:
                 data = b''
 
-            buf += self._decompressor.decompress(data, length - len(buf))
+            try:
+                buf += self._decompressor.decompress(data, length - len(buf))
+            except Exception:
+                raise Error('Patch bz2 decompression failed.')
 
         return buf
 
@@ -77,7 +80,7 @@ def patch(fold, fpatch, fnew):
         length = _unpack_i64(patch_bz2.decompress(8))
 
         if new_pos + length > new_length:
-            raise Error("Corrupt patch.")
+            raise Error("Patch diff data too long.")
 
         for _ in range(length):
             byte = patch_bz2.decompress(1)[0]
@@ -91,7 +94,7 @@ def patch(fold, fpatch, fnew):
         length = _unpack_i64(patch_bz2.decompress(8))
 
         if new_pos + length > new_length:
-            raise Error("Corrupt patch.")
+            raise Error("Patch extra data too long.")
 
         fnew.write(patch_bz2.decompress(length))
         new_pos += length
@@ -101,7 +104,7 @@ def patch(fold, fpatch, fnew):
         fold.seek(length, os.SEEK_CUR)
 
     if new_pos != new_length:
-        raise Error('New length mismatch.')
+        raise Error('New data length mismatch.')
 
     if not patch_bz2.eof:
-        raise Error('BZ2 leftovers.')
+        raise Error('End of patch bz2 not found.')
