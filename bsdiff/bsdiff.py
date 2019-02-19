@@ -4,6 +4,22 @@ from bz2 import BZ2Decompressor
 from .errors import Error
 
 
+def _pack_i64(value):
+    return struct.pack('>q', value)
+
+
+def _write_header(fpatch, fnew):
+    # Magic.
+    fpatch.write(b'bsdiff01')
+
+    # New size.
+    fnew.seek(0, os.SEEK_END)
+    new_size = fnew.tell()
+    fnew.seek(0, os.SEEK_SET)
+
+    fpatch.write(_pack_i64(new_size))
+
+
 class _PatchBZ2Reader(object):
 
     def __init__(self, fpatch):
@@ -65,7 +81,15 @@ def _read_header(fpatch):
     return new_size
 
 
-def patch(fold, fpatch, fnew):
+def create_patch(fold, fnew, fpatch):
+    """This is likely a very slow operation. =/
+
+    """
+
+    _write_header(fpatch, fnew)
+
+
+def apply_patch(fold, fpatch, fnew):
     """Apply `fpatch` to `fold` and write the result to `fnew`. All
     arguments are file-like objects.
 
