@@ -4,7 +4,7 @@
 About
 =====
 
-Binary diff/patch utility.
+Binary diff/patch utility in Python 3.
 
 Based on http://www.daemonology.net/bsdiff/.
 
