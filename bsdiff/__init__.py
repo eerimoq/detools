@@ -15,8 +15,8 @@ def _do_create_patch(args):
 
 def _do_apply_patch(args):
     with open(args.oldfile, 'rb') as fold:
-        with open(args.newfile, 'wb') as fnew:
-            with open(args.patchfile, 'rb') as fpatch:
+        with open(args.patchfile, 'rb') as fpatch:
+            with open(args.newfile, 'wb') as fnew:
                 apply_patch(fold, fpatch, fnew)
 
 

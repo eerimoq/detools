@@ -2,6 +2,7 @@
 
 from setuptools import setup
 from setuptools import find_packages
+from setuptools import Extension
 import re
 
 
@@ -24,6 +25,9 @@ setup(name='bsdiff',
       ],
       url='https://github.com/eerimoq/bsdiff',
       packages=find_packages(exclude=['tests']),
+      ext_modules = [
+          Extension(name="bsdiff._sais", sources=["bsdiff/sais.c"])
+      ],
       test_suite="tests",
       entry_points = {
           'console_scripts': ['bsdiff=bsdiff.__init__:_main']
