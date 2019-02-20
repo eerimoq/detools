@@ -144,14 +144,76 @@ static int append_buffer(PyObject *list_p, u_char *buf_p, off_t size)
     return (append_bytes(list_p, buf_p, size));
 }
 
-static PyObject *create_patch(PyObject *self_p, PyObject *args_p)
+static int parse_args(PyObject *args_p,
+                      Py_ssize_t *suffix_array_length_p,
+                      off_t **i_pp,
+                      char **old_pp,
+                      char **new_pp,
+                      Py_ssize_t *old_size_p,
+                      Py_ssize_t *new_size_p)
 {
     int res;
-    u_char *old_p;
-    u_char *new_p;
-    Py_ssize_t old_size;
-    Py_ssize_t new_size;
-    off_t *i_p;
+    PyObject *suffix_array_p;
+    PyObject *old_bytes_p;
+    PyObject *new_bytes_p;
+    int i;
+
+    res = PyArg_ParseTuple(args_p,
+                           "OOO",
+                           &suffix_array_p,
+                           &old_bytes_p,
+                           &new_bytes_p);
+
+    if (res == 0) {
+        return (-1);
+    }
+
+    *suffix_array_length_p = PyList_Size(suffix_array_p);
+
+    if (*suffix_array_length_p <= 0) {
+        return (-1);
+    }
+
+    *i_pp = PyMem_Malloc(*suffix_array_length_p * sizeof(**i_pp));
+
+    if (*i_pp == NULL) {
+        return (-1);
+    }
+
+    for (i = 0; i < *suffix_array_length_p; i++) {
+        (*i_pp)[i] = PyLong_AsLong(PyList_GET_ITEM(suffix_array_p, i));
+    }
+
+    res = PyBytes_AsStringAndSize(old_bytes_p, old_pp, old_size_p);
+
+    if (res != 0) {
+        goto err1;
+    }
+
+    res = PyBytes_AsStringAndSize(new_bytes_p, new_pp, new_size_p);
+
+    if (res != 0) {
+        goto err1;
+    }
+
+    return (res);
+
+ err1:
+    PyMem_Free(*i_pp);
+
+    return (-1);
+}
+
+static int create_patch_loop(PyObject *list_p,
+                             off_t *i_p,
+                             u_char *old_p,
+                             Py_ssize_t old_size,
+                             u_char *new_p,
+                             Py_ssize_t new_size,
+                             u_char *db_p,
+                             u_char *eb_p)
+{
+    int res;
     off_t scan;
     off_t pos;
     off_t len;
@@ -169,59 +231,6 @@ static PyObject *create_patch(PyObject *self_p, PyObject *args_p)
     off_t Ss;
     off_t lens;
     off_t i;
-    u_char *db_p;
-    u_char *eb_p;
-    PyObject *suffix_array_p;
-    PyObject *old_bytes_p;
-    PyObject *new_bytes_p;
-    PyObject *list_p;
-    Py_ssize_t suffix_array_length;
-
-    /* Input argument conversion. */
-    if (!PyArg_ParseTuple(args_p,
-                          "OOO",
-                          &suffix_array_p,
-                          &old_bytes_p,
-                          &new_bytes_p)) {
-        return (NULL);
-    }
-
-    suffix_array_length = PyList_Size(suffix_array_p);
-
-    if (suffix_array_length <= 0) {
-        return (NULL);
-    }
-
-    i_p = PyMem_Malloc(suffix_array_length * sizeof(*i_p));
-
-    if (i_p == NULL) {
-        return (NULL);
-    }
-
-    for (i = 0; i < suffix_array_length; i++) {
-        i_p[i] = PyLong_AsLong(PyList_GET_ITEM(suffix_array_p, i));
-    }
-
-    res = PyBytes_AsStringAndSize(old_bytes_p, (char **)&old_p, &old_size);
-
-    if (res != 0) {
-        return (NULL);
-    }
-
-    res = PyBytes_AsStringAndSize(new_bytes_p, (char **)&new_p, &new_size);
-
-    if (res != 0) {
-        return (NULL);
-    }
-
-    list_p = PyList_New(0);
-
-    if (list_p == NULL) {
-        return (NULL);
-    }
-
-    db_p = PyMem_Malloc(suffix_array_length * sizeof(*db_p));
-    eb_p = PyMem_Malloc(suffix_array_length * sizeof(*eb_p));
 
     scan = 0;
     len = 0;
@@ -334,7 +343,7 @@ static PyObject *create_patch(PyObject *self_p, PyObject *args_p)
             res = append_buffer(list_p, &db_p[0], lenf);
 
             if (res != 0) {
-                return (NULL);
+                return (res);
             }
 
             /* Extra data. */
@@ -343,14 +352,14 @@ static PyObject *create_patch(PyObject *self_p, PyObject *args_p)
                                 (scan - lenb) - (last_scan + lenf));
 
             if (res != 0) {
-                return (NULL);
+                return (res);
             }
 
             /* Adjustment. */
             res = append_size(list_p, (pos - lenb) - (last_pos + lenf));
 
             if (res != 0) {
-                return (NULL);
+                return (res);
             }
 
             last_scan = (scan - lenb);
@@ -359,7 +368,84 @@ static PyObject *create_patch(PyObject *self_p, PyObject *args_p)
         }
     }
 
+    return (0);
+}
+
+static PyObject *create_patch(PyObject *self_p, PyObject *args_p)
+{
+    int res;
+    u_char *old_p;
+    u_char *new_p;
+    Py_ssize_t old_size;
+    Py_ssize_t new_size;
+    off_t *i_p;
+    u_char *db_p;
+    u_char *eb_p;
+    PyObject *list_p;
+    Py_ssize_t suffix_array_length;
+
+    res = parse_args(args_p,
+                     &suffix_array_length,
+                     &i_p,
+                     (char **)&old_p,
+                     (char **)&new_p,
+                     &old_size,
+                     &new_size);
+
+    if (res != 0) {
+        return (NULL);
+    }
+
+    list_p = PyList_New(0);
+
+    if (list_p == NULL) {
+        goto err1;
+    }
+
+    db_p = PyMem_Malloc(suffix_array_length * sizeof(*db_p));
+
+    if (db_p == NULL) {
+        goto err2;
+    }
+
+    eb_p = PyMem_Malloc(suffix_array_length * sizeof(*eb_p));
+
+    if (eb_p == NULL) {
+        goto err3;
+    }
+
+    res = create_patch_loop(list_p,
+                            i_p,
+                            old_p,
+                            old_size,
+                            new_p,
+                            new_size,
+                            db_p,
+                            eb_p);
+
+    if (res != 0) {
+        goto err4;
+    }
+
+    PyMem_Free(eb_p);
+    PyMem_Free(db_p);
+    PyMem_Free(i_p);
+
     return (list_p);
+
+ err4:
+    PyMem_Free(eb_p);
+
+ err3:
+    PyMem_Free(db_p);
+
+ err2:
+    Py_DECREF(list_p);
+
+ err1:
+    PyMem_Free(i_p);
+
+    return (NULL);
 }
 
 static PyMethodDef module_methods[] = {
