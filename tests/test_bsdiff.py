@@ -18,9 +18,7 @@ class BsdiffTest(unittest.TestCase):
         with open('tests/files/foo.patch', 'rb') as fpatch:
             expected = fpatch.read()
 
-        # ToDo
-        with self.assertRaises(AssertionError):
-            self.assertEqual(actual, expected)
+        self.assertEqual(actual, expected)
 
     def test_apply_patch_foo(self):
         fnew = BytesIO()

@@ -26,7 +26,8 @@ setup(name='bsdiff',
       url='https://github.com/eerimoq/bsdiff',
       packages=find_packages(exclude=['tests']),
       ext_modules = [
-          Extension(name="bsdiff._sais", sources=["bsdiff/sais.c"])
+          Extension(name="bsdiff._sais", sources=["bsdiff/sais.c"]),
+          Extension(name="bsdiff._bsdiff", sources=["bsdiff/bsdiff.c"])
       ],
       test_suite="tests",
       entry_points = {
