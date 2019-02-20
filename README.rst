@@ -6,7 +6,14 @@ About
 
 Binary diff/patch utility in Python 3.
 
-Based on http://www.daemonology.net/bsdiff/.
+Based on http://www.daemonology.net/bsdiff/, with the following
+changes:
+
+- LZMA compression instead of BZ2 for smaller patches.
+
+- Linear patch file access pattern to allow streaming.
+
+- `SA-IS`_ instead of qsufsort for speed and reliability.
 
 Project homepage: https://github.com/eerimoq/bsdiff
 
@@ -59,3 +66,5 @@ Contributing
 
 .. |coverage| image:: https://coveralls.io/repos/github/eerimoq/bsdiff/badge.svg?branch=master
 .. _coverage: https://coveralls.io/github/eerimoq/bsdiff
+
+.. _SA-IS: https://sites.google.com/site/yuta256/sais
