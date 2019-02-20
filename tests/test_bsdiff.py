@@ -66,7 +66,7 @@ class BsdiffTest(unittest.TestCase):
                     bsdiff.apply_patch(fold, fpatch, fnew)
 
                 self.assertEqual(str(cm.exception),
-                                 "End of patch bz2 not found.")
+                                 "End of patch not found.")
 
     def test_apply_patch_foo_long(self):
         fnew = BytesIO()
@@ -77,7 +77,7 @@ class BsdiffTest(unittest.TestCase):
                     bsdiff.apply_patch(fold, fpatch, fnew)
 
                 self.assertEqual(str(cm.exception),
-                                 "Patch bz2 decompression failed.")
+                                 "Patch decompression failed.")
 
     def test_apply_patch_foo_diff_data_too_long(self):
         fnew = BytesIO()

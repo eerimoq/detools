@@ -1,6 +1,6 @@
 import os
 import struct
-from bz2 import BZ2Compressor
+from lzma import LZMACompressor
 
 from . import _sais
 from . import _bsdiff
@@ -32,7 +32,7 @@ def _write_data(fold, fnew, fpatch):
     suffix_array = [_get_fsize(fold)]
     suffix_array += _sais.sais(old)
     chunks = _bsdiff.create_patch(suffix_array, old, fread(fnew))
-    compressor = BZ2Compressor()
+    compressor = LZMACompressor()
 
     for chunk in chunks:
         fpatch.write(compressor.compress(chunk))
