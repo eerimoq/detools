@@ -4,7 +4,7 @@
 About
 =====
 
-Binary diff/patch utility in Python 3.
+Binary diff/patch utility in Python 3, using C extensions.
 
 Based on http://www.daemonology.net/bsdiff/, with the following
 changes:
