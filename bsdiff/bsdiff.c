@@ -113,13 +113,9 @@ static int append_bytes(PyObject *list_p, u_char *buf_p, off_t size)
 
     res = PyList_Append(list_p, bytes_p);
 
-    if (res != 0) {
-        Py_DECREF(bytes_p);
+    Py_DECREF(bytes_p);
 
-        return (res);
-    }
-
-    return (0);
+    return (res);
 }
 
 static int append_size(PyObject *list_p, off_t size)
