@@ -7,17 +7,17 @@ from .version import __version__
 
 
 def _do_create_patch(args):
-    with open(args.oldfile, 'rb') as fold:
-        with open(args.newfile, 'rb') as fnew:
+    with open(args.fromfile, 'rb') as ffrom:
+        with open(args.tofile, 'rb') as fto:
             with open(args.patchfile, 'wb') as fpatch:
-                create_patch(fold, fnew, fpatch)
+                create_patch(ffrom, fto, fpatch)
 
 
 def _do_apply_patch(args):
-    with open(args.oldfile, 'rb') as fold:
+    with open(args.fromfile, 'rb') as ffrom:
         with open(args.patchfile, 'rb') as fpatch:
-            with open(args.newfile, 'wb') as fnew:
-                apply_patch(fold, fpatch, fnew)
+            with open(args.tofile, 'wb') as fto:
+                apply_patch(ffrom, fpatch, fto)
 
 
 def _main():
@@ -37,17 +37,17 @@ def _main():
     # Create patch subparser.
     subparser = subparsers.add_parser('create_patch',
                                       description='Create a patch.')
-    subparser.add_argument('oldfile', help='Old file.')
-    subparser.add_argument('newfile', help='New file.')
+    subparser.add_argument('fromfile', help='From file.')
+    subparser.add_argument('tofile', help='To file.')
     subparser.add_argument('patchfile', help='Created patch file.')
     subparser.set_defaults(func=_do_create_patch)
 
     # Apply patch subparser.
     subparser = subparsers.add_parser('apply_patch',
                                       description='Apply given patch.')
-    subparser.add_argument('oldfile', help='Old file.')
+    subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('patchfile', help='Patch file.')
-    subparser.add_argument('newfile', help='Created new file.')
+    subparser.add_argument('tofile', help='Created to file.')
     subparser.set_defaults(func=_do_apply_patch)
 
     args = parser.parse_args()

@@ -57,29 +57,29 @@ def _read_header(fpatch):
         raise Error(
             "Expected header magic b'bsdiff01', but got {}.".format(magic))
 
-    new_size = _unpack_i64(header[8:16])
+    to_size = _unpack_i64(header[8:16])
 
-    if new_size < 0:
-        raise Error('Expected new size >= 0, but got {}.'.format(new_size))
+    if to_size < 0:
+        raise Error('Expected to size >= 0, but got {}.'.format(to_size))
 
-    return new_size
+    return to_size
 
 
-def apply_patch(fold, fpatch, fnew):
-    """Apply `fpatch` to `fold` and write the result to `fnew`. All
+def apply_patch(ffrom, fpatch, fto):
+    """Apply `fpatch` to `ffrom` and write the result to `fto`. All
     arguments are file-like objects.
 
     """
 
-    new_size = _read_header(fpatch)
+    to_size = _read_header(fpatch)
     patch_reader = _PatchReader(fpatch)
-    new_pos = 0
+    to_pos = 0
 
-    while new_pos < new_size:
+    while to_pos < to_size:
         # Diff data.
         size = _unpack_i64(patch_reader.decompress(8))
 
-        if new_pos + size > new_size:
+        if to_pos + size > to_size:
             raise Error("Patch diff data too long.")
 
         offset = 0
@@ -88,28 +88,28 @@ def apply_patch(fold, fpatch, fnew):
             chunk_size = min(size - offset, 4096)
             offset += chunk_size
             patch_data = patch_reader.decompress(chunk_size)
-            old_data = fold.read(chunk_size)
-            fnew.write(bytearray(
-                (pb + ob) & 0xff for pb, ob in zip(patch_data, old_data)
+            from_data = ffrom.read(chunk_size)
+            fto.write(bytearray(
+                (pb + ob) & 0xff for pb, ob in zip(patch_data, from_data)
             ))
 
-        new_pos += size
+        to_pos += size
 
         # Extra data.
         size = _unpack_i64(patch_reader.decompress(8))
 
-        if new_pos + size > new_size:
+        if to_pos + size > to_size:
             raise Error("Patch extra data too long.")
 
-        fnew.write(patch_reader.decompress(size))
-        new_pos += size
+        fto.write(patch_reader.decompress(size))
+        to_pos += size
 
         # Adjustment.
         size = _unpack_i64(patch_reader.decompress(8))
-        fold.seek(size, os.SEEK_CUR)
+        ffrom.seek(size, os.SEEK_CUR)
 
-    if new_pos != new_size:
-        raise Error('New data size mismatch.')
+    if to_pos != to_size:
+        raise Error('To data size mismatch.')
 
     if not patch_reader.eof:
         raise Error('End of patch not found.')

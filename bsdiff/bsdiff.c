@@ -36,15 +36,15 @@
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-static off_t matchlen(u_char *old_p,
-                      off_t old_size,
-                      u_char *new_p,
-                      off_t new_size)
+static off_t matchlen(u_char *from_p,
+                      off_t from_size,
+                      u_char *to_p,
+                      off_t to_size)
 {
     off_t i;
 
-    for (i = 0; i < MIN(old_size, new_size); i++) {
-        if (old_p[i] != new_p[i]) {
+    for (i = 0; i < MIN(from_size, to_size); i++) {
+        if (from_p[i] != to_p[i]) {
             break;
         }
     }
@@ -53,10 +53,10 @@ static off_t matchlen(u_char *old_p,
 }
 
 static off_t search(off_t *i_p,
-                    u_char *old_p,
-                    off_t old_size,
-                    u_char *new_p,
-                    off_t new_size,
+                    u_char *from_p,
+                    off_t from_size,
+                    u_char *to_p,
+                    off_t to_size,
                     off_t st,
                     off_t en,
                     off_t *pos)
@@ -65,8 +65,8 @@ static off_t search(off_t *i_p,
     off_t y;
 
     if (en - st < 2) {
-        x = matchlen(old_p + i_p[st], old_size - i_p[st], new_p, new_size);
-        y = matchlen(old_p + i_p[en], old_size - i_p[en], new_p, new_size);
+        x = matchlen(from_p + i_p[st], from_size - i_p[st], to_p, to_size);
+        y = matchlen(from_p + i_p[en], from_size - i_p[en], to_p, to_size);
 
         if (x > y) {
             *pos = i_p[st];
@@ -81,10 +81,10 @@ static off_t search(off_t *i_p,
 
     x = (st + (en - st) / 2);
 
-    if (memcmp(old_p + i_p[x], new_p, MIN(old_size - i_p[x], new_size)) < 0) {
-        return search(i_p, old_p, old_size, new_p, new_size, x, en, pos);
+    if (memcmp(from_p + i_p[x], to_p, MIN(from_size - i_p[x], to_size)) < 0) {
+        return search(i_p, from_p, from_size, to_p, to_size, x, en, pos);
     } else {
-        return search(i_p, old_p, old_size, new_p, new_size, st, x, pos);
+        return search(i_p, from_p, from_size, to_p, to_size, st, x, pos);
     }
 }
 
@@ -143,22 +143,22 @@ static int append_buffer(PyObject *list_p, u_char *buf_p, off_t size)
 static int parse_args(PyObject *args_p,
                       Py_ssize_t *suffix_array_length_p,
                       off_t **i_pp,
-                      char **old_pp,
-                      char **new_pp,
-                      Py_ssize_t *old_size_p,
-                      Py_ssize_t *new_size_p)
+                      char **from_pp,
+                      char **to_pp,
+                      Py_ssize_t *from_size_p,
+                      Py_ssize_t *to_size_p)
 {
     int res;
     PyObject *suffix_array_p;
-    PyObject *old_bytes_p;
-    PyObject *new_bytes_p;
+    PyObject *from_bytes_p;
+    PyObject *to_bytes_p;
     int i;
 
     res = PyArg_ParseTuple(args_p,
                            "OOO",
                            &suffix_array_p,
-                           &old_bytes_p,
-                           &new_bytes_p);
+                           &from_bytes_p,
+                           &to_bytes_p);
 
     if (res == 0) {
         return (-1);
@@ -180,13 +180,13 @@ static int parse_args(PyObject *args_p,
         (*i_pp)[i] = PyLong_AsLong(PyList_GET_ITEM(suffix_array_p, i));
     }
 
-    res = PyBytes_AsStringAndSize(old_bytes_p, old_pp, old_size_p);
+    res = PyBytes_AsStringAndSize(from_bytes_p, from_pp, from_size_p);
 
     if (res != 0) {
         goto err1;
     }
 
-    res = PyBytes_AsStringAndSize(new_bytes_p, new_pp, new_size_p);
+    res = PyBytes_AsStringAndSize(to_bytes_p, to_pp, to_size_p);
 
     if (res != 0) {
         goto err1;
@@ -202,10 +202,10 @@ static int parse_args(PyObject *args_p,
 
 static int create_patch_loop(PyObject *list_p,
                              off_t *i_p,
-                             u_char *old_p,
-                             Py_ssize_t old_size,
-                             u_char *new_p,
-                             Py_ssize_t new_size,
+                             u_char *from_p,
+                             Py_ssize_t from_size,
+                             u_char *to_p,
+                             Py_ssize_t to_size,
                              u_char *db_p,
                              u_char *eb_p)
 {
@@ -216,7 +216,7 @@ static int create_patch_loop(PyObject *list_p,
     off_t last_scan;
     off_t last_pos;
     off_t last_offset;
-    off_t old_score;
+    off_t from_score;
     off_t scsc;
     off_t s;
     off_t Sf;
@@ -235,43 +235,43 @@ static int create_patch_loop(PyObject *list_p,
     last_offset = 0;
     pos = 0;
 
-    while (scan < new_size) {
-        old_score = 0;
+    while (scan < to_size) {
+        from_score = 0;
 
-        for (scsc = scan += len; scan < new_size; scan++) {
+        for (scsc = scan += len; scan < to_size; scan++) {
             len = search(i_p,
-                         old_p,
-                         old_size,
-                         new_p + scan,
-                         new_size - scan,
+                         from_p,
+                         from_size,
+                         to_p + scan,
+                         to_size - scan,
                          0,
-                         old_size,
+                         from_size,
                          &pos);
 
             for (; scsc < scan + len; scsc++) {
-                if ((scsc + last_offset < old_size)
-                    && (old_p[scsc + last_offset] == new_p[scsc])) {
-                    old_score++;
+                if ((scsc + last_offset < from_size)
+                    && (from_p[scsc + last_offset] == to_p[scsc])) {
+                    from_score++;
                 }
             }
 
-            if (((len == old_score) && (len != 0)) || (len > old_score + 8)) {
+            if (((len == from_score) && (len != 0)) || (len > from_score + 8)) {
                 break;
             }
 
-            if ((scan + last_offset < old_size)
-                && (old_p[scan + last_offset] == new_p[scan])) {
-                old_score--;
+            if ((scan + last_offset < from_size)
+                && (from_p[scan + last_offset] == to_p[scan])) {
+                from_score--;
             }
         }
 
-        if ((len != old_score) || (scan == new_size)) {
+        if ((len != from_score) || (scan == to_size)) {
             s = 0;
             Sf = 0;
             lenf = 0;
 
-            for (i = 0; (last_scan + i < scan) && (last_pos + i < old_size);) {
-                if (old_p[last_pos + i] == new_p[last_scan + i]) {
+            for (i = 0; (last_scan + i < scan) && (last_pos + i < from_size);) {
+                if (from_p[last_pos + i] == to_p[last_scan + i]) {
                     s++;
                 }
 
@@ -285,12 +285,12 @@ static int create_patch_loop(PyObject *list_p,
 
             lenb = 0;
 
-            if (scan < new_size) {
+            if (scan < to_size) {
                 s = 0;
                 Sb = 0;
 
                 for (i = 1; (scan >= last_scan + i) && (pos >= i); i++) {
-                    if (old_p[pos - i] == new_p[scan - i]) {
+                    if (from_p[pos - i] == to_p[scan - i]) {
                         s++;
                     }
 
@@ -308,12 +308,12 @@ static int create_patch_loop(PyObject *list_p,
                 lens = 0;
 
                 for (i = 0; i < overlap; i++) {
-                    if (new_p[last_scan + lenf - overlap + i]
-                        == old_p[last_pos + lenf - overlap + i]) {
+                    if (to_p[last_scan + lenf - overlap + i]
+                        == from_p[last_pos + lenf - overlap + i]) {
                         s++;
                     }
 
-                    if(new_p[scan - lenb + i] == old_p[pos - lenb + i]) {
+                    if(to_p[scan - lenb + i] == from_p[pos - lenb + i]) {
                         s--;
                     }
 
@@ -328,11 +328,11 @@ static int create_patch_loop(PyObject *list_p,
             }
 
             for (i = 0; i < lenf; i++) {
-                db_p[i] = (new_p[last_scan + i] - old_p[last_pos + i]);
+                db_p[i] = (to_p[last_scan + i] - from_p[last_pos + i]);
             }
 
             for(i = 0; i < (scan - lenb) - (last_scan + lenf); i++) {
-                eb_p[i] = new_p[last_scan + lenf + i];
+                eb_p[i] = to_p[last_scan + lenf + i];
             }
 
             /* Diff data. */
@@ -370,10 +370,10 @@ static int create_patch_loop(PyObject *list_p,
 static PyObject *create_patch(PyObject *self_p, PyObject *args_p)
 {
     int res;
-    u_char *old_p;
-    u_char *new_p;
-    Py_ssize_t old_size;
-    Py_ssize_t new_size;
+    u_char *from_p;
+    u_char *to_p;
+    Py_ssize_t from_size;
+    Py_ssize_t to_size;
     off_t *i_p;
     u_char *db_p;
     u_char *eb_p;
@@ -383,10 +383,10 @@ static PyObject *create_patch(PyObject *self_p, PyObject *args_p)
     res = parse_args(args_p,
                      &suffix_array_length,
                      &i_p,
-                     (char **)&old_p,
-                     (char **)&new_p,
-                     &old_size,
-                     &new_size);
+                     (char **)&from_p,
+                     (char **)&to_p,
+                     &from_size,
+                     &to_size);
 
     if (res != 0) {
         return (NULL);
@@ -412,10 +412,10 @@ static PyObject *create_patch(PyObject *self_p, PyObject *args_p)
 
     res = create_patch_loop(list_p,
                             i_p,
-                            old_p,
-                            old_size,
-                            new_p,
-                            new_size,
+                            from_p,
+                            from_size,
+                            to_p,
+                            to_size,
                             db_p,
                             eb_p);
 
