@@ -14,7 +14,7 @@ def find_version():
 
 setup(name='detools',
       version=find_version(),
-      description='Binary diff/patch utility.',
+      description='Binary delta encoding utility.',
       long_description=open('README.rst', 'r').read(),
       author='Erik Moqvist',
       author_email='erik.moqvist@gmail.com',

@@ -21,7 +21,7 @@ def _do_apply_patch(args):
 
 
 def _main():
-    parser = argparse.ArgumentParser(description='Binary diff/patch utility.')
+    parser = argparse.ArgumentParser(description='Binary delta encoding utility.')
 
     parser.add_argument('-d', '--debug', action='store_true')
     parser.add_argument('--version',
