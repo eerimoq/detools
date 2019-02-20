@@ -53,9 +53,9 @@ def _read_header(fpatch):
 
     magic = header[0:8]
 
-    if magic != b'bsdiff01':
+    if magic != b'detools0':
         raise Error(
-            "Expected header magic b'bsdiff01', but got {}.".format(magic))
+            "Expected header magic b'detools0', but got {}.".format(magic))
 
     to_size = _unpack_i64(header[8:16])
 

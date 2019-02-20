@@ -4,7 +4,7 @@
 About
 =====
 
-Binary diff/patch utility in Python 3, using C extensions.
+Binary delta encoding utility in Python 3, using C extensions.
 
 Based on http://www.daemonology.net/bsdiff/, with the following
 differences:
@@ -15,16 +15,16 @@ differences:
 
 - `SA-IS`_ instead of qsufsort for speed and reliability.
 
-Project homepage: https://github.com/eerimoq/bsdiff
+Project homepage: https://github.com/eerimoq/detools
 
-Documentation: http://bsdiff.readthedocs.org/en/latest
+Documentation: http://detools.readthedocs.org/en/latest
 
 Installation
 ============
 
 .. code-block:: python
 
-    pip install bsdiff
+    pip install detools
 
 Statistics
 ==========
@@ -48,14 +48,14 @@ The create patch subcommand
 
 .. code-block:: text
 
-   $ bsdiff create_patch tests/files/foo.old tests/files/foo.new foo.patch
+   $ detools create_patch tests/files/foo.old tests/files/foo.new foo.patch
 
 The apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: text
 
-   $ bsdiff apply_patch tests/files/foo.old foo.patch foo.new
+   $ detools apply_patch tests/files/foo.old foo.patch foo.new
 
 Contributing
 ============
@@ -75,10 +75,10 @@ Contributing
 
 #. Create a pull request.
 
-.. |buildstatus| image:: https://travis-ci.org/eerimoq/bsdiff.svg?branch=master
-.. _buildstatus: https://travis-ci.org/eerimoq/bsdiff
+.. |buildstatus| image:: https://travis-ci.org/eerimoq/detools.svg?branch=master
+.. _buildstatus: https://travis-ci.org/eerimoq/detools
 
-.. |coverage| image:: https://coveralls.io/repos/github/eerimoq/bsdiff/badge.svg?branch=master
-.. _coverage: https://coveralls.io/github/eerimoq/bsdiff
+.. |coverage| image:: https://coveralls.io/repos/github/eerimoq/detools/badge.svg?branch=master
+.. _coverage: https://coveralls.io/github/eerimoq/detools
 
 .. _SA-IS: https://sites.google.com/site/yuta256/sais

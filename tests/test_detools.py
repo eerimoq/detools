@@ -1,17 +1,17 @@
 import unittest
 from io import BytesIO
 
-import bsdiff
+import detools
 
 
-class BsdiffTest(unittest.TestCase):
+class DetoolsTest(unittest.TestCase):
 
     def test_create_patch_foo(self):
         fpatch = BytesIO()
 
         with open('tests/files/foo.old', 'rb') as fold:
             with open('tests/files/foo.new', 'rb') as fnew:
-                bsdiff.create_patch(fold, fnew, fpatch)
+                detools.create_patch(fold, fnew, fpatch)
 
         actual = fpatch.getvalue()
 
@@ -25,7 +25,7 @@ class BsdiffTest(unittest.TestCase):
 
         with open('tests/files/foo.old', 'rb') as fold:
             with open('tests/files/foo.patch', 'rb') as fpatch:
-                bsdiff.apply_patch(fold, fpatch, fnew)
+                detools.apply_patch(fold, fpatch, fnew)
 
         actual = fnew.getvalue()
 
@@ -39,20 +39,20 @@ class BsdiffTest(unittest.TestCase):
 
         with open('tests/files/foo.old', 'rb') as fold:
             with open('tests/files/bad-header-magic.patch', 'rb') as fpatch:
-                with self.assertRaises(bsdiff.Error) as cm:
-                    bsdiff.apply_patch(fold, fpatch, fnew)
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
 
                 self.assertEqual(
                     str(cm.exception),
-                    "Expected header magic b'bsdiff01', but got b'csdiff01'.")
+                    "Expected header magic b'detools0', but got b'eetools0'.")
 
     def test_apply_patch_empty(self):
         fnew = BytesIO()
 
         with open('tests/files/foo.old', 'rb') as fold:
             with open('tests/files/empty.patch', 'rb') as fpatch:
-                with self.assertRaises(bsdiff.Error) as cm:
-                    bsdiff.apply_patch(fold, fpatch, fnew)
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
 
                 self.assertEqual(str(cm.exception),
                                  "Failed to read the patch header.")
@@ -62,8 +62,8 @@ class BsdiffTest(unittest.TestCase):
 
         with open('tests/files/foo.old', 'rb') as fold:
             with open('tests/files/foo-short.patch', 'rb') as fpatch:
-                with self.assertRaises(bsdiff.Error) as cm:
-                    bsdiff.apply_patch(fold, fpatch, fnew)
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
 
                 self.assertEqual(str(cm.exception),
                                  "End of patch not found.")
@@ -73,8 +73,8 @@ class BsdiffTest(unittest.TestCase):
 
         with open('tests/files/foo.old', 'rb') as fold:
             with open('tests/files/foo-bad-bz2-end.patch', 'rb') as fpatch:
-                with self.assertRaises(bsdiff.Error) as cm:
-                    bsdiff.apply_patch(fold, fpatch, fnew)
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
 
                 self.assertEqual(str(cm.exception),
                                  "Patch decompression failed.")
@@ -84,8 +84,8 @@ class BsdiffTest(unittest.TestCase):
 
         with open('tests/files/foo.old', 'rb') as fold:
             with open('tests/files/foo-diff-data-too-long.patch', 'rb') as fpatch:
-                with self.assertRaises(bsdiff.Error) as cm:
-                    bsdiff.apply_patch(fold, fpatch, fnew)
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
 
                 self.assertEqual(str(cm.exception),
                                  "Patch diff data too long.")
@@ -95,8 +95,8 @@ class BsdiffTest(unittest.TestCase):
 
         with open('tests/files/foo.old', 'rb') as fold:
             with open('tests/files/foo-extra-data-too-long.patch', 'rb') as fpatch:
-                with self.assertRaises(bsdiff.Error) as cm:
-                    bsdiff.apply_patch(fold, fpatch, fnew)
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
 
                 self.assertEqual(str(cm.exception),
                                  "Patch extra data too long.")

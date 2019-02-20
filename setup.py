@@ -8,11 +8,11 @@ import re
 
 def find_version():
     return re.search(r"^__version__ = '(.*)'$",
-                     open('bsdiff/version.py', 'r').read(),
+                     open('detools/version.py', 'r').read(),
                      re.MULTILINE).group(1)
 
 
-setup(name='bsdiff',
+setup(name='detools',
       version=find_version(),
       description='Binary diff/patch utility.',
       long_description=open('README.rst', 'r').read(),
@@ -23,13 +23,13 @@ setup(name='bsdiff',
           'License :: OSI Approved :: BSD License',
           'Programming Language :: Python :: 3',
       ],
-      url='https://github.com/eerimoq/bsdiff',
+      url='https://github.com/eerimoq/detools',
       packages=find_packages(exclude=['tests']),
       ext_modules = [
-          Extension(name="bsdiff._sais", sources=["bsdiff/sais.c"]),
-          Extension(name="bsdiff._bsdiff", sources=["bsdiff/bsdiff.c"])
+          Extension(name="detools._sais", sources=["detools/sais.c"]),
+          Extension(name="detools._bsdiff", sources=["detools/bsdiff.c"])
       ],
       test_suite="tests",
       entry_points = {
-          'console_scripts': ['bsdiff=bsdiff.__init__:_main']
+          'console_scripts': ['detools=detools.__init__:_main']
       })

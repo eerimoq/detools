@@ -7,7 +7,7 @@ install:
   - pip install coveralls
 
 script:
-  - coverage run --source=bsdiff setup.py test
+  - coverage run --source=detools setup.py test
 
 after_success:
   coveralls

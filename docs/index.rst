@@ -6,14 +6,14 @@
 .. toctree::
    :maxdepth: 2
 
-Binary diff/patch utility
-=========================
+Binary delta encoding utility
+=============================
 
 .. include:: ../README.rst
 
 Functions and classes
 =====================
 
-.. autofunction:: bsdiff.create_patch
+.. autofunction:: detools.create_patch
 
-.. autofunction:: bsdiff.apply_patch
+.. autofunction:: detools.apply_patch

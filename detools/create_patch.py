@@ -23,7 +23,7 @@ def _pack_i64(value):
 
 
 def _write_header(fpatch, fto):
-    fpatch.write(b'bsdiff01')
+    fpatch.write(b'detools0')
     fpatch.write(_pack_i64(_get_fsize(fto)))
 
 
