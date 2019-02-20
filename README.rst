@@ -37,6 +37,26 @@ Statistics
 |   foo.old |   foo.new |      2780 |      2780 |        192 |          1934 |
 +-----------+-----------+-----------+-----------+------------+---------------+
 
+Example usage
+=============
+
+Command line tool
+-----------------
+
+The create patch subcommand
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: text
+
+   $ bsdiff create_patch tests/files/foo.old tests/files/foo.new foo.patch
+
+The apply patch subcommand
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: text
+
+   $ bsdiff apply_patch tests/files/foo.old foo.patch foo.new
+
 Contributing
 ============
 
