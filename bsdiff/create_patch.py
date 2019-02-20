@@ -2,7 +2,7 @@ import os
 import struct
 from bz2 import BZ2Compressor
 
-from ._sais import sais
+from . import _sais
 from . import _bsdiff
 
 
@@ -30,7 +30,7 @@ def _write_header(fpatch, fnew):
 def _write_data(fold, fnew, fpatch):
     old = fread(fold)
     suffix_array = [_get_fsize(fold)]
-    suffix_array += sais(old)
+    suffix_array += _sais.sais(old)
     chunks = _bsdiff.create_patch(suffix_array, old, fread(fnew))
     compressor = BZ2Compressor()
 
