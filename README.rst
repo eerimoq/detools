@@ -53,8 +53,8 @@ Command line tool
 The create patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Create a patch from ``tests/files/foo.old`` to ``tests/files/foo.new``
-to create ``foo.patch``.
+Create a patch ``foo.patch`` from ``tests/files/foo.old`` to
+``tests/files/foo.new``.
 
 .. code-block:: text
 
