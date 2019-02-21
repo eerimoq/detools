@@ -63,7 +63,7 @@ Create a patch ``foo.patch`` from ``tests/files/foo.old`` to
 
    $ detools create_patch tests/files/foo.old tests/files/foo.new foo.patch
    $ ls -l foo.patch
-   -rw-rw-r-- 1 erik erik 192 feb 21 07:28 foo.patch
+   -rw-rw-r-- 1 erik erik 184 feb 21 07:28 foo.patch
 
 The apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -85,10 +85,10 @@ Print information about the patch ``foo.patch``.
 .. code-block:: text
 
    $ detools patch_info foo.patch
-   Patch size:         192 bytes
+   Patch size:         184 bytes
    To size:            2.78 KB
-   Patch/to ratio:     6 % (lower is better)
-   Size/data ratio:    1 % (lower is better)
+   Patch/to ratio:     6.6 % (lower is better)
+   Size/data ratio:    0.3 % (lower is better)
 
    Number of diffs:    2
    Total diff size:    2.75 KB
