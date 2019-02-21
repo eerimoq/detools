@@ -16,6 +16,8 @@ differences:
 
 - `SA-IS`_ instead of qsufsort for speed and reliability.
 
+- Variable length size fields for smaller patches.
+
 Project homepage: https://github.com/eerimoq/detools
 
 Documentation: http://detools.readthedocs.org/en/latest
@@ -38,11 +40,11 @@ All sizes are in bytes.
 +--------------------+-------------------+-----------+-----------+------------+---------------+
 | From file          | To file           | From size |   To size | Patch size | To compressed |
 +====================+===================+===========+===========+============+===============+
-| micropython v1.9.4 | micropython v1.10 |    604872 |    615388 |      73532 |        367500 |
+| micropython v1.9.4 | micropython v1.10 |    604872 |    615388 |      71868 |        367500 |
 +--------------------+-------------------+-----------+-----------+------------+---------------+
-| python 3.5         | python 3.6        |   4464400 |   4568920 |    1493488 |       1402663 |
+| python 3.5         | python 3.6        |   4464400 |   4568920 |    1451788 |       1402663 |
 +--------------------+-------------------+-----------+-----------+------------+---------------+
-| foo.old            | foo.new           |      2780 |      2780 |        192 |          1934 |
+| foo.old            | foo.new           |      2780 |      2780 |        184 |          1934 |
 +--------------------+-------------------+-----------+-----------+------------+---------------+
 
 Example usage

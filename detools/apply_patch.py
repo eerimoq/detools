@@ -45,6 +45,23 @@ def _unpack_i64(buf):
     return struct.unpack('>q', buf)[0]
 
 
+def _unpack_size(patch_reader):
+    byte = patch_reader.decompress(1)[0]
+    is_signed = (byte & 0x40)
+    value = (byte & 0x3f)
+    offset = 6
+
+    while byte & 0x80:
+        byte = patch_reader.decompress(1)[0]
+        value |= ((byte & 0x7f) << offset)
+        offset += 7
+
+    if is_signed:
+        value *= -1
+
+    return value, ((offset - 6) / 7 + 1)
+
+
 def _read_header(fpatch):
     header = fpatch.read(16)
 
@@ -77,7 +94,7 @@ def apply_patch(ffrom, fpatch, fto):
 
     while to_pos < to_size:
         # Diff data.
-        size = _unpack_i64(patch_reader.decompress(8))
+        size = _unpack_size(patch_reader)[0]
 
         if to_pos + size > to_size:
             raise Error("Patch diff data too long.")
@@ -96,7 +113,7 @@ def apply_patch(ffrom, fpatch, fto):
         to_pos += size
 
         # Extra data.
-        size = _unpack_i64(patch_reader.decompress(8))
+        size = _unpack_size(patch_reader)[0]
 
         if to_pos + size > to_size:
             raise Error("Patch extra data too long.")
@@ -105,7 +122,7 @@ def apply_patch(ffrom, fpatch, fto):
         to_pos += size
 
         # Adjustment.
-        size = _unpack_i64(patch_reader.decompress(8))
+        size = _unpack_size(patch_reader)[0]
         ffrom.seek(size, os.SEEK_CUR)
 
     if to_pos != to_size:
@@ -123,23 +140,26 @@ def patch_info(fpatch):
     patch_reader = _PatchReader(fpatch)
     to_pos = 0
 
+    number_of_size_bytes = 0
     diff_sizes = []
     extra_sizes = []
     adjustment_sizes = []
 
     while to_pos < to_size:
         # Diff data.
-        size = _unpack_i64(patch_reader.decompress(8))
+        size, number_of_bytes = _unpack_size(patch_reader)
 
         if to_pos + size > to_size:
             raise Error("Patch diff data too long.")
 
         diff_sizes.append(size)
+        number_of_size_bytes += number_of_bytes
         patch_reader.decompress(size)
         to_pos += size
 
         # Extra data.
-        size = _unpack_i64(patch_reader.decompress(8))
+        size, number_of_bytes = _unpack_size(patch_reader)
+        number_of_size_bytes += number_of_bytes
 
         if to_pos + size > to_size:
             raise Error("Patch extra data too long.")
@@ -149,7 +169,8 @@ def patch_info(fpatch):
         to_pos += size
 
         # Adjustment.
-        size = _unpack_i64(patch_reader.decompress(8))
+        size, number_of_bytes = _unpack_size(patch_reader)
+        number_of_size_bytes += number_of_bytes
         adjustment_sizes.append(size)
 
     if to_pos != to_size:
@@ -158,4 +179,9 @@ def patch_info(fpatch):
     if not patch_reader.eof:
         raise Error('End of patch not found.')
 
-    return patch_size, to_size, diff_sizes, extra_sizes, adjustment_sizes
+    return (patch_size,
+            to_size,
+            diff_sizes,
+            extra_sizes,
+            adjustment_sizes,
+            number_of_size_bytes)

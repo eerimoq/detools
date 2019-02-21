@@ -189,10 +189,10 @@ class DetoolsTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
-                         'Patch size:         192 bytes\n'
+                         'Patch size:         184 bytes\n'
                          'To size:            2.78 KB\n'
-                         'Patch/to ratio:     6 % (lower is better)\n'
-                         'Size/data ratio:    1 % (lower is better)\n'
+                         'Patch/to ratio:     6.6 % (lower is better)\n'
+                         'Size/data ratio:    0.3 % (lower is better)\n'
                          '\n'
                          'Number of diffs:    2\n'
                          'Total diff size:    2.75 KB\n'

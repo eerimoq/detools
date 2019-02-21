@@ -31,12 +31,12 @@ def _do_patch_info(args):
          to_size,
          diff_sizes,
          extra_sizes,
-         adjustment_sizes) = patch_info(fpatch)
+         _,
+         number_of_size_bytes) = patch_info(fpatch)
 
-    number_of_size_bytes = 8 * len(diff_sizes + extra_sizes + adjustment_sizes)
     number_of_data_bytes = sum(diff_sizes + extra_sizes)
-    size_data_ratio = int(100 * number_of_size_bytes / number_of_data_bytes)
-    patch_to_ratio = int(100 * patch_size / to_size)
+    size_data_ratio = round(100 * number_of_size_bytes / number_of_data_bytes, 1)
+    patch_to_ratio = round(100 * patch_size / to_size, 1)
 
     print('Patch size:         {}'.format(format_size(patch_size)))
     print('To size:            {}'.format(format_size(to_size)))

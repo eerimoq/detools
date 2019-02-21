@@ -84,16 +84,43 @@ static int64_t search(int64_t *i_p,
     }
 }
 
-static void pack_i64(uint8_t *buf_p, int64_t x)
+static int pack_size(uint8_t *buf_p, int64_t value, size_t size)
 {
-    buf_p[0] = (uint8_t)(x >> 56);
-    buf_p[1] = (uint8_t)(x >> 48);
-    buf_p[2] = (uint8_t)(x >> 40);
-    buf_p[3] = (uint8_t)(x >> 32);
-    buf_p[4] = (uint8_t)(x >> 24);
-    buf_p[5] = (uint8_t)(x >> 16);
-    buf_p[6] = (uint8_t)(x >> 8);
-    buf_p[7] = (uint8_t)(x >> 0);
+    int res;
+
+    if (size < 10) {
+        return (-1);
+    }
+
+    res = 0;
+
+    if (value == 0) {
+        buf_p[0] = 0;
+        res++;
+    } else if (value != 0x8000000000000000ll) {
+        if (value > 0) {
+            buf_p[res] = 0;
+        } else {
+            buf_p[res] = 0x40;
+            value *= -1;
+        }
+
+        buf_p[res] |= (0x80 | (value & 0x3f));
+        value >>= 6;
+        res++;
+
+        while (value > 0) {
+            buf_p[res] = (0x80 | (value & 0x7f));
+            value >>= 7;
+            res++;
+        }
+    } else {
+        return (-1);
+    }
+
+    buf_p[res - 1] &= 0x7f;
+
+    return (res);
 }
 
 static int append_bytes(PyObject *list_p, uint8_t *buf_p, int64_t size)
@@ -116,11 +143,16 @@ static int append_bytes(PyObject *list_p, uint8_t *buf_p, int64_t size)
 
 static int append_size(PyObject *list_p, int64_t size)
 {
-    uint8_t buf[8];
+    int res;
+    uint8_t buf[10];
 
-    pack_i64(&buf[0], size);
+    res = pack_size(&buf[0], size, sizeof(buf));
 
-    return (append_bytes(list_p, &buf[0], sizeof(buf)));
+    if (res <= 0) {
+        return (-1);
+    }
+
+    return (append_bytes(list_p, &buf[0], res));
 }
 
 static int append_buffer(PyObject *list_p, uint8_t *buf_p, int64_t size)
