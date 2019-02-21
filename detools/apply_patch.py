@@ -113,3 +113,46 @@ def apply_patch(ffrom, fpatch, fto):
 
     if not patch_reader.eof:
         raise Error('End of patch not found.')
+
+
+def patch_info(fpatch):
+    to_size = _read_header(fpatch)
+    patch_reader = _PatchReader(fpatch)
+    to_pos = 0
+
+    diff_sizes = []
+    extra_sizes = []
+    adjustment_sizes = []
+
+    while to_pos < to_size:
+        # Diff data.
+        size = _unpack_i64(patch_reader.decompress(8))
+
+        if to_pos + size > to_size:
+            raise Error("Patch diff data too long.")
+
+        diff_sizes.append(size)
+        patch_reader.decompress(size)
+        to_pos += size
+
+        # Extra data.
+        size = _unpack_i64(patch_reader.decompress(8))
+
+        if to_pos + size > to_size:
+            raise Error("Patch extra data too long.")
+
+        extra_sizes.append(size)
+        patch_reader.decompress(size)
+        to_pos += size
+
+        # Adjustment.
+        size = _unpack_i64(patch_reader.decompress(8))
+        adjustment_sizes.append(size)
+
+    if to_pos != to_size:
+        raise Error('To data size mismatch.')
+
+    if not patch_reader.eof:
+        raise Error('End of patch not found.')
+
+    return to_size, diff_sizes, extra_sizes, adjustment_sizes

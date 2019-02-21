@@ -2,6 +2,7 @@ import os
 import unittest
 from unittest.mock import patch
 from io import BytesIO
+from io import StringIO
 
 import detools
 
@@ -175,6 +176,27 @@ class DetoolsTest(unittest.TestCase):
         self.assertEqual(read_file(foo_new),
                          read_file('tests/files/foo.new'))
 
+    def test_command_line_patch_info_foo(self):
+        argv = [
+            'detools',
+            'patch_info',
+            'tests/files/foo.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(stdout.getvalue(),
+                         'To size:            2780\n'
+                         'Number of diffs:    2\n'
+                         'Average diff size:  1376\n'
+                         'Median diff size:   1376\n'
+                         'Number of extras:   2\n'
+                         'Average extra size: 14\n'
+                         'Median extra size:  14\n'
+                         'Size/data ratio:    1 %\n')
 
 
 if __name__ == '__main__':

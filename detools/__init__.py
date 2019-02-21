@@ -1,7 +1,11 @@
 import sys
 import argparse
+from statistics import mean
+from statistics import median
+
 from .create_patch import create_patch
 from .apply_patch import apply_patch
+from .apply_patch import patch_info
 from .errors import Error
 from .version import __version__
 
@@ -18,6 +22,24 @@ def _do_apply_patch(args):
         with open(args.patchfile, 'rb') as fpatch:
             with open(args.tofile, 'wb') as fto:
                 apply_patch(ffrom, fpatch, fto)
+
+
+def _do_patch_info(args):
+    with open(args.patchfile, 'rb') as fpatch:
+        to_size, diff_sizes, extra_sizes, adjustment_sizes = patch_info(fpatch)
+
+    number_of_size_bytes = 8 * len(diff_sizes + extra_sizes + adjustment_sizes)
+    number_of_data_bytes = sum(diff_sizes + extra_sizes)
+    size_data_ratio = int(100 * number_of_size_bytes / number_of_data_bytes)
+
+    print('To size:            {}'.format(to_size))
+    print('Number of diffs:    {}'.format(len(diff_sizes)))
+    print('Average diff size:  {}'.format(int(mean(diff_sizes))))
+    print('Median diff size:   {}'.format(int(median(diff_sizes))))
+    print('Number of extras:   {}'.format(len(extra_sizes)))
+    print('Average extra size: {}'.format(int(mean(extra_sizes))))
+    print('Median extra size:  {}'.format(int(median(extra_sizes))))
+    print('Size/data ratio:    {} %'.format(size_data_ratio))
 
 
 def _main():
@@ -49,6 +71,12 @@ def _main():
     subparser.add_argument('patchfile', help='Patch file.')
     subparser.add_argument('tofile', help='Created to file.')
     subparser.set_defaults(func=_do_apply_patch)
+
+    # Patch info subparser.
+    subparser = subparsers.add_parser('patch_info',
+                                      description='Display patch info.')
+    subparser.add_argument('patchfile', help='Patch file.')
+    subparser.set_defaults(func=_do_patch_info)
 
     args = parser.parse_args()
 
