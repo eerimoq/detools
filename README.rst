@@ -29,8 +29,13 @@ Installation
 Statistics
 ==========
 
+`To compressed` is the size of `To file` compressed using ``lzma
+--best``.
+
+All sizes are in bytes.
+
 +--------------------+-------------------+-----------+-----------+------------+---------------+
-| From file          |           To file | From size |   To size | Patch size | To compressed |
+| From file          | To file           | From size |   To size | Patch size | To compressed |
 +====================+===================+===========+===========+============+===============+
 | micropython v1.9.4 | micropython v1.10 |    604872 |    615388 |      73532 |        367500 |
 +--------------------+-------------------+-----------+-----------+------------+---------------+
