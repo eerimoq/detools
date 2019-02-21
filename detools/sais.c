@@ -26,6 +26,7 @@
  */
 
 #include <assert.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <Python.h>
 
@@ -37,24 +38,22 @@
 #    define MINBUCKETSIZE 256
 #endif
 
-#define sais_index_type int
-#define sais_bool_type  int
 #define SAIS_LMSSORT2_LIMIT 0x3fffffff
 
 #define SAIS_MYMALLOC(_num, _type) ((_type *)malloc((_num) * sizeof(_type)))
 #define SAIS_MYFREE(_ptr, _num, _type) free((_ptr))
-#define chr(_a) (cs == sizeof(sais_index_type)          \
-                 ? ((sais_index_type *)t_p)[(_a)]       \
-                 : ((unsigned char *)t_p)[(_a)])
+#define chr(_a) (cs == sizeof(int)              \
+                 ? ((int *)t_p)[(_a)]           \
+                 : ((uint8_t *)t_p)[(_a)])
 
 /* find the start or end of each bucket */
 static void get_counts(const void *t_p,
-                       sais_index_type *c_p,
-                       sais_index_type n,
-                       sais_index_type k,
+                       int *c_p,
+                       int n,
+                       int k,
                        int cs)
 {
-    sais_index_type i;
+    int i;
 
     for (i = 0; i < k; ++i) {
         c_p[i] = 0;
@@ -65,13 +64,13 @@ static void get_counts(const void *t_p,
     }
 }
 
-static void get_buckets(const sais_index_type *c_p,
-                        sais_index_type *b_p,
-                        sais_index_type k,
-                        sais_bool_type end)
+static void get_buckets(const int *c_p,
+                        int *b_p,
+                        int k,
+                        int end)
 {
-    sais_index_type i;
-    sais_index_type sum = 0;
+    int i;
+    int sum = 0;
 
     if (end) {
         for (i = 0; i < k; ++i) {
@@ -88,18 +87,18 @@ static void get_buckets(const sais_index_type *c_p,
 
 /* sort all type LMS suffixes */
 static void lms_sort_1(const void *t_p,
-                       sais_index_type *sa_p,
-                       sais_index_type *c_p,
-                       sais_index_type *b_p,
-                       sais_index_type n,
-                       sais_index_type k,
+                       int *sa_p,
+                       int *c_p,
+                       int *b_p,
+                       int n,
+                       int k,
                        int cs)
 {
-    sais_index_type *b;
-    sais_index_type i;
-    sais_index_type j;
-    sais_index_type c0;
-    sais_index_type c1;
+    int *b;
+    int i;
+    int j;
+    int c0;
+    int c1;
 
     /* compute SAl */
     if (c_p == b_p) {
@@ -154,22 +153,22 @@ static void lms_sort_1(const void *t_p,
     }
 }
 
-static sais_index_type lms_postproc_1(const void *t_p,
-                                      sais_index_type *sa_p,
-                                      sais_index_type n,
-                                      sais_index_type m,
-                                      int cs)
+static int lms_postproc_1(const void *t_p,
+                          int *sa_p,
+                          int n,
+                          int m,
+                          int cs)
 {
-    sais_index_type i;
-    sais_index_type j;
-    sais_index_type p;
-    sais_index_type q;
-    sais_index_type plen;
-    sais_index_type qlen;
-    sais_index_type name;
-    sais_index_type c0;
-    sais_index_type c1;
-    sais_bool_type diff;
+    int i;
+    int j;
+    int p;
+    int q;
+    int plen;
+    int qlen;
+    int name;
+    int c0;
+    int c1;
+    int diff;
 
     /* compact all the sorted substrings into the first m items of SA
        2*m must be not larger than n (proveable) */
@@ -231,7 +230,9 @@ static sais_index_type lms_postproc_1(const void *t_p,
         }
 
         if (diff != 0) {
-            ++name, q = p, qlen = plen;
+            ++name;
+            q = p;
+            qlen = plen;
         }
 
         sa_p[m + (p >> 1)] = name;
@@ -241,20 +242,20 @@ static sais_index_type lms_postproc_1(const void *t_p,
 }
 
 static void lms_sort_2(const void *t_p,
-                       sais_index_type *sa_p,
-                       sais_index_type *c_p,
-                       sais_index_type *b_p,
-                       sais_index_type *d_p,
-                       sais_index_type n,
-                       sais_index_type k,
+                       int *sa_p,
+                       int *c_p,
+                       int *b_p,
+                       int *d_p,
+                       int n,
+                       int k,
                        int cs)
 {
-    sais_index_type *b;
-    sais_index_type i;
-    sais_index_type j;
-    sais_index_type t;
-    sais_index_type d;
-    sais_index_type c0, c1;
+    int *b;
+    int i;
+    int j;
+    int t;
+    int d;
+    int c0, c1;
 
     assert(c_p != b_p);
 
@@ -329,7 +330,8 @@ static void lms_sort_2(const void *t_p,
 
             assert((b - sa_p) <= i);
             --j;
-            t = c0; t = (t << 1) | (chr(j) > c1);
+            t = c0;
+            t = (t << 1) | (chr(j) > c1);
 
             if (d_p[t] != d) {
                 j += n;
@@ -342,14 +344,14 @@ static void lms_sort_2(const void *t_p,
     }
 }
 
-static sais_index_type lms_postproc_2(sais_index_type *sa_p,
-                                      sais_index_type n,
-                                      sais_index_type m)
+static int lms_postproc_2(int *sa_p,
+                          int n,
+                          int m)
 {
-    sais_index_type i;
-    sais_index_type j;
-    sais_index_type d;
-    sais_index_type name;
+    int i;
+    int j;
+    int d;
+    int name;
 
     /* compact all the sorted LMS substrings into the first m items of SA */
     assert(0 < n);
@@ -411,18 +413,18 @@ static sais_index_type lms_postproc_2(sais_index_type *sa_p,
 
 /* compute SA and BWT */
 static void induce_sa(const void *t_p,
-                      sais_index_type *sa_p,
-                      sais_index_type *c_p,
-                      sais_index_type *b_p,
-                      sais_index_type n,
-                      sais_index_type k,
+                      int *sa_p,
+                      int *c_p,
+                      int *b_p,
+                      int n,
+                      int k,
                       int cs)
 {
-    sais_index_type *b;
-    sais_index_type i;
-    sais_index_type j;
-    sais_index_type c0;
-    sais_index_type c1;
+    int *b;
+    int i;
+    int j;
+    int c0;
+    int c1;
 
     /* compute SAl */
     if (c_p == b_p) {
@@ -435,7 +437,8 @@ static void induce_sa(const void *t_p,
     *b++ = ((0 < j) && (chr(j - 1) < c1)) ? ~j : j;
 
     for (i = 0; i < n; ++i) {
-        j = sa_p[i], sa_p[i] = ~j;
+        j = sa_p[i];
+        sa_p[i] = ~j;
 
         if (0 < j) {
             --j;
@@ -477,35 +480,35 @@ static void induce_sa(const void *t_p,
 }
 
 /* find the suffix array SA of T[0..n-1] in {0..255}^n */
-static sais_index_type sais_main(const void *t_p,
-                                 sais_index_type *sa_p,
-                                 sais_index_type fs,
-                                 sais_index_type n,
-                                 sais_index_type k,
-                                 int cs)
+static int sais_main(const void *t_p,
+                     int *sa_p,
+                     int fs,
+                     int n,
+                     int k,
+                     int cs)
 {
-    sais_index_type *c_p;
-    sais_index_type *b_p;
-    sais_index_type *d_p;
-    sais_index_type *ra_p;
-    sais_index_type *b;
-    sais_index_type i;
-    sais_index_type j;
-    sais_index_type m;
-    sais_index_type p;
-    sais_index_type q;
-    sais_index_type t;
-    sais_index_type name;
-    sais_index_type newfs;
-    sais_index_type c0;
-    sais_index_type c1;
+    int *c_p;
+    int *b_p;
+    int *d_p;
+    int *ra_p;
+    int *b;
+    int i;
+    int j;
+    int m;
+    int p;
+    int q;
+    int t;
+    int name;
+    int newfs;
+    int c0;
+    int c1;
     unsigned int flags;
 
     assert((t_p != NULL) && (sa_p != NULL));
     assert((0 <= fs) && (0 < n) && (1 <= k));
 
     if (k <= MINBUCKETSIZE) {
-        if ((c_p = SAIS_MYMALLOC(k, sais_index_type)) == NULL) {
+        if ((c_p = SAIS_MYMALLOC(k, int)) == NULL) {
             return -2;
         }
 
@@ -513,8 +516,8 @@ static sais_index_type sais_main(const void *t_p,
             b_p = sa_p + (n + fs - k);
             flags = 1;
         } else {
-            if ((b_p = SAIS_MYMALLOC(k, sais_index_type)) == NULL) {
-                SAIS_MYFREE(c_p, k, sais_index_type);
+            if ((b_p = SAIS_MYMALLOC(k, int)) == NULL) {
+                SAIS_MYFREE(c_p, k, int);
 
                 return (-2);
             }
@@ -528,7 +531,7 @@ static sais_index_type sais_main(const void *t_p,
             b_p = c_p - k;
             flags = 0;
         } else if (k <= (MINBUCKETSIZE * 4)) {
-            if ((b_p = SAIS_MYMALLOC(k, sais_index_type)) == NULL) {
+            if ((b_p = SAIS_MYMALLOC(k, int)) == NULL) {
                 return (-2);
             }
 
@@ -538,7 +541,7 @@ static sais_index_type sais_main(const void *t_p,
             flags = 8;
         }
     } else {
-        if ((c_p = b_p = SAIS_MYMALLOC(k, sais_index_type)) == NULL) {
+        if ((c_p = b_p = SAIS_MYMALLOC(k, int)) == NULL) {
             return (-2);
         }
 
@@ -592,13 +595,13 @@ static sais_index_type sais_main(const void *t_p,
     if (1 < m) {
         if (flags & (16 | 32)) {
             if (flags & 16) {
-                if ((d_p = SAIS_MYMALLOC(k * 2, sais_index_type)) == NULL) {
+                if ((d_p = SAIS_MYMALLOC(k * 2, int)) == NULL) {
                     if (flags & (1 | 4)) {
-                        SAIS_MYFREE(c_p, k, sais_index_type);
+                        SAIS_MYFREE(c_p, k, int);
                     }
 
                     if (flags & 2) {
-                        SAIS_MYFREE(b_p, k, sais_index_type);
+                        SAIS_MYFREE(b_p, k, int);
                     }
 
                     return (-2);
@@ -625,7 +628,7 @@ static sais_index_type sais_main(const void *t_p,
             name = lms_postproc_2(sa_p, n, m);
 
             if (flags & 16) {
-                SAIS_MYFREE(d_p, k * 2, sais_index_type);
+                SAIS_MYFREE(d_p, k * 2, int);
             }
         } else {
             lms_sort_1(t_p, sa_p, c_p, b_p, n, k, cs);
@@ -642,11 +645,11 @@ static sais_index_type sais_main(const void *t_p,
        recurse if names are not yet unique */
     if (name < m) {
         if (flags & 4) {
-            SAIS_MYFREE(c_p, k, sais_index_type);
+            SAIS_MYFREE(c_p, k, int);
         }
 
         if (flags & 2) {
-            SAIS_MYFREE(b_p, k, sais_index_type);
+            SAIS_MYFREE(b_p, k, int);
         }
 
         newfs = (n + fs) - (m * 2);
@@ -668,9 +671,9 @@ static sais_index_type sais_main(const void *t_p,
             }
         }
 
-        if (sais_main(ra_p, sa_p, newfs, m, name, sizeof(sais_index_type)) != 0) {
+        if (sais_main(ra_p, sa_p, newfs, m, name, sizeof(int)) != 0) {
             if (flags & 1) {
-                SAIS_MYFREE(c_p, k, sais_index_type);
+                SAIS_MYFREE(c_p, k, int);
             }
 
             return (-2);
@@ -711,7 +714,7 @@ static sais_index_type sais_main(const void *t_p,
         if (flags & 2) {
             if ((b_p = SAIS_MYMALLOC(k, int)) == NULL) {
                 if (flags & 1) {
-                    SAIS_MYFREE(c_p, k, sais_index_type);
+                    SAIS_MYFREE(c_p, k, int);
                 }
 
                 return (-2);
@@ -727,7 +730,10 @@ static sais_index_type sais_main(const void *t_p,
     /* put all left-most S characters into their buckets */
     if (1 < m) {
         get_buckets(c_p, b_p, k, 1); /* find ends of buckets */
-        i = m - 1, j = n, p = sa_p[m - 1], c1 = chr(p);
+        i = m - 1;
+        j = n;
+        p = sa_p[m - 1];
+        c1 = chr(p);
 
         do {
             q = b_p[c0 = c1];
@@ -755,17 +761,17 @@ static sais_index_type sais_main(const void *t_p,
     induce_sa(t_p, sa_p, c_p, b_p, n, k, cs);
 
     if (flags & (1 | 4)) {
-        SAIS_MYFREE(c_p, k, sais_index_type);
+        SAIS_MYFREE(c_p, k, int);
     }
 
     if (flags & 2) {
-        SAIS_MYFREE(b_p, k, sais_index_type);
+        SAIS_MYFREE(b_p, k, int);
     }
 
     return (0);
 }
 
-static int sais(const unsigned char *t_p, int *sa_p, int n)
+static int sais(const uint8_t *t_p, int *sa_p, int n)
 {
     if ((t_p == NULL) || (sa_p == NULL) || (n < 0)) {
         return (-1);
@@ -779,7 +785,7 @@ static int sais(const unsigned char *t_p, int *sa_p, int n)
         return (0);
     }
 
-    return (sais_main(t_p, sa_p, 0, n, UCHAR_SIZE, sizeof(unsigned char)));
+    return (sais_main(t_p, sa_p, 0, n, UCHAR_SIZE, sizeof(uint8_t)));
 }
 
 /**
@@ -815,7 +821,7 @@ static PyObject* sais_wrapper(PyObject* self_p, PyObject* arg_p)
     }
 
     /* Execute the SA-IS algorithm. */
-    res = sais((unsigned char *)buf_p, suffix_array_p, size);
+    res = sais((uint8_t *)buf_p, suffix_array_p, size);
 
     if (res != 0) {
         goto err1;

@@ -25,23 +25,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <err.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
-#include <unistd.h>
 #include <Python.h>
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-static off_t matchlen(u_char *from_p,
-                      off_t from_size,
-                      u_char *to_p,
-                      off_t to_size)
+static int64_t matchlen(uint8_t *from_p,
+                        int64_t from_size,
+                        uint8_t *to_p,
+                        int64_t to_size)
 {
-    off_t i;
+    int64_t i;
 
     for (i = 0; i < MIN(from_size, to_size); i++) {
         if (from_p[i] != to_p[i]) {
@@ -52,17 +48,17 @@ static off_t matchlen(u_char *from_p,
     return (i);
 }
 
-static off_t search(off_t *i_p,
-                    u_char *from_p,
-                    off_t from_size,
-                    u_char *to_p,
-                    off_t to_size,
-                    off_t st,
-                    off_t en,
-                    off_t *pos)
+static int64_t search(int64_t *i_p,
+                      uint8_t *from_p,
+                      int64_t from_size,
+                      uint8_t *to_p,
+                      int64_t to_size,
+                      int64_t st,
+                      int64_t en,
+                      int64_t *pos)
 {
-    off_t x;
-    off_t y;
+    int64_t x;
+    int64_t y;
 
     if (en - st < 2) {
         x = matchlen(from_p + i_p[st], from_size - i_p[st], to_p, to_size);
@@ -88,7 +84,7 @@ static off_t search(off_t *i_p,
     }
 }
 
-static void pack_i64(u_char *buf_p, off_t x)
+static void pack_i64(uint8_t *buf_p, int64_t x)
 {
     buf_p[0] = (x >> 56);
     buf_p[1] = (x >> 48);
@@ -100,7 +96,7 @@ static void pack_i64(u_char *buf_p, off_t x)
     buf_p[7] = (x >> 0);
 }
 
-static int append_bytes(PyObject *list_p, u_char *buf_p, off_t size)
+static int append_bytes(PyObject *list_p, uint8_t *buf_p, int64_t size)
 {
     int res;
     PyObject *bytes_p;
@@ -118,16 +114,16 @@ static int append_bytes(PyObject *list_p, u_char *buf_p, off_t size)
     return (res);
 }
 
-static int append_size(PyObject *list_p, off_t size)
+static int append_size(PyObject *list_p, int64_t size)
 {
-    u_char buf[8];
+    uint8_t buf[8];
 
     pack_i64(&buf[0], size);
 
     return (append_bytes(list_p, &buf[0], sizeof(buf)));
 }
 
-static int append_buffer(PyObject *list_p, u_char *buf_p, off_t size)
+static int append_buffer(PyObject *list_p, uint8_t *buf_p, int64_t size)
 {
     int res;
 
@@ -142,7 +138,7 @@ static int append_buffer(PyObject *list_p, u_char *buf_p, off_t size)
 
 static int parse_args(PyObject *args_p,
                       Py_ssize_t *suffix_array_length_p,
-                      off_t **i_pp,
+                      int64_t **i_pp,
                       char **from_pp,
                       char **to_pp,
                       Py_ssize_t *from_size_p,
@@ -201,32 +197,32 @@ static int parse_args(PyObject *args_p,
 }
 
 static int create_patch_loop(PyObject *list_p,
-                             off_t *i_p,
-                             u_char *from_p,
+                             int64_t *i_p,
+                             uint8_t *from_p,
                              Py_ssize_t from_size,
-                             u_char *to_p,
+                             uint8_t *to_p,
                              Py_ssize_t to_size,
-                             u_char *db_p,
-                             u_char *eb_p)
+                             uint8_t *db_p,
+                             uint8_t *eb_p)
 {
     int res;
-    off_t scan;
-    off_t pos;
-    off_t len;
-    off_t last_scan;
-    off_t last_pos;
-    off_t last_offset;
-    off_t from_score;
-    off_t scsc;
-    off_t s;
-    off_t Sf;
-    off_t lenf;
-    off_t Sb;
-    off_t lenb;
-    off_t overlap;
-    off_t Ss;
-    off_t lens;
-    off_t i;
+    int64_t scan;
+    int64_t pos;
+    int64_t len;
+    int64_t last_scan;
+    int64_t last_pos;
+    int64_t last_offset;
+    int64_t from_score;
+    int64_t scsc;
+    int64_t s;
+    int64_t Sf;
+    int64_t lenf;
+    int64_t Sb;
+    int64_t lenb;
+    int64_t overlap;
+    int64_t Ss;
+    int64_t lens;
+    int64_t i;
 
     scan = 0;
     len = 0;
@@ -370,13 +366,13 @@ static int create_patch_loop(PyObject *list_p,
 static PyObject *create_patch(PyObject *self_p, PyObject *args_p)
 {
     int res;
-    u_char *from_p;
-    u_char *to_p;
+    uint8_t *from_p;
+    uint8_t *to_p;
     Py_ssize_t from_size;
     Py_ssize_t to_size;
-    off_t *i_p;
-    u_char *db_p;
-    u_char *eb_p;
+    int64_t *i_p;
+    uint8_t *db_p;
+    uint8_t *eb_p;
     PyObject *list_p;
     Py_ssize_t suffix_array_length;
 
