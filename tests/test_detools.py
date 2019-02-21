@@ -189,14 +189,20 @@ class DetoolsTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
-                         'To size:            2780\n'
+                         'Patch size:         192 bytes\n'
+                         'To size:            2.78 KB\n'
+                         'Patch/to ratio:     6 % (lower is better)\n'
+                         'Size/data ratio:    1 % (lower is better)\n'
+                         '\n'
                          'Number of diffs:    2\n'
-                         'Average diff size:  1376\n'
-                         'Median diff size:   1376\n'
+                         'Total diff size:    2.75 KB\n'
+                         'Average diff size:  1.38 KB\n'
+                         'Median diff size:   1.38 KB\n'
+                         '\n'
                          'Number of extras:   2\n'
-                         'Average extra size: 14\n'
-                         'Median extra size:  14\n'
-                         'Size/data ratio:    1 %\n')
+                         'Total extra size:   28 bytes\n'
+                         'Average extra size: 14 bytes\n'
+                         'Median extra size:  14 bytes\n')
 
 
 if __name__ == '__main__':

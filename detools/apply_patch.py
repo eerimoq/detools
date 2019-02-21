@@ -116,6 +116,9 @@ def apply_patch(ffrom, fpatch, fto):
 
 
 def patch_info(fpatch):
+    fpatch.seek(0, os.SEEK_END)
+    patch_size = fpatch.tell()
+    fpatch.seek(0, os.SEEK_SET)
     to_size = _read_header(fpatch)
     patch_reader = _PatchReader(fpatch)
     to_pos = 0
@@ -155,4 +158,4 @@ def patch_info(fpatch):
     if not patch_reader.eof:
         raise Error('End of patch not found.')
 
-    return to_size, diff_sizes, extra_sizes, adjustment_sizes
+    return patch_size, to_size, diff_sizes, extra_sizes, adjustment_sizes

@@ -75,6 +75,29 @@ Apply the patch ``foo.patch`` to ``tests/files/foo.old`` to create
    $ ls -l foo.new
    -rw-rw-r-- 1 erik erik 2780 feb 21 07:30 foo.new
 
+The patch info subcommand
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Print information about the patch ``foo.patch``.
+
+.. code-block:: text
+
+   $ detools patch_info foo.patch
+   Patch size:         192 bytes
+   To size:            2.78 KB
+   Patch/to ratio:     6 % (lower is better)
+   Size/data ratio:    1 % (lower is better)
+
+   Number of diffs:    2
+   Total diff size:    2.75 KB
+   Average diff size:  1.38 KB
+   Median diff size:   1.38 KB
+
+   Number of extras:   2
+   Total extra size:   28 bytes
+   Average extra size: 14 bytes
+   Median extra size:  14 bytes
+
 Contributing
 ============
 

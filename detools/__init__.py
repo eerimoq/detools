@@ -2,6 +2,7 @@ import sys
 import argparse
 from statistics import mean
 from statistics import median
+from humanfriendly import format_size
 
 from .create_patch import create_patch
 from .apply_patch import apply_patch
@@ -26,20 +27,31 @@ def _do_apply_patch(args):
 
 def _do_patch_info(args):
     with open(args.patchfile, 'rb') as fpatch:
-        to_size, diff_sizes, extra_sizes, adjustment_sizes = patch_info(fpatch)
+        (patch_size,
+         to_size,
+         diff_sizes,
+         extra_sizes,
+         adjustment_sizes) = patch_info(fpatch)
 
     number_of_size_bytes = 8 * len(diff_sizes + extra_sizes + adjustment_sizes)
     number_of_data_bytes = sum(diff_sizes + extra_sizes)
     size_data_ratio = int(100 * number_of_size_bytes / number_of_data_bytes)
+    patch_to_ratio = int(100 * patch_size / to_size)
 
-    print('To size:            {}'.format(to_size))
+    print('Patch size:         {}'.format(format_size(patch_size)))
+    print('To size:            {}'.format(format_size(to_size)))
+    print('Patch/to ratio:     {} % (lower is better)'.format(patch_to_ratio))
+    print('Size/data ratio:    {} % (lower is better)'.format(size_data_ratio))
+    print()
     print('Number of diffs:    {}'.format(len(diff_sizes)))
-    print('Average diff size:  {}'.format(int(mean(diff_sizes))))
-    print('Median diff size:   {}'.format(int(median(diff_sizes))))
+    print('Total diff size:    {}'.format(format_size(sum(diff_sizes))))
+    print('Average diff size:  {}'.format(format_size(int(mean(diff_sizes)))))
+    print('Median diff size:   {}'.format(format_size(int(median(diff_sizes)))))
+    print()
     print('Number of extras:   {}'.format(len(extra_sizes)))
-    print('Average extra size: {}'.format(int(mean(extra_sizes))))
-    print('Median extra size:  {}'.format(int(median(extra_sizes))))
-    print('Size/data ratio:    {} %'.format(size_data_ratio))
+    print('Total extra size:   {}'.format(format_size(sum(extra_sizes))))
+    print('Average extra size: {}'.format(format_size(int(mean(extra_sizes)))))
+    print('Median extra size:  {}'.format(format_size(int(median(extra_sizes)))))
 
 
 def _main():
