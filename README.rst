@@ -53,16 +53,26 @@ Command line tool
 The create patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Create a patch from ``tests/files/foo.old`` to ``tests/files/foo.new``
+to create ``foo.patch``.
+
 .. code-block:: text
 
    $ detools create_patch tests/files/foo.old tests/files/foo.new foo.patch
+   $ ls -l foo.patch
+   -rw-rw-r-- 1 erik erik 192 feb 21 07:28 foo.patch
 
 The apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Apply the patch ``foo.patch`` to ``tests/files/foo.old`` to create
+``foo.new``.
+
 .. code-block:: text
 
    $ detools apply_patch tests/files/foo.old foo.patch foo.new
+   $ ls -l foo.new
+   -rw-rw-r-- 1 erik erik 2780 feb 21 07:30 foo.new
 
 Contributing
 ============
