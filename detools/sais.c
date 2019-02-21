@@ -255,7 +255,8 @@ static void lms_sort_2(const void *t_p,
     int j;
     int t;
     int d;
-    int c0, c1;
+    int c0;
+    int c1;
 
     assert(c_p != b_p);
 
