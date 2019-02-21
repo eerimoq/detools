@@ -7,7 +7,8 @@ install:
   - pip install coveralls
 
 script:
-  - coverage run --source=detools setup.py test
+  - env CFLAGS=--coverage coverage run --source=detools setup.py test
 
 after_success:
-  coveralls
+  - coveralls
+  - bash <(curl -s https://codecov.io/bash) -X coveragepy
