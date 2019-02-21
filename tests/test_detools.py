@@ -1,7 +1,14 @@
+import os
 import unittest
+from unittest.mock import patch
 from io import BytesIO
 
 import detools
+
+
+def read_file(filename):
+    with open(filename, 'rb') as fin:
+        return fin.read()
 
 
 class DetoolsTest(unittest.TestCase):
@@ -128,6 +135,45 @@ class DetoolsTest(unittest.TestCase):
 
                 self.assertEqual(str(cm.exception),
                                  "Patch extra data too long.")
+
+    def test_command_line_create_patch_foo(self):
+        foo_patch = 'foo.patch'
+        argv = [
+            'detools',
+            'create_patch',
+            'tests/files/foo.old',
+            'tests/files/foo.new',
+            foo_patch
+        ]
+
+        if os.path.exists(foo_patch):
+            os.remove(foo_patch)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_patch),
+                         read_file('tests/files/foo.patch'))
+
+    def test_command_line_apply_patch_foo(self):
+        foo_new = 'foo.new'
+        argv = [
+            'detools',
+            'apply_patch',
+            'tests/files/foo.old',
+            'tests/files/foo.patch',
+            foo_new
+        ]
+
+        if os.path.exists(foo_new):
+            os.remove(foo_new)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_new),
+                         read_file('tests/files/foo.new'))
+
 
 
 if __name__ == '__main__':
