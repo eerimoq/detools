@@ -116,7 +116,7 @@ static void lms_sort_1(const void *t_p,
             assert(chr(j) >= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = b - sa_p;
+                b_p[c1] = (int)(b - sa_p);
                 b = sa_p + b_p[c1 = c0];
             }
 
@@ -141,7 +141,7 @@ static void lms_sort_1(const void *t_p,
             assert(chr(j) <= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = b - sa_p;
+                b_p[c1] = (int)(b - sa_p);
                 b = sa_p + b_p[c1 = c0];
             }
 
@@ -278,7 +278,7 @@ static void lms_sort_2(const void *t_p,
             assert(chr(j) >= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = b - sa_p;
+                b_p[c1] = (int)(b - sa_p);
                 b = sa_p + b_p[c1 = c0];
             }
 
@@ -324,7 +324,7 @@ static void lms_sort_2(const void *t_p,
             assert(chr(j) <= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = b - sa_p;
+                b_p[c1] = (int)(b - sa_p);
                 b = sa_p + b_p[c1 = c0];
             }
 
@@ -445,7 +445,7 @@ static void induce_sa(const void *t_p,
             assert(chr(j) >= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = b - sa_p;
+                b_p[c1] = (int)(b - sa_p);
                 b = sa_p + b_p[c1 = c0];
             }
 
@@ -467,7 +467,7 @@ static void induce_sa(const void *t_p,
             assert(chr(j) <= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = b - sa_p;
+                b_p[c1] = (int)(b - sa_p);
                 b = sa_p + b_p[c1 = c0];
             }
 
@@ -821,7 +821,7 @@ static PyObject* sais_wrapper(PyObject* self_p, PyObject* arg_p)
     }
 
     /* Execute the SA-IS algorithm. */
-    res = sais((uint8_t *)buf_p, suffix_array_p, size);
+    res = sais((uint8_t *)buf_p, suffix_array_p, (int)size);
 
     if (res != 0) {
         goto err1;

@@ -86,14 +86,14 @@ static int64_t search(int64_t *i_p,
 
 static void pack_i64(uint8_t *buf_p, int64_t x)
 {
-    buf_p[0] = (x >> 56);
-    buf_p[1] = (x >> 48);
-    buf_p[2] = (x >> 40);
-    buf_p[3] = (x >> 32);
-    buf_p[4] = (x >> 24);
-    buf_p[5] = (x >> 16);
-    buf_p[6] = (x >> 8);
-    buf_p[7] = (x >> 0);
+    buf_p[0] = (uint8_t)(x >> 56);
+    buf_p[1] = (uint8_t)(x >> 48);
+    buf_p[2] = (uint8_t)(x >> 40);
+    buf_p[3] = (uint8_t)(x >> 32);
+    buf_p[4] = (uint8_t)(x >> 24);
+    buf_p[5] = (uint8_t)(x >> 16);
+    buf_p[6] = (uint8_t)(x >> 8);
+    buf_p[7] = (uint8_t)(x >> 0);
 }
 
 static int append_bytes(PyObject *list_p, uint8_t *buf_p, int64_t size)
