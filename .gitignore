@@ -67,3 +67,4 @@ target/
 
 # IntelliJ IDEA
 .idea/
+/foo.*
