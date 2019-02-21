@@ -1,3 +1,3 @@
 include LICENSE
 include Makefile
-recursive-include tests *.py
+recursive-include tests *.py *.old *.new *.patch *.bin

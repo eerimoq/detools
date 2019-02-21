@@ -25,6 +25,9 @@ setup(name='detools',
       ],
       url='https://github.com/eerimoq/detools',
       packages=find_packages(exclude=['tests']),
+      install_requires=[
+          'humanfriendly'
+      ],
       ext_modules = [
           Extension(name="detools._sais", sources=["detools/sais.c"]),
           Extension(name="detools._bsdiff", sources=["detools/bsdiff.c"])
