@@ -159,6 +159,7 @@ class DetoolsTest(unittest.TestCase):
         foo_new = 'foo.new'
         argv = [
             'detools',
+            '--debug',
             'apply_patch',
             'tests/files/foo.old',
             'tests/files/foo.patch',

@@ -1,5 +1,6 @@
 |buildstatus|_
 |coverage|_
+|codecov|_
 
 About
 =====
@@ -97,5 +98,8 @@ Contributing
 
 .. |coverage| image:: https://coveralls.io/repos/github/eerimoq/detools/badge.svg?branch=master
 .. _coverage: https://coveralls.io/github/eerimoq/detools
+
+.. |codecov| image:: https://codecov.io/gh/eerimoq/detools/branch/master/graph/badge.svg
+.. _codecov: https://codecov.io/gh/eerimoq/detools
 
 .. _SA-IS: https://sites.google.com/site/yuta256/sais
