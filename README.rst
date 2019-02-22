@@ -5,7 +5,7 @@
 About
 =====
 
-Binary delta encoding in Python 3, using C extensions.
+Binary delta encoding in Python 3.
 
 Based on http://www.daemonology.net/bsdiff/, with the following
 differences:
