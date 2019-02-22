@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from setuptools import setup
+import setuptools
 from setuptools import find_packages
 from setuptools import Extension
 import re
@@ -12,27 +12,36 @@ def find_version():
                      re.MULTILINE).group(1)
 
 
-setup(name='detools',
-      version=find_version(),
-      description='Binary delta encoding utility.',
-      long_description=open('README.rst', 'r').read(),
-      author='Erik Moqvist',
-      author_email='erik.moqvist@gmail.com',
-      license='MIT',
-      classifiers=[
-          'License :: OSI Approved :: BSD License',
-          'Programming Language :: Python :: 3',
-      ],
-      url='https://github.com/eerimoq/detools',
-      packages=find_packages(exclude=['tests']),
-      install_requires=[
-          'humanfriendly'
-      ],
-      ext_modules = [
-          Extension(name="detools._sais", sources=["detools/sais.c"]),
-          Extension(name="detools._bsdiff", sources=["detools/bsdiff.c"])
-      ],
-      test_suite="tests",
-      entry_points = {
-          'console_scripts': ['detools=detools.__init__:_main']
-      })
+def setup(ext_modules):
+    setuptools.setup(
+        name='detools',
+        version=find_version(),
+        description='Binary delta encoding utility.',
+        long_description=open('README.rst', 'r').read(),
+        author='Erik Moqvist',
+        author_email='erik.moqvist@gmail.com',
+        license='BSD',
+        classifiers=[
+            'License :: OSI Approved :: BSD License',
+            'Programming Language :: Python :: 3',
+        ],
+        url='https://github.com/eerimoq/detools',
+        packages=find_packages(exclude=['tests']),
+        install_requires=[
+            'humanfriendly'
+        ],
+        ext_modules=ext_modules,
+        test_suite="tests",
+        entry_points = {
+            'console_scripts': ['detools=detools.__init__:_main']
+        })
+
+
+try:
+    setup([
+        Extension(name="detools.csais", sources=["detools/sais.c"]),
+        Extension(name="detools.cbsdiff", sources=["detools/bsdiff.c"])
+    ])
+except:
+    print('WARNING: Failed to build the C extension.')
+    setup([])

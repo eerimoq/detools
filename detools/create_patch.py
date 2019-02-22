@@ -2,8 +2,12 @@ import os
 import struct
 from lzma import LZMACompressor
 
-from . import _sais
-from . import _bsdiff
+try:
+    from . import csais as sais
+    from . import cbsdiff as bsdiff
+except ImportError:
+    from . import sais
+    from . import cbsdiff as bsdiff
 
 
 def _get_fsize(f):
@@ -29,9 +33,8 @@ def _write_header(fpatch, fto):
 
 def _write_data(ffrom, fto, fpatch):
     from_data = fread(ffrom)
-    suffix_array = [_get_fsize(ffrom)]
-    suffix_array += _sais.sais(from_data)
-    chunks = _bsdiff.create_patch(suffix_array, from_data, fread(fto))
+    suffix_array = sais.sais(from_data)
+    chunks = bsdiff.create_patch(suffix_array, from_data, fread(fto))
     compressor = LZMACompressor()
 
     for chunk in chunks:

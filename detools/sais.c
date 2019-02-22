@@ -815,6 +815,12 @@ static PyObject* sais_wrapper(PyObject* self_p, PyObject* arg_p)
         return (NULL);
     }
 
+    if (size == 0) {
+        PyErr_SetString(PyExc_ValueError, "SA-IS data empty.");
+
+        return (NULL);
+    }
+
     suffix_array_p = PyMem_Malloc(size * sizeof(int));
 
     if (suffix_array_p == NULL) {
@@ -829,11 +835,13 @@ static PyObject* sais_wrapper(PyObject* self_p, PyObject* arg_p)
     }
 
     /* Create result list. */
-    list_p = PyList_New(size);
+    list_p = PyList_New(size + 1);
 
     if (list_p == NULL) {
         goto err1;
     }
+
+    PyList_SET_ITEM(list_p, 0, PyLong_FromLong(size));
 
     for (i = 0; i < size; i++) {
         value_p = PyLong_FromLong(suffix_array_p[i]);
@@ -842,7 +850,7 @@ static PyObject* sais_wrapper(PyObject* self_p, PyObject* arg_p)
             goto err2;
         }
 
-        PyList_SET_ITEM(list_p, i, value_p);
+        PyList_SET_ITEM(list_p, i + 1, value_p);
     }
 
     PyMem_Free(suffix_array_p);
@@ -871,13 +879,13 @@ static PyMethodDef module_methods[] = {
 
 static PyModuleDef module = {
     PyModuleDef_HEAD_INIT,
-    .m_name = "_sais",
+    .m_name = "csais",
     .m_doc = NULL,
     .m_size = -1,
     .m_methods = module_methods
 };
 
-PyMODINIT_FUNC PyInit__sais(void)
+PyMODINIT_FUNC PyInit_csais(void)
 {
     PyObject *m_p;
 
