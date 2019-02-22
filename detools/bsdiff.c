@@ -247,7 +247,7 @@ static int create_patch_loop(PyObject *list_p,
     int64_t from_score;
     int64_t scsc;
     int64_t s;
-    int64_t Sf;
+    int64_t sf;
     int64_t lenf;
     int64_t Sb;
     int64_t lenb;
@@ -295,7 +295,7 @@ static int create_patch_loop(PyObject *list_p,
 
         if ((len != from_score) || (scan == to_size)) {
             s = 0;
-            Sf = 0;
+            sf = 0;
             lenf = 0;
 
             for (i = 0; (last_scan + i < scan) && (last_pos + i < from_size);) {
@@ -305,8 +305,8 @@ static int create_patch_loop(PyObject *list_p,
 
                 i++;
 
-                if (s * 2 - i > Sf * 2 - lenf) {
-                    Sf = s;
+                if (s * 2 - i > sf * 2 - lenf) {
+                    sf = s;
                     lenf = i;
                 }
             }
@@ -426,13 +426,13 @@ static PyObject *create_patch(PyObject *self_p, PyObject *args_p)
         goto err1;
     }
 
-    db_p = PyMem_Malloc(suffix_array_length * sizeof(*db_p));
+    db_p = PyMem_Malloc(to_size + 1);
 
     if (db_p == NULL) {
         goto err2;
     }
 
-    eb_p = PyMem_Malloc(suffix_array_length * sizeof(*eb_p));
+    eb_p = PyMem_Malloc(to_size + 1);
 
     if (eb_p == NULL) {
         goto err3;

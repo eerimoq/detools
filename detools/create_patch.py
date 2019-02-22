@@ -6,8 +6,9 @@ try:
     from . import csais as sais
     from . import cbsdiff as bsdiff
 except ImportError:
+    print('detools: Failed to import C extensions. Using Python fallback.')
     from . import sais
-    from . import cbsdiff as bsdiff
+    from . import bsdiff as bsdiff
 
 
 def _get_fsize(f):
