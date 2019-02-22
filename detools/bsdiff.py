@@ -27,16 +27,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-def matchlen(from_data, to_data):
-    length = min(len(from_data), len(to_data))
-
-    for i in range(length):
-        if from_data[i] != to_data[i]:
-            return i
-
-    return length
-
-
 def memcmp(b1, b2):
     for a, b in zip(b1, b2):
         if a > b:
@@ -45,6 +35,16 @@ def memcmp(b1, b2):
             return -1
 
     return 0
+
+
+def matchlen(from_data, to_data):
+    length = min(len(from_data), len(to_data))
+
+    for i in range(length):
+        if from_data[i] != to_data[i]:
+            return i
+
+    return length
 
 
 def search(suffix_array, from_data, to_data, st, en):
@@ -102,6 +102,8 @@ def create_patch(suffix_array, from_data, to_data):
 
     """
 
+    from_size = len(from_data)
+    to_size = len(to_data)
     scan = 0
     length = 0
     last_scan = 0
@@ -110,20 +112,20 @@ def create_patch(suffix_array, from_data, to_data):
     pos = 0
     chunks = []
 
-    while scan < len(to_data):
+    while scan < to_size:
         from_score = 0
         scan += length
         scsc = scan
 
-        while scan < len(to_data):
+        while scan < to_size:
             length, pos = search(suffix_array,
                                  from_data,
                                  to_data[scan:],
                                  0,
-                                 len(from_data))
+                                 from_size)
 
             while scsc < scan + length:
-                if ((scsc + last_offset < len(from_data))
+                if ((scsc + last_offset < from_size)
                     and (from_data[scsc + last_offset] == to_data[scsc])):
                     from_score += 1
 
@@ -132,19 +134,19 @@ def create_patch(suffix_array, from_data, to_data):
             if ((length == from_score) and (length != 0)) or (length > from_score + 8):
                 break
 
-            if ((scan + last_offset < len(from_data))
+            if ((scan + last_offset < from_size)
                 and (from_data[scan + last_offset] == to_data[scan])):
                 from_score -= 1
 
             scan += 1
 
-        if (length != from_score) or (scan == len(to_data)):
+        if (length != from_score) or (scan == to_size):
             s = 0
             sf = 0
             lenf = 0
             i = 0
 
-            while (last_scan + i < scan) and (last_pos + i < len(from_data)):
+            while (last_scan + i < scan) and (last_pos + i < from_size):
                 if from_data[last_pos + i] == to_data[last_scan + i]:
                     s += 1
 
@@ -156,7 +158,7 @@ def create_patch(suffix_array, from_data, to_data):
 
             lenb = 0
 
-            if scan < len(to_data):
+            if scan < to_size:
                 s = 0
                 sb = 0
                 i = 1
@@ -193,7 +195,7 @@ def create_patch(suffix_array, from_data, to_data):
                 lenb -= lens
 
             db = bytearray(
-                (to_data[last_scan + i] - from_data[last_pos + i]) % 256
+                (to_data[last_scan + i] - from_data[last_pos + i]) & 0xff
                 for i in range(lenf)
             )
 
@@ -201,7 +203,6 @@ def create_patch(suffix_array, from_data, to_data):
                 to_data[last_scan + lenf + i]
                 for i in range((scan - lenb) - (last_scan + lenf))
             )
-
 
             # Diff, extra and adjustment.
             append_buffer(chunks, db)
