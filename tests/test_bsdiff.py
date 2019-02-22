@@ -78,7 +78,8 @@ class DetoolsBsdiffTest(unittest.TestCase):
             read_file('tests/files/foo.old'),
             read_file('tests/files/foo.patch'),
             read_file('tests/files/foo-short.patch'),
-            read_file('tests/files/micropython-esp8266-20190125-v1.10.bin')
+            read_file('tests/files/micropython-esp8266-20190125-v1.10.bin'),
+            read_file('tests/files/errors.cpython-36.bin')
         ]
 
         for data in datas:
@@ -87,6 +88,21 @@ class DetoolsBsdiffTest(unittest.TestCase):
             self.assertEqual(
                 detools.cbsdiff.create_patch(suffix_array, data, to_data),
                 detools.bsdiff.create_patch(suffix_array, data, to_data))
+
+    def test_bsdiff_c_and_py_compatibility_to_readme(self):
+        datas = [
+                read_file('tests/files/bsdiff.py'),
+                read_file('tests/files/sais.c')
+        ]
+
+        with open('tests/files/README.rst', 'rb') as fin:
+            readme_data = fin.read()
+
+        for data in datas:
+            suffix_array = detools.csais.sais(data)
+            self.assertEqual(
+                detools.cbsdiff.create_patch(suffix_array, data, readme_data),
+                detools.bsdiff.create_patch(suffix_array, data, readme_data))
 
 
 if __name__ == '__main__':

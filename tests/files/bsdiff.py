@@ -112,8 +112,8 @@ def create_patch(suffix_array, from_data, to_data):
 
     while scan < len(to_data):
         from_score = 0
-        scan += length
         scsc = scan
+        scan += length
 
         while scan < len(to_data):
             length, pos = search(suffix_array,
@@ -193,7 +193,7 @@ def create_patch(suffix_array, from_data, to_data):
                 lenb -= lens
 
             db = bytearray(
-                (to_data[last_scan + i] - from_data[last_pos + i]) % 256
+                to_data[last_scan + i] - from_data[last_pos + i]
                 for i in range(lenf)
             )
 

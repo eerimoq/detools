@@ -57,7 +57,10 @@ class DetoolsSaisTest(unittest.TestCase):
             read_file('tests/files/foo.old'),
             read_file('tests/files/foo.patch'),
             read_file('tests/files/foo-short.patch'),
-            read_file('tests/files/micropython-esp8266-20190125-v1.10.bin')
+            read_file('tests/files/micropython-esp8266-20190125-v1.10.bin'),
+            read_file('tests/files/errors.cpython-36.bin'),
+            read_file('tests/files/bsdiff.py'),
+            read_file('tests/files/sais.c')
         ]
 
         for data in datas:
