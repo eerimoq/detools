@@ -5,18 +5,18 @@
 About
 =====
 
-Binary delta encoding utility in Python 3, using C extensions.
+Binary delta encoding in Python 3, using C extensions.
 
 Based on http://www.daemonology.net/bsdiff/, with the following
 differences:
 
-- LZMA compression instead of BZ2 for smaller patches.
+- LZMA compression instead of BZ2.
 
 - Linear patch file access pattern to allow streaming.
 
-- `SA-IS`_ instead of qsufsort for speed and reliability.
+- `SA-IS`_ instead of qsufsort.
 
-- Variable length size fields for smaller patches.
+- Variable length size fields.
 
 Project homepage: https://github.com/eerimoq/detools
 
