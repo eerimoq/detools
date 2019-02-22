@@ -815,13 +815,7 @@ static PyObject* sais_wrapper(PyObject* self_p, PyObject* arg_p)
         return (NULL);
     }
 
-    if (size == 0) {
-        PyErr_SetString(PyExc_ValueError, "SA-IS data empty.");
-
-        return (NULL);
-    }
-
-    suffix_array_p = PyMem_Malloc(size * sizeof(int));
+    suffix_array_p = PyMem_Malloc((size + 1) * sizeof(int));
 
     if (suffix_array_p == NULL) {
         return (NULL);

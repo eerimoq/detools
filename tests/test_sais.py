@@ -14,6 +14,14 @@ class DetoolsSaisTest(unittest.TestCase):
     def test_sais(self):
         datas = [
             (
+                b'',
+                [0]
+            ),
+            (
+                b'1',
+                [1, 0]
+            ),
+            (
                 b'1234',
                 [4, 0, 1, 2, 3]
             ),
