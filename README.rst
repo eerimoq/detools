@@ -32,7 +32,7 @@ Installation
 Statistics
 ==========
 
-`To compressed` is the size of `To file` compressed using ``lzma
+"To compressed" is the size of "To file" compressed using ``lzma
 --best``.
 
 All sizes are in bytes.
