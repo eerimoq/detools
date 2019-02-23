@@ -1,6 +1,7 @@
 import os
 import struct
 from lzma import LZMACompressor
+from .errors import Error
 
 try:
     from . import csais as sais
@@ -55,7 +56,7 @@ def _write_data(ffrom, fto, fpatch, compression):
     elif compression == 'none':
         compressor = NoneCompressor()
     else:
-        raise ValueError(
+        raise Error(
             'Expected compression lzma or none, but got {}.'.format(
                 compression))
 

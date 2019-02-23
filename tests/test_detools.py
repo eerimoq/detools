@@ -188,6 +188,30 @@ class DetoolsTest(unittest.TestCase):
                 self.assertEqual(str(cm.exception),
                                  "Patch extra data too long.")
 
+    def test_apply_patch_foo_bad_kind(self):
+        fnew = BytesIO()
+
+        with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo-bad-kind.patch', 'rb') as fpatch:
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
+
+                self.assertEqual(str(cm.exception),
+                                 "Expected kind 48, but got 57.")
+
+    def test_apply_patch_foo_non_ascii_compression(self):
+        fnew = BytesIO()
+
+        with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo-non-ascii-compression.patch', 'rb') as fpatch:
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
+
+                self.assertEqual(
+                    str(cm.exception),
+                    "Failed to decode the compression field in the header "
+                    "(got b'\\xdczma').")
+
     def test_command_line_create_patch_foo(self):
         foo_patch = 'foo.patch'
         argv = [

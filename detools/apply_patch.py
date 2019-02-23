@@ -109,14 +109,14 @@ def _read_header(fpatch):
 
     kind = header[7]
 
-    if kind != ord(b'0'):
-        raise Error("Expected kind 0, but got {}.".format(kind))
+    if kind != 48:
+        raise Error("Expected kind 48, but got {}.".format(kind))
 
     compression = header[8:12]
 
     try:
         compression = compression.decode('ascii')
-    except UnicodeEncodeError:
+    except UnicodeDecodeError:
         raise Error(
             'Failed to decode the compression field in the header (got {}).'.format(
                 compression))
