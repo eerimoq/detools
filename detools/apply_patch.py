@@ -174,9 +174,6 @@ def apply_patch(ffrom, fpatch, fto):
         size = _unpack_size(patch_reader)[0]
         ffrom.seek(size, os.SEEK_CUR)
 
-    if to_pos != to_size:
-        raise Error('To data size mismatch.')
-
     if not patch_reader.eof:
         raise Error('End of patch not found.')
 
@@ -222,9 +219,6 @@ def patch_info(fpatch):
         size, number_of_bytes = _unpack_size(patch_reader)
         number_of_size_bytes += number_of_bytes
         adjustment_sizes.append(size)
-
-    if to_pos != to_size:
-        raise Error('To data size mismatch.')
 
     if not patch_reader.eof:
         raise Error('End of patch not found.')
