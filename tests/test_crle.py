@@ -1,5 +1,6 @@
 import unittest
 
+import detools
 from detools.create import CrleCompressor
 from detools.apply import CrleDecompressor
 
@@ -13,10 +14,10 @@ class DetoolsCrleTest(unittest.TestCase):
             (                  [5 * b'A'], b'\x00\x05AAAAA'),
             (                  [6 * b'A'], b'\x01\x06A'),
             (         [b'ABBCC', b'CBBA'], b'\x00\x09ABBCCCBBA'),
-            (      [62 * b'A', b'', b'A'], b'\x01\x3fA'),
-            (                 [64 * b'A'], b'\x01\x80\x01A'),
-            (               [1000 * b'A'], b'\x01\xa8\x0fA'),
-            (        [69999 * b'A', b'A'], b'\x01\xb0\xc5\x08A'),
+            (     [126 * b'A', b'', b'A'], b'\x01\x7fA'),
+            (                [128 * b'A'], b'\x01\x80\x01A'),
+            (               [1000 * b'A'], b'\x01\xe8\x07A'),
+            (        [69999 * b'A', b'A'], b'\x01\xf0\xa2\x04A'),
             ([10 * b'A', b'BC', 8 * b'A'], b'\x01\x0aA\x00\x02BC\x01\x08A'),
             (      [10 * b'A' + 8 * b'B'], b'\x01\x0aA\x01\x08B')
         ]
@@ -39,10 +40,10 @@ class DetoolsCrleTest(unittest.TestCase):
             (             [b'\x00\x07AAAAAAA'], 7 * b'A'),
             (                   [b'\x01\x08A'], 8 * b'A'),
             (           [b'\x00\x09ABBCCCBBA'], b'ABBCCCBBA'),
-            (              [b'\x01\x3f', b'A'], 63 * b'A'),
-            (               [b'\x01\x80\x01A'], 64 * b'A'),
-            (               [b'\x01\xa8\x0fA'], 1000 * b'A'),
-            (      [b'\x01\xb0', b'\xc5\x08A'], 70000 * b'A'),
+            (              [b'\x01\x7f', b'A'], 127 * b'A'),
+            (               [b'\x01\x80\x01A'], 128 * b'A'),
+            (               [b'\x01\xe8\x07A'], 1000 * b'A'),
+            (      [b'\x01\xf0', b'\xa2\x04A'], 70000 * b'A'),
             ([b'\x01\x0aA\x00\x02BC\x01\x08A'], 10 * b'A' + b'BC' + 8 * b'A'),
             (          [b'\x01\x0aA\x01\x08B'], 10 * b'A' + 8 * b'B')
         ]
@@ -65,6 +66,16 @@ class DetoolsCrleTest(unittest.TestCase):
 
             self.assertEqual(decompressor.eof, True)
             self.assertEqual(data, decompressed)
+
+    def test_decompress_bad_kind(self):
+        decompressor = CrleDecompressor(3)
+
+        with self.assertRaises(detools.Error) as cm:
+            decompressor.decompress(b'\x02\x01A', 1)
+
+        self.assertEqual(
+            str(cm.exception),
+            'Expected kind scattered(0) or repeated(1), but got 2.')
 
 
 if __name__ == '__main__':

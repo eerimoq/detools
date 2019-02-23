@@ -386,9 +386,9 @@ class DetoolsTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
-                         'Patch size:         208 bytes\n'
+                         'Patch size:         206 bytes\n'
                          'To size:            2.78 KB\n'
-                         'Patch/to ratio:     7.5 % (lower is better)\n'
+                         'Patch/to ratio:     7.4 % (lower is better)\n'
                          'Diff/extra ratio:   9828.6 % (higher is better)\n'
                          'Size/data ratio:    0.3 % (lower is better)\n'
                          'Compression:        crle\n'

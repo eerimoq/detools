@@ -6,11 +6,6 @@ with RLE, but leaves other data sequences as is.
 import struct
 from .errors import Error
 
-try:
-    from . import cbsdiff as bsdiff
-except ImportError:
-    from . import bsdiff as bsdiff
-
 
 MINIMUM_REPEATED_SIZE = 6
 
@@ -67,7 +62,7 @@ class CrleCompressor(object):
 
         kind, data = self.get_segment()
         compressed = struct.pack('B', kind)
-        compressed += bsdiff.pack_size(len(data))
+        compressed += pack_size(len(data))
 
         if kind == self.SCATTERED:
             compressed += data
@@ -111,11 +106,11 @@ class CrleDecompressor(object):
             offset += 1
 
             if kind == self.SCATTERED:
-                length, offset = unpack_size_from_buffer(self._indata, offset)
+                length, offset = unpack_size(self._indata, offset)
                 outdata.append(self._indata[offset:offset + length])
                 offset += length
             elif kind == self.REPEATED:
-                repetitions, offset = unpack_size_from_buffer(self._indata, offset)
+                repetitions, offset = unpack_size(self._indata, offset)
                 outdata.append(repetitions * self._indata[offset:offset + 1])
                 offset += 1
             else:
@@ -156,20 +151,33 @@ class CrleDecompressor(object):
         return self._eof
 
 
-def unpack_size_from_buffer(buf, position):
-    byte = buf[position]
-    is_signed = (byte & 0x40)
-    value = (byte & 0x3f)
-    offset = 6
-    position += 1
+def pack_size(value):
+    if value >= 0x8000000000000000:
+        raise Error('Size too big.')
+
+    packed = bytearray()
+    packed.append(0)
+    packed[0] |= (0x80 | (value & 0x7f))
+    value >>= 7
+
+    while value > 0:
+        packed.append(0x80 | (value & 0x7f))
+        value >>= 7
+
+    packed[-1] &= 0x7f
+
+    return packed
+
+
+def unpack_size(buf, position):
+    byte = 0x80
+    value = 0
+    offset = 0
 
     while byte & 0x80:
         byte = buf[position]
         value |= ((byte & 0x7f) << offset)
         offset += 7
         position += 1
-
-    if is_signed:
-        value *= -1
 
     return value, position
