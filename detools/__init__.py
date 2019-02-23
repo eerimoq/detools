@@ -34,14 +34,22 @@ def _do_patch_info(args):
          _,
          number_of_size_bytes) = patch_info(fpatch)
 
-    number_of_data_bytes = sum(diff_sizes + extra_sizes)
+    number_of_diff_bytes = sum(diff_sizes)
+    number_of_extra_bytes = sum(extra_sizes)
+    number_of_data_bytes = (number_of_diff_bytes + number_of_extra_bytes)
     size_data_ratio = round(100 * number_of_size_bytes / number_of_data_bytes, 1)
     patch_to_ratio = round(100 * patch_size / to_size, 1)
+
+    if number_of_extra_bytes > 0:
+        diff_extra_ratio = round(100 * number_of_diff_bytes / number_of_extra_bytes, 1)
+    else:
+        diff_extra_ratio = 'inf'
 
     print('Patch size:         {}'.format(format_size(patch_size)))
     print('To size:            {}'.format(format_size(to_size)))
     print('Patch/to ratio:     {} % (lower is better)'.format(patch_to_ratio))
     print('Size/data ratio:    {} % (lower is better)'.format(size_data_ratio))
+    print('Diff/extra ratio:   {} % (higher is better)'.format(diff_extra_ratio))
     print()
     print('Number of diffs:    {}'.format(len(diff_sizes)))
     print('Total diff size:    {}'.format(format_size(sum(diff_sizes))))

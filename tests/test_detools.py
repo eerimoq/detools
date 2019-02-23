@@ -22,7 +22,7 @@ class DetoolsTest(unittest.TestCase):
                 detools.create_patch(fold, fnew, fpatch)
 
         actual = fpatch.getvalue()
-            
+
         with open(patch_filename, 'rb') as fpatch:
             expected = fpatch.read()
 
@@ -229,6 +229,7 @@ class DetoolsTest(unittest.TestCase):
                          'To size:            2.78 KB\n'
                          'Patch/to ratio:     6.6 % (lower is better)\n'
                          'Size/data ratio:    0.3 % (lower is better)\n'
+                         'Diff/extra ratio:   9828.6 % (higher is better)\n'
                          '\n'
                          'Number of diffs:    2\n'
                          'Total diff size:    2.75 KB\n'
@@ -239,6 +240,35 @@ class DetoolsTest(unittest.TestCase):
                          'Total extra size:   28 bytes\n'
                          'Average extra size: 14 bytes\n'
                          'Median extra size:  14 bytes\n')
+
+    def test_command_line_patch_info_foo_no_delta(self):
+        argv = [
+            'detools',
+            'patch_info',
+            'tests/files/foo-no-delta.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(stdout.getvalue(),
+                         'Patch size:         108 bytes\n'
+                         'To size:            2.78 KB\n'
+                         'Patch/to ratio:     3.9 % (lower is better)\n'
+                         'Size/data ratio:    0.2 % (lower is better)\n'
+                         'Diff/extra ratio:   inf % (higher is better)\n'
+                         '\n'
+                         'Number of diffs:    1\n'
+                         'Total diff size:    2.78 KB\n'
+                         'Average diff size:  2.78 KB\n'
+                         'Median diff size:   2.78 KB\n'
+                         '\n'
+                         'Number of extras:   1\n'
+                         'Total extra size:   0 bytes\n'
+                         'Average extra size: 0 bytes\n'
+                         'Median extra size:  0 bytes\n')
 
 
 if __name__ == '__main__':
