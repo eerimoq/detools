@@ -43,7 +43,7 @@ def _write_header(fpatch, fto, compression):
     fpatch.write(b'detools')
     fpatch.write(b'0')
     fpatch.write(COMPRESSIONS[compression])
-    fpatch.write(struct.pack('>q', _get_fsize(fto)))
+    fpatch.write(struct.pack('>Q', _get_fsize(fto)))
 
 
 def _write_data(ffrom, fto, fpatch, compression):
