@@ -22,7 +22,7 @@ class DetoolsTest(unittest.TestCase):
                 detools.create_patch(fold, fnew, fpatch)
 
         actual = fpatch.getvalue()
-
+            
         with open(patch_filename, 'rb') as fpatch:
             expected = fpatch.read()
 
@@ -64,6 +64,42 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
             'tests/files/micropython-esp8266-20190125-v1.10.bin',
             'tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10.patch')
+
+    def test_create_and_apply_patch_bsdiff(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/bsdiff.py',
+            'tests/files/README.rst',
+            'tests/files/bsdiff-README.patch')
+
+    def test_create_and_apply_patch_sais(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/sais.c',
+            'tests/files/README.rst',
+            'tests/files/sais-README.patch')
+
+    def test_create_and_apply_patch_3f5531ba56182a807a5c358f04678b3b026d3a(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/3f5531ba56182a807a5c358f04678b3b026d3a.bin',
+            'tests/files/README.rst',
+            'tests/files/3f5531ba56182a807a5c358f04678b3b026d3a-README.patch')
+
+    def test_create_and_apply_patch_b2db59ab76ca36f67e61f720857021df8a660b(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/b2db59ab76ca36f67e61f720857021df8a660b.bin',
+            'tests/files/README.rst',
+            'tests/files/b2db59ab76ca36f67e61f720857021df8a660b-README.patch')
+
+    def test_create_and_apply_patch_d027a1e1f752f15b6a13d9f9d775f3914c83f7(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7.bin',
+            'tests/files/README.rst',
+            'tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7-README.patch')
+
+    def test_create_and_apply_patch_eb9ed88e9975028c4694e070cfaece2498e92d(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/eb9ed88e9975028c4694e070cfaece2498e92d.bin',
+            'tests/files/README.rst',
+            'tests/files/eb9ed88e9975028c4694e070cfaece2498e92d-README.patch')
 
     def test_create_and_apply_patch_no_delta(self):
         self.assert_create_and_apply_patch('tests/files/foo.new',

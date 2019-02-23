@@ -68,3 +68,5 @@ target/
 # IntelliJ IDEA
 .idea/
 /foo.*
+
+*.gcov

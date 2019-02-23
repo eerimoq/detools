@@ -91,8 +91,12 @@ class DetoolsBsdiffTest(unittest.TestCase):
 
     def test_bsdiff_c_and_py_compatibility_to_readme(self):
         datas = [
-                read_file('tests/files/bsdiff.py'),
-                read_file('tests/files/sais.c')
+            read_file('tests/files/bsdiff.py'),
+            read_file('tests/files/sais.c'),
+            read_file('tests/files/3f5531ba56182a807a5c358f04678b3b026d3a.bin'),
+            read_file('tests/files/b2db59ab76ca36f67e61f720857021df8a660b.bin'),
+            read_file('tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7.bin'),
+            read_file('tests/files/eb9ed88e9975028c4694e070cfaece2498e92d.bin')
         ]
 
         with open('tests/files/README.rst', 'rb') as fin:

@@ -1,6 +1,7 @@
 test:
-	python3 setup.py test
+	env CFLAGS=--coverage python3 setup.py test
 	$(MAKE) test-sdist
+	find . -name "*.gcno" -exec gcov {} +
 
 test-sdist:
 	rm -rf dist
