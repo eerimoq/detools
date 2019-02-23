@@ -14,12 +14,16 @@ def read_file(filename):
 
 class DetoolsTest(unittest.TestCase):
 
-    def assert_create_patch(self, from_filename, to_filename, patch_filename):
+    def assert_create_patch(self,
+                            from_filename,
+                            to_filename,
+                            patch_filename,
+                            compression):
         fpatch = BytesIO()
 
         with open(from_filename, 'rb') as fold:
             with open(to_filename, 'rb') as fnew:
-                detools.create_patch(fold, fnew, fpatch)
+                detools.create_patch(fold, fnew, fpatch, compression)
 
         actual = fpatch.getvalue()
 
@@ -45,8 +49,12 @@ class DetoolsTest(unittest.TestCase):
     def assert_create_and_apply_patch(self,
                                       from_filename,
                                       to_filename,
-                                      patch_filename):
-        self.assert_create_patch(from_filename, to_filename, patch_filename)
+                                      patch_filename,
+                                      compression='lzma'):
+        self.assert_create_patch(from_filename,
+                                 to_filename,
+                                 patch_filename,
+                                 compression)
         self.assert_apply_patch(from_filename, to_filename, patch_filename)
 
     def test_create_and_apply_patch_foo(self):
@@ -64,6 +72,13 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
             'tests/files/micropython-esp8266-20190125-v1.10.bin',
             'tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10.patch')
+
+    def test_create_and_apply_patch_micropython_none_compression(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython-esp8266-20190125-v1.10.bin',
+            'tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-none.patch',
+            compression='none')
 
     def test_create_and_apply_patch_bsdiff(self):
         self.assert_create_and_apply_patch(
@@ -116,7 +131,7 @@ class DetoolsTest(unittest.TestCase):
 
                 self.assertEqual(
                     str(cm.exception),
-                    "Expected header magic b'detools0', but got b'eetools0'.")
+                    "Expected header magic b'detools', but got b'eetools'.")
 
     def test_apply_patch_empty(self):
         fnew = BytesIO()
@@ -144,7 +159,7 @@ class DetoolsTest(unittest.TestCase):
         fnew = BytesIO()
 
         with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-bad-bz2-end.patch', 'rb') as fpatch:
+            with open('tests/files/foo-bad-lzma-end.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
@@ -225,11 +240,12 @@ class DetoolsTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
-                         'Patch size:         184 bytes\n'
+                         'Patch size:         188 bytes\n'
                          'To size:            2.78 KB\n'
-                         'Patch/to ratio:     6.6 % (lower is better)\n'
+                         'Patch/to ratio:     6.8 % (lower is better)\n'
                          'Diff/extra ratio:   9828.6 % (higher is better)\n'
                          'Size/data ratio:    0.3 % (lower is better)\n'
+                         'Compression:        lzma\n'
                          '\n'
                          'Number of diffs:    2\n'
                          'Total diff size:    2.75 KB\n'
@@ -254,11 +270,12 @@ class DetoolsTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
-                         'Patch size:         108 bytes\n'
+                         'Patch size:         112 bytes\n'
                          'To size:            2.78 KB\n'
-                         'Patch/to ratio:     3.9 % (lower is better)\n'
+                         'Patch/to ratio:     4.0 % (lower is better)\n'
                          'Diff/extra ratio:   inf % (higher is better)\n'
                          'Size/data ratio:    0.2 % (lower is better)\n'
+                         'Compression:        lzma\n'
                          '\n'
                          'Number of diffs:    1\n'
                          'Total diff size:    2.78 KB\n'

@@ -70,7 +70,7 @@ class DetoolsBsdiffTest(unittest.TestCase):
         datas = [
             read_file('tests/files/bad-header-magic.patch'),
             read_file('tests/files/foo-backwards.patch'),
-            read_file('tests/files/foo-bad-bz2-end.patch'),
+            read_file('tests/files/foo-bad-lzma-end.patch'),
             read_file('tests/files/foo-diff-data-too-long.patch'),
             read_file('tests/files/foo-extra-data-too-long.patch'),
             read_file('tests/files/foo.new'),

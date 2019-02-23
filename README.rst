@@ -65,6 +65,14 @@ Create a patch ``foo.patch`` from ``tests/files/foo.old`` to
    $ ls -l foo.patch
    -rw-rw-r-- 1 erik erik 184 feb 21 07:28 foo.patch
 
+Create the same patch as above, but without compression.
+
+.. code-block:: text
+
+   $ detools create_patch --compression none tests/files/foo.old tests/files/foo.new foo-no-compression.patch
+   $ ls -l foo-no-compression.patch
+   -rw-rw-r-- 1 erik erik 2808 Feb 23 10:19 foo-no-compression.patch
+
 The apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -85,11 +93,12 @@ Print information about the patch ``foo.patch``.
 .. code-block:: text
 
    $ detools patch_info foo.patch
-   Patch size:         184 bytes
+   Patch size:         188 bytes
    To size:            2.78 KB
-   Patch/to ratio:     6.6 % (lower is better)
+   Patch/to ratio:     6.8 % (lower is better)
    Diff/extra ratio:   9828.6 % (higher is better)
    Size/data ratio:    0.3 % (lower is better)
+   Compression:        lzma
 
    Number of diffs:    2
    Total diff size:    2.75 KB

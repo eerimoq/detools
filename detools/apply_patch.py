@@ -4,10 +4,47 @@ from lzma import LZMADecompressor
 from .errors import Error
 
 
+class NoneDecompressor(object):
+
+    def __init__(self, number_of_bytes):
+        self._number_of_bytes_left = number_of_bytes
+        self._data = b''
+
+    def decompress(self, data, size):
+        self._data += data
+        decompressed = self._data[:size]
+        self._data = self._data[size:]
+
+        self._number_of_bytes_left -= len(decompressed)
+
+        if self._number_of_bytes_left < 0:
+            raise Error('Out of data to decompress.')
+
+        return decompressed
+
+    @property
+    def needs_input(self):
+        return self._data == b''
+
+    @property
+    def eof(self):
+        return self._number_of_bytes_left == 0
+
+
 class _PatchReader(object):
 
-    def __init__(self, fpatch):
-        self._decompressor = LZMADecompressor()
+    def __init__(self, fpatch, compression):
+        if compression == 'lzma':
+            self._decompressor = LZMADecompressor()
+        elif compression == 'none':
+            position = fpatch.tell()
+            fpatch.seek(0, os.SEEK_END)
+            length = fpatch.tell()
+            fpatch.seek(position, os.SEEK_SET)
+            self._decompressor = NoneDecompressor(length - position)
+        else:
+            raise Error()
+
         self._fpatch = fpatch
 
     def decompress(self, size):
@@ -59,23 +96,42 @@ def _unpack_size(patch_reader):
 
 
 def _read_header(fpatch):
-    header = fpatch.read(16)
+    header = fpatch.read(20)
 
-    if len(header) != 16:
+    if len(header) != 20:
         raise Error('Failed to read the patch header.')
 
-    magic = header[0:8]
+    magic = header[0:7]
 
-    if magic != b'detools0':
+    if magic != b'detools':
         raise Error(
-            "Expected header magic b'detools0', but got {}.".format(magic))
+            "Expected header magic b'detools', but got {}.".format(magic))
 
-    to_size = struct.unpack('>q', header[8:16])[0]
+    kind = header[7]
+
+    if kind != ord(b'0'):
+        raise Error("Expected kind 0, but got {}.".format(kind))
+
+    compression = header[8:12]
+
+    try:
+        compression = compression.decode('ascii')
+    except UnicodeEncodeError:
+        raise Error(
+            'Failed to decode the compression field in the header (got {}).'.format(
+                compression))
+
+    if compression not in ['lzma', 'none']:
+        raise Error(
+            'Expected compression lzma or none, but got {}.'.format(
+                compression))
+
+    to_size = struct.unpack('>q', header[12:20])[0]
 
     if to_size < 0:
         raise Error('Expected to size >= 0, but got {}.'.format(to_size))
 
-    return to_size
+    return to_size, compression
 
 
 def apply_patch(ffrom, fpatch, fto):
@@ -84,8 +140,8 @@ def apply_patch(ffrom, fpatch, fto):
 
     """
 
-    to_size = _read_header(fpatch)
-    patch_reader = _PatchReader(fpatch)
+    to_size, compression = _read_header(fpatch)
+    patch_reader = _PatchReader(fpatch, compression)
     to_pos = 0
 
     while to_pos < to_size:
@@ -132,8 +188,9 @@ def patch_info(fpatch):
     fpatch.seek(0, os.SEEK_END)
     patch_size = fpatch.tell()
     fpatch.seek(0, os.SEEK_SET)
-    to_size = _read_header(fpatch)
-    patch_reader = _PatchReader(fpatch)
+
+    to_size, compression = _read_header(fpatch)
+    patch_reader = _PatchReader(fpatch, compression)
     to_pos = 0
 
     number_of_size_bytes = 0
@@ -175,7 +232,8 @@ def patch_info(fpatch):
     if not patch_reader.eof:
         raise Error('End of patch not found.')
 
-    return (patch_size,
+    return (compression,
+            patch_size,
             to_size,
             diff_sizes,
             extra_sizes,

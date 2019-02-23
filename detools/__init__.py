@@ -15,7 +15,7 @@ def _do_create_patch(args):
     with open(args.fromfile, 'rb') as ffrom:
         with open(args.tofile, 'rb') as fto:
             with open(args.patchfile, 'wb') as fpatch:
-                create_patch(ffrom, fto, fpatch)
+                create_patch(ffrom, fto, fpatch, args.compression)
 
 
 def _do_apply_patch(args):
@@ -27,7 +27,8 @@ def _do_apply_patch(args):
 
 def _do_patch_info(args):
     with open(args.patchfile, 'rb') as fpatch:
-        (patch_size,
+        (compression,
+         patch_size,
          to_size,
          diff_sizes,
          extra_sizes,
@@ -50,6 +51,7 @@ def _do_patch_info(args):
     print('Patch/to ratio:     {} % (lower is better)'.format(patch_to_ratio))
     print('Diff/extra ratio:   {} % (higher is better)'.format(diff_extra_ratio))
     print('Size/data ratio:    {} % (lower is better)'.format(size_data_ratio))
+    print('Compression:        {}'.format(compression))
     print()
     print('Number of diffs:    {}'.format(len(diff_sizes)))
     print('Total diff size:    {}'.format(format_size(sum(diff_sizes))))
@@ -79,6 +81,10 @@ def _main():
     # Create patch subparser.
     subparser = subparsers.add_parser('create_patch',
                                       description='Create a patch.')
+    subparser.add_argument('-c', '--compression',
+                           choices=('lzma', 'none'),
+                           default='lzma',
+                           help='Compression algorithm (default: lzma).')
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
     subparser.add_argument('patchfile', help='Created patch file.')
