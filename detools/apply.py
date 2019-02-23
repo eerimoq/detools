@@ -31,7 +31,7 @@ class NoneDecompressor(object):
         return self._number_of_bytes_left == 0
 
 
-class _PatchReader(object):
+class PatchReader(object):
 
     def __init__(self, fpatch, compression):
         if compression == 'lzma':
@@ -78,7 +78,7 @@ class _PatchReader(object):
         return self._decompressor.eof
 
 
-def _unpack_size(patch_reader):
+def unpack_size(patch_reader):
     byte = patch_reader.decompress(1)[0]
     is_signed = (byte & 0x40)
     value = (byte & 0x3f)
@@ -95,7 +95,7 @@ def _unpack_size(patch_reader):
     return value, ((offset - 6) / 7 + 1)
 
 
-def _read_header(fpatch):
+def read_header(fpatch):
     header = fpatch.read(20)
 
     if len(header) != 20:
@@ -137,13 +137,13 @@ def apply_patch(ffrom, fpatch, fto):
 
     """
 
-    to_size, compression = _read_header(fpatch)
-    patch_reader = _PatchReader(fpatch, compression)
+    to_size, compression = read_header(fpatch)
+    patch_reader = PatchReader(fpatch, compression)
     to_pos = 0
 
     while to_pos < to_size:
         # Diff data.
-        size = _unpack_size(patch_reader)[0]
+        size = unpack_size(patch_reader)[0]
 
         if to_pos + size > to_size:
             raise Error("Patch diff data too long.")
@@ -162,7 +162,7 @@ def apply_patch(ffrom, fpatch, fto):
         to_pos += size
 
         # Extra data.
-        size = _unpack_size(patch_reader)[0]
+        size = unpack_size(patch_reader)[0]
 
         if to_pos + size > to_size:
             raise Error("Patch extra data too long.")
@@ -171,62 +171,8 @@ def apply_patch(ffrom, fpatch, fto):
         to_pos += size
 
         # Adjustment.
-        size = _unpack_size(patch_reader)[0]
+        size = unpack_size(patch_reader)[0]
         ffrom.seek(size, os.SEEK_CUR)
 
     if not patch_reader.eof:
         raise Error('End of patch not found.')
-
-
-def patch_info(fpatch):
-    fpatch.seek(0, os.SEEK_END)
-    patch_size = fpatch.tell()
-    fpatch.seek(0, os.SEEK_SET)
-
-    to_size, compression = _read_header(fpatch)
-    patch_reader = _PatchReader(fpatch, compression)
-    to_pos = 0
-
-    number_of_size_bytes = 0
-    diff_sizes = []
-    extra_sizes = []
-    adjustment_sizes = []
-
-    while to_pos < to_size:
-        # Diff data.
-        size, number_of_bytes = _unpack_size(patch_reader)
-
-        if to_pos + size > to_size:
-            raise Error("Patch diff data too long.")
-
-        diff_sizes.append(size)
-        number_of_size_bytes += number_of_bytes
-        patch_reader.decompress(size)
-        to_pos += size
-
-        # Extra data.
-        size, number_of_bytes = _unpack_size(patch_reader)
-        number_of_size_bytes += number_of_bytes
-
-        if to_pos + size > to_size:
-            raise Error("Patch extra data too long.")
-
-        extra_sizes.append(size)
-        patch_reader.decompress(size)
-        to_pos += size
-
-        # Adjustment.
-        size, number_of_bytes = _unpack_size(patch_reader)
-        number_of_size_bytes += number_of_bytes
-        adjustment_sizes.append(size)
-
-    if not patch_reader.eof:
-        raise Error('End of patch not found.')
-
-    return (compression,
-            patch_size,
-            to_size,
-            diff_sizes,
-            extra_sizes,
-            adjustment_sizes,
-            number_of_size_bytes)

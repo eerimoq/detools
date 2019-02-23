@@ -4,9 +4,9 @@ from statistics import mean
 from statistics import median
 from humanfriendly import format_size
 
-from .create_patch import create_patch
-from .apply_patch import apply_patch
-from .apply_patch import patch_info
+from .create import create_patch
+from .apply import apply_patch
+from .info import patch_info
 from .errors import Error
 from .version import __version__
 
