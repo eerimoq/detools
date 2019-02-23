@@ -395,36 +395,6 @@ static int create_patch_loop(PyObject *list_p,
     return (0);
 }
 
-static PyObject *m_pack_size(PyObject *self_p, PyObject *arg_p)
-{
-    int res;
-    long long size;
-    uint8_t buf[10];
-    PyObject *bytes_p;
-
-    size = PyLong_AsLongLong(arg_p);
-
-    if ((size == -1) && PyErr_Occurred()) {
-        return (NULL);
-    }
-
-    res = pack_size(&buf[0], size, sizeof(buf));
-
-    if (res <= 0) {
-        PyErr_Format(PyExc_ValueError, "Pack size failed with %d.", res);
-
-        return (NULL);
-    }
-
-    bytes_p = PyBytes_FromStringAndSize((char *)&buf[0], res);
-
-    if (bytes_p == NULL) {
-        return (NULL);
-    }
-
-    return (bytes_p);
-}
-
 static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
 {
     int res;
@@ -503,7 +473,6 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
 }
 
 static PyMethodDef module_methods[] = {
-    { "pack_size", m_pack_size, METH_O },
     { "create_patch", m_create_patch, METH_VARARGS },
     { NULL }
 };
