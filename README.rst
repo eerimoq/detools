@@ -88,6 +88,7 @@ Print information about the patch ``foo.patch``.
    Patch size:         184 bytes
    To size:            2.78 KB
    Patch/to ratio:     6.6 % (lower is better)
+   Diff/extra ratio:   9828.6 % (higher is better)
    Size/data ratio:    0.3 % (lower is better)
 
    Number of diffs:    2
