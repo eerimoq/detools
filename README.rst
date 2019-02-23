@@ -10,7 +10,7 @@ Binary delta encoding in Python 3.
 Based on http://www.daemonology.net/bsdiff/, with the following
 differences:
 
-- LZMA compression instead of BZ2.
+- LZMA or CRLE compression instead of BZ2.
 
 - Linear patch file access pattern to allow streaming.
 

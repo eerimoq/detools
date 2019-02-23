@@ -2,6 +2,7 @@ import os
 import struct
 from lzma import LZMACompressor
 from .errors import Error
+from .crle import CrleCompressor
 
 try:
     from . import csais as sais
@@ -14,6 +15,7 @@ except ImportError:
 
 COMPRESSIONS = {
     'lzma': b'lzma',
+    'crle': b'crle',
     'none': b'none'
 }
 
@@ -55,6 +57,8 @@ def _write_data(ffrom, fto, fpatch, compression):
         compressor = LZMACompressor()
     elif compression == 'none':
         compressor = NoneCompressor()
+    elif compression == 'crle':
+        compressor = CrleCompressor()
     else:
         raise Error(
             'Expected compression lzma or none, but got {}.'.format(

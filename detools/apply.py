@@ -2,6 +2,7 @@ import os
 import struct
 from lzma import LZMADecompressor
 from .errors import Error
+from .crle import CrleDecompressor
 
 
 class NoneDecompressor(object):
@@ -31,19 +32,26 @@ class NoneDecompressor(object):
         return self._number_of_bytes_left == 0
 
 
+def patch_length(fpatch):
+    position = fpatch.tell()
+    fpatch.seek(0, os.SEEK_END)
+    length = fpatch.tell()
+    fpatch.seek(position, os.SEEK_SET)
+
+    return length - position
+
+
 class PatchReader(object):
 
     def __init__(self, fpatch, compression):
         if compression == 'lzma':
             self._decompressor = LZMADecompressor()
+        elif compression == 'crle':
+            self._decompressor = CrleDecompressor(patch_length(fpatch))
         elif compression == 'none':
-            position = fpatch.tell()
-            fpatch.seek(0, os.SEEK_END)
-            length = fpatch.tell()
-            fpatch.seek(position, os.SEEK_SET)
-            self._decompressor = NoneDecompressor(length - position)
+            self._decompressor = NoneDecompressor(patch_length(fpatch))
         else:
-            raise Error()
+            raise Error(compression)
 
         self._fpatch = fpatch
 
@@ -121,7 +129,7 @@ def read_header(fpatch):
             'Failed to decode the compression field in the header (got {}).'.format(
                 compression))
 
-    if compression not in ['lzma', 'none']:
+    if compression not in ['lzma', 'crle', 'none']:
         raise Error(
             "Expected compression 'lzma' or 'none', but got '{}'.".format(
                 compression))

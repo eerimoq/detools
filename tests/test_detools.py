@@ -26,6 +26,7 @@ class DetoolsTest(unittest.TestCase):
                 detools.create_patch(fold, fnew, fpatch, compression)
 
         actual = fpatch.getvalue()
+        # open(patch_filename, 'wb').write(actual)
 
         with open(patch_filename, 'rb') as fpatch:
             expected = fpatch.read()
@@ -73,12 +74,31 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/micropython-esp8266-20190125-v1.10.bin',
             'tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10.patch')
 
+    def test_create_and_apply_patch_foo_none_compression(self):
+        self.assert_create_and_apply_patch('tests/files/foo.old',
+                                           'tests/files/foo.new',
+                                           'tests/files/foo-none.patch',
+                                           compression='none')
+
     def test_create_and_apply_patch_micropython_none_compression(self):
         self.assert_create_and_apply_patch(
             'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
             'tests/files/micropython-esp8266-20190125-v1.10.bin',
             'tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-none.patch',
             compression='none')
+
+    def test_create_and_apply_patch_foo_crle_compression(self):
+        self.assert_create_and_apply_patch('tests/files/foo.old',
+                                           'tests/files/foo.new',
+                                           'tests/files/foo-crle.patch',
+                                           compression='crle')
+
+    def test_create_and_apply_patch_micropython_crle_compression(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython-esp8266-20190125-v1.10.bin',
+            'tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-crle.patch',
+            compression='crle')
 
     def test_create_and_apply_patch_bsdiff(self):
         self.assert_create_and_apply_patch(
@@ -322,6 +342,66 @@ class DetoolsTest(unittest.TestCase):
                          'Total extra size:   0 bytes\n'
                          'Average extra size: 0 bytes\n'
                          'Median extra size:  0 bytes\n')
+
+    def test_command_line_patch_info_foo_none_compression(self):
+        argv = [
+            'detools',
+            'patch_info',
+            'tests/files/foo-none.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(stdout.getvalue(),
+                         'Patch size:         2.81 KB\n'
+                         'To size:            2.78 KB\n'
+                         'Patch/to ratio:     101.0 % (lower is better)\n'
+                         'Diff/extra ratio:   9828.6 % (higher is better)\n'
+                         'Size/data ratio:    0.3 % (lower is better)\n'
+                         'Compression:        none\n'
+                         '\n'
+                         'Number of diffs:    2\n'
+                         'Total diff size:    2.75 KB\n'
+                         'Average diff size:  1.38 KB\n'
+                         'Median diff size:   1.38 KB\n'
+                         '\n'
+                         'Number of extras:   2\n'
+                         'Total extra size:   28 bytes\n'
+                         'Average extra size: 14 bytes\n'
+                         'Median extra size:  14 bytes\n')
+
+    def test_command_line_patch_info_foo_crle_compression(self):
+        argv = [
+            'detools',
+            'patch_info',
+            'tests/files/foo-crle.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(stdout.getvalue(),
+                         'Patch size:         208 bytes\n'
+                         'To size:            2.78 KB\n'
+                         'Patch/to ratio:     7.5 % (lower is better)\n'
+                         'Diff/extra ratio:   9828.6 % (higher is better)\n'
+                         'Size/data ratio:    0.3 % (lower is better)\n'
+                         'Compression:        crle\n'
+                         '\n'
+                         'Number of diffs:    2\n'
+                         'Total diff size:    2.75 KB\n'
+                         'Average diff size:  1.38 KB\n'
+                         'Median diff size:   1.38 KB\n'
+                         '\n'
+                         'Number of extras:   2\n'
+                         'Total extra size:   28 bytes\n'
+                         'Average extra size: 14 bytes\n'
+                         'Median extra size:  14 bytes\n')
 
 
 if __name__ == '__main__':
