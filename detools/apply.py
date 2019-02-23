@@ -25,7 +25,7 @@ class NoneDecompressor(object):
 
     @property
     def needs_input(self):
-        return self._data == b''
+        return self._data == b'' and not self.eof
 
     @property
     def eof(self):

@@ -175,6 +175,16 @@ class DetoolsTest(unittest.TestCase):
                 self.assertEqual(str(cm.exception),
                                  "End of patch not found.")
 
+    def test_apply_patch_foo_short_none_compression(self):
+        fnew = BytesIO()
+
+        with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo-short-none.patch', 'rb') as fpatch:
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
+
+                self.assertEqual(str(cm.exception), "Early end of patch data.")
+
     def test_apply_patch_foo_long(self):
         fnew = BytesIO()
 
