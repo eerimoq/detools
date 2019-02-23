@@ -18,6 +18,11 @@ differences:
 
 - Variable length size fields.
 
+Planned functionality:
+
+- Incremental apply patch implemented in C, suitable for memory
+  constrained embedded devices.
+
 Project homepage: https://github.com/eerimoq/detools
 
 Documentation: http://detools.readthedocs.org/en/latest
