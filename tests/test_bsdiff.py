@@ -99,7 +99,7 @@ class DetoolsBsdiffTest(unittest.TestCase):
             read_file('tests/files/eb9ed88e9975028c4694e070cfaece2498e92d.bin')
         ]
 
-        with open('tests/files/README.bin', 'rb') as fin:
+        with open('tests/files/READ-ME.rst', 'rb') as fin:
             readme_data = fin.read()
 
         for data in datas:

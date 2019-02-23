@@ -68,38 +68,38 @@ class DetoolsTest(unittest.TestCase):
     def test_create_and_apply_patch_bsdiff(self):
         self.assert_create_and_apply_patch(
             'tests/files/bsdiff.py',
-            'tests/files/README.bin',
-            'tests/files/bsdiff-README.patch')
+            'tests/files/READ-ME.rst',
+            'tests/files/bsdiff-READ-ME.patch')
 
     def test_create_and_apply_patch_sais(self):
         self.assert_create_and_apply_patch(
             'tests/files/sais.c',
-            'tests/files/README.bin',
-            'tests/files/sais-README.patch')
+            'tests/files/READ-ME.rst',
+            'tests/files/sais-READ-ME.patch')
 
     def test_create_and_apply_patch_3f5531ba56182a807a5c358f04678b3b026d3a(self):
         self.assert_create_and_apply_patch(
             'tests/files/3f5531ba56182a807a5c358f04678b3b026d3a.bin',
-            'tests/files/README.bin',
-            'tests/files/3f5531ba56182a807a5c358f04678b3b026d3a-README.patch')
+            'tests/files/READ-ME.rst',
+            'tests/files/3f5531ba56182a807a5c358f04678b3b026d3a-READ-ME.patch')
 
     def test_create_and_apply_patch_b2db59ab76ca36f67e61f720857021df8a660b(self):
         self.assert_create_and_apply_patch(
             'tests/files/b2db59ab76ca36f67e61f720857021df8a660b.bin',
-            'tests/files/README.bin',
-            'tests/files/b2db59ab76ca36f67e61f720857021df8a660b-README.patch')
+            'tests/files/READ-ME.rst',
+            'tests/files/b2db59ab76ca36f67e61f720857021df8a660b-READ-ME.patch')
 
     def test_create_and_apply_patch_d027a1e1f752f15b6a13d9f9d775f3914c83f7(self):
         self.assert_create_and_apply_patch(
             'tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7.bin',
-            'tests/files/README.bin',
-            'tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7-README.patch')
+            'tests/files/READ-ME.rst',
+            'tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7-READ-ME.patch')
 
     def test_create_and_apply_patch_eb9ed88e9975028c4694e070cfaece2498e92d(self):
         self.assert_create_and_apply_patch(
             'tests/files/eb9ed88e9975028c4694e070cfaece2498e92d.bin',
-            'tests/files/README.bin',
-            'tests/files/eb9ed88e9975028c4694e070cfaece2498e92d-README.patch')
+            'tests/files/READ-ME.rst',
+            'tests/files/eb9ed88e9975028c4694e070cfaece2498e92d-READ-ME.patch')
 
     def test_create_and_apply_patch_no_delta(self):
         self.assert_create_and_apply_patch('tests/files/foo.new',
