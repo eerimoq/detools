@@ -123,7 +123,7 @@ def _read_header(fpatch):
 
     if compression not in ['lzma', 'none']:
         raise Error(
-            'Expected compression lzma or none, but got {}.'.format(
+            "Expected compression 'lzma' or 'none', but got '{}'.".format(
                 compression))
 
     to_size = struct.unpack('>q', header[12:20])[0]

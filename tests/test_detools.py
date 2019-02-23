@@ -212,6 +212,18 @@ class DetoolsTest(unittest.TestCase):
                     "Failed to decode the compression field in the header "
                     "(got b'\\xdczma').")
 
+    def test_apply_patch_foo_bad_compression(self):
+        fnew = BytesIO()
+
+        with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo-bad-compression.patch', 'rb') as fpatch:
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
+
+                self.assertEqual(
+                    str(cm.exception),
+                    "Expected compression 'lzma' or 'none', but got 'abcd'.")
+
     def test_command_line_create_patch_foo(self):
         foo_patch = 'foo.patch'
         argv = [
