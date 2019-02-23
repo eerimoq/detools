@@ -37,7 +37,7 @@ def memcmp(b1, b2):
     return 0
 
 
-def matchlen(from_data, to_data):
+def match_length(from_data, to_data):
     length = min(len(from_data), len(to_data))
 
     for i in range(length):
@@ -49,8 +49,8 @@ def matchlen(from_data, to_data):
 
 def search(suffix_array, from_data, to_data, st, en):
     if en - st < 2:
-        x = matchlen(from_data[suffix_array[st]:], to_data)
-        y = matchlen(from_data[suffix_array[en]:], to_data)
+        x = match_length(from_data[suffix_array[st]:], to_data)
+        y = match_length(from_data[suffix_array[en]:], to_data)
 
         if x > y:
             return x, suffix_array[st]

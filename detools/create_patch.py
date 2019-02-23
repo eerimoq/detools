@@ -23,13 +23,9 @@ def fread(f):
     return f.read()
 
 
-def _pack_i64(value):
-    return struct.pack('>q', value)
-
-
 def _write_header(fpatch, fto):
     fpatch.write(b'detools0')
-    fpatch.write(_pack_i64(_get_fsize(fto)))
+    fpatch.write(struct.pack('>q', _get_fsize(fto)))
 
 
 def _write_data(ffrom, fto, fpatch):

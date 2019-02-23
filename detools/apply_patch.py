@@ -41,10 +41,6 @@ class _PatchReader(object):
         return self._decompressor.eof
 
 
-def _unpack_i64(buf):
-    return struct.unpack('>q', buf)[0]
-
-
 def _unpack_size(patch_reader):
     byte = patch_reader.decompress(1)[0]
     is_signed = (byte & 0x40)
@@ -74,7 +70,7 @@ def _read_header(fpatch):
         raise Error(
             "Expected header magic b'detools0', but got {}.".format(magic))
 
-    to_size = _unpack_i64(header[8:16])
+    to_size = struct.unpack('>q', header[8:16])[0]
 
     if to_size < 0:
         raise Error('Expected to size >= 0, but got {}.'.format(to_size))
