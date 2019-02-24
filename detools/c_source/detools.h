@@ -33,7 +33,7 @@
 
 typedef int (*detools_read_t)(void *arg_p, uint8_t *buf_p, size_t size);
 
-struct detools_apply_patch_t {
+struct detools_crle_apply_patch_t {
     detools_read_t from_read;
     void *from_read_arg_p;
 };
@@ -43,9 +43,9 @@ struct detools_apply_patch_t {
  *
  * @return zero(0) or negative error code.
  */
-int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
-                             detools_read_t from_read,
-                             void *from_read_arg_p);
+int detools_crle_apply_patch_init(struct detools_crle_apply_patch_t *self_p,
+                                  detools_read_t from_read,
+                                  void *from_read_arg_p);
 
 /**
  * Feed data into the patcher and at the same time generate patched
@@ -61,10 +61,10 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
  *         buffer or -EEOF once the whole patch has been applied or
  *         -ENEEDSINPUT if more input is needed.
  */
-int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
-                                uint8_t *to_p,
-                                size_t to_size,
-                                const uint8_t *patch_p,
-                                size_t *patch_size_p);
+int detools_crle_apply_patch_process(struct detools_crle_apply_patch_t *self_p,
+                                     uint8_t *to_p,
+                                     size_t to_size,
+                                     const uint8_t *patch_p,
+                                     size_t *patch_size_p);
 
 #endif

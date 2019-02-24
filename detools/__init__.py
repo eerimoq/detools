@@ -12,10 +12,24 @@ from .version import __version__
 
 
 def _do_create_patch(args):
+    if args.type == 'in-place':
+        if args.memory_size is None:
+            raise Error('--memory-size is required for in-place patch.')
+
+        if args.segment_size is None:
+            raise Error('--segment-size is required for in-place patch.')
+
     with open(args.fromfile, 'rb') as ffrom:
         with open(args.tofile, 'rb') as fto:
             with open(args.patchfile, 'wb') as fpatch:
-                create_patch(ffrom, fto, fpatch, args.compression)
+                create_patch(ffrom,
+                             fto,
+                             fpatch,
+                             args.compression,
+                             patch_type=args.type,
+                             memory_size=args.memory_size,
+                             segment_size=args.segment_size,
+                             minimum_shift_size=args.minimum_shift_size)
 
 
 def _do_apply_patch(args):
@@ -25,16 +39,13 @@ def _do_apply_patch(args):
                 apply_patch(ffrom, fpatch, fto)
 
 
-def _do_patch_info(args):
-    with open(args.patchfile, 'rb') as fpatch:
-        (compression,
-         patch_size,
-         to_size,
-         diff_sizes,
-         extra_sizes,
-         _,
-         number_of_size_bytes) = patch_info(fpatch)
-
+def _patch_info_normal(compression,
+                       patch_size,
+                       to_size,
+                       diff_sizes,
+                       extra_sizes,
+                       _,
+                       number_of_size_bytes):
     number_of_diff_bytes = sum(diff_sizes)
     number_of_extra_bytes = sum(extra_sizes)
     number_of_data_bytes = (number_of_diff_bytes + number_of_extra_bytes)
@@ -46,6 +57,7 @@ def _do_patch_info(args):
     else:
         diff_extra_ratio = 'inf'
 
+    print('Type:               normal')
     print('Patch size:         {}'.format(format_size(patch_size)))
     print('To size:            {}'.format(format_size(to_size)))
     print('Patch/to ratio:     {} % (lower is better)'.format(patch_to_ratio))
@@ -62,6 +74,36 @@ def _do_patch_info(args):
     print('Total extra size:   {}'.format(format_size(sum(extra_sizes))))
     print('Average extra size: {}'.format(format_size(int(mean(extra_sizes)))))
     print('Median extra size:  {}'.format(format_size(int(median(extra_sizes)))))
+
+
+def _patch_info_in_place(number_of_segments, from_shift_size, info):
+    print('Type:               in-place')
+    print('Number of segments: {}'.format(number_of_segments))
+    print('From shift size:    {}'.format(from_shift_size))
+    print()
+
+    for i, (from_offset, _, normal_info) in enumerate(info):
+        print('-------------------- Patch {} --------------------'.format(i + 1))
+        print()
+        print('From offset:        {}'.format(format_size(from_offset)))
+        _patch_info_normal(*normal_info)
+        print()
+
+
+def _do_patch_info(args):
+    with open(args.patchfile, 'rb') as fpatch:
+        patch_type, info = patch_info(fpatch)
+
+        if patch_type == 'normal':
+            _patch_info_normal(*info)
+        elif patch_type == 'in-place':
+            _patch_info_in_place(*info)
+        else:
+            raise Error('Bad patch type {}.'.format(patch_type))
+
+
+def to_int(value):
+    return int(value, 0)
 
 
 def _main():
@@ -81,10 +123,25 @@ def _main():
     # Create patch subparser.
     subparser = subparsers.add_parser('create_patch',
                                       description='Create a patch.')
+    subparser.add_argument('-t', '--type',
+                           choices=('normal', 'in-place'),
+                           default='normal',
+                           help='Patch type (default: normal).')
     subparser.add_argument('-c', '--compression',
                            choices=('lzma', 'crle', 'none'),
                            default='lzma',
                            help='Compression algorithm (default: lzma).')
+    subparser.add_argument('--memory-size',
+                           type=to_int,
+                           help='Target memory size.')
+    subparser.add_argument(
+        '--segment-size',
+        type=to_int,
+        help='Segment size. Must be a multiple of the largest erase block size.')
+    subparser.add_argument(
+        '--minimum-shift-size',
+        type=to_int,
+        help='Minimum shift size (default: 2 * segment size).')
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
     subparser.add_argument('patchfile', help='Created patch file.')

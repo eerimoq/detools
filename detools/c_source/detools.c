@@ -32,9 +32,9 @@
 
 #include "detools.h"
 
-int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
-                             detools_read_t from_read,
-                             void *from_read_arg_p)
+int detools_crle_apply_patch_init(struct detools_crle_apply_patch_t *self_p,
+                                  detools_read_t from_read,
+                                  void *from_read_arg_p)
 {
     self_p->from_read = from_read;
     self_p->from_read_arg_p = from_read_arg_p;
@@ -42,11 +42,11 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
     return (0);
 }
 
-int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
-                                uint8_t *to_p,
-                                size_t to_size,
-                                const uint8_t *patch_p,
-                                size_t *patch_size_p)
+int detools_crle_apply_patch_process(struct detools_crle_apply_patch_t *self_p,
+                                     uint8_t *to_p,
+                                     size_t to_size,
+                                     const uint8_t *patch_p,
+                                     size_t *patch_size_p)
 {
     return (-1);
 }

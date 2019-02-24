@@ -18,12 +18,12 @@ class DetoolsTest(unittest.TestCase):
                             from_filename,
                             to_filename,
                             patch_filename,
-                            compression):
+                            **kwargs):
         fpatch = BytesIO()
 
         with open(from_filename, 'rb') as fold:
             with open(to_filename, 'rb') as fnew:
-                detools.create_patch(fold, fnew, fpatch, compression)
+                detools.create_patch(fold, fnew, fpatch, **kwargs)
 
         actual = fpatch.getvalue()
         # open(patch_filename, 'wb').write(actual)
@@ -51,11 +51,11 @@ class DetoolsTest(unittest.TestCase):
                                       from_filename,
                                       to_filename,
                                       patch_filename,
-                                      compression='lzma'):
+                                      **kwargs):
         self.assert_create_patch(from_filename,
                                  to_filename,
                                  patch_filename,
-                                 compression)
+                                 **kwargs)
         self.assert_apply_patch(from_filename, to_filename, patch_filename)
 
     def test_create_and_apply_patch_foo(self):
@@ -99,6 +99,80 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/micropython-esp8266-20190125-v1.10.bin',
             'tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-crle.patch',
             compression='crle')
+
+    def test_create_and_apply_patch_micropython_in_place(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython-esp8266-20190125-v1.10.bin',
+            'tests/files/micropython-esp8266-20180511-v1.9.4--'
+            '20190125-v1.10-in-place.patch',
+            patch_type='in-place',
+            memory_size=2097152,
+            segment_size=65536)
+
+    def test_create_and_apply_patch_foo_in_place_3000_1500(self):
+        self.assert_create_and_apply_patch('tests/files/foo.old',
+                                           'tests/files/foo.new',
+                                           'tests/files/foo-in-place-3000-1500.patch',
+                                           patch_type='in-place',
+                                           memory_size=3000,
+                                           segment_size=1500)
+
+    def test_create_and_apply_patch_foo_in_place_3000_1500_1500(self):
+        self.assert_create_and_apply_patch('tests/files/foo.old',
+                                           'tests/files/foo.new',
+                                           'tests/files/foo-in-place-3000-1500-1500.patch',
+                                           patch_type='in-place',
+                                           memory_size=3000,
+                                           segment_size=1500,
+                                           minimum_shift_size=1500)
+
+    def test_create_and_apply_patch_foo_in_place_3000_500(self):
+        self.assert_create_and_apply_patch('tests/files/foo.old',
+                                           'tests/files/foo.new',
+                                           'tests/files/foo-in-place-3000-500.patch',
+                                           patch_type='in-place',
+                                           memory_size=3000,
+                                           segment_size=500)
+
+    def test_create_and_apply_patch_foo_in_place_3000_500_crle(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/foo.old',
+            'tests/files/foo.new',
+            'tests/files/foo-in-place-3000-500-crle.patch',
+            patch_type='in-place',
+            compression='crle',
+            memory_size=3000,
+            segment_size=500)
+
+    def test_create_and_apply_patch_foo_in_place_6000_1000_crle(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/foo.old',
+            'tests/files/foo.new',
+            'tests/files/foo-in-place-6000-1000-crle.patch',
+            patch_type='in-place',
+            compression='crle',
+            memory_size=6000,
+            segment_size=1000)
+
+    def test_create_and_apply_patch_foo_in_place_minimum_size(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/foo.old',
+            'tests/files/foo.new',
+            'tests/files/foo-in-place-minimum-size.patch',
+            patch_type='in-place',
+            memory_size=3000,
+            segment_size=500,
+            minimum_shift_size=2000)
+
+    def test_create_and_apply_patch_foo_in_place_many_segments(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/foo.old',
+            'tests/files/foo.new',
+            'tests/files/foo-in-place-many-segments.patch',
+            patch_type='in-place',
+            memory_size=3000,
+            segment_size=50)
 
     def test_create_and_apply_patch_bsdiff(self):
         self.assert_create_and_apply_patch(
@@ -218,16 +292,16 @@ class DetoolsTest(unittest.TestCase):
                 self.assertEqual(str(cm.exception),
                                  "Patch extra data too long.")
 
-    def test_apply_patch_foo_bad_kind(self):
+    def test_apply_patch_foo_bad_patch_type(self):
         fnew = BytesIO()
 
         with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-bad-kind.patch', 'rb') as fpatch:
+            with open('tests/files/foo-bad-patch-type.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
                 self.assertEqual(str(cm.exception),
-                                 "Expected kind 48, but got 57.")
+                                 "Expected patch type 48 or 49, but got 57.")
 
     def test_apply_patch_foo_non_ascii_compression(self):
         fnew = BytesIO()
@@ -306,6 +380,7 @@ class DetoolsTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
+                         'Type:               normal\n'
                          'Patch size:         188 bytes\n'
                          'To size:            2.78 KB\n'
                          'Patch/to ratio:     6.8 % (lower is better)\n'
@@ -336,6 +411,7 @@ class DetoolsTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
+                         'Type:               normal\n'
                          'Patch size:         112 bytes\n'
                          'To size:            2.78 KB\n'
                          'Patch/to ratio:     4.0 % (lower is better)\n'
@@ -366,6 +442,7 @@ class DetoolsTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
+                         'Type:               normal\n'
                          'Patch size:         2.81 KB\n'
                          'To size:            2.78 KB\n'
                          'Patch/to ratio:     101.0 % (lower is better)\n'
@@ -396,6 +473,7 @@ class DetoolsTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
+                         'Type:               normal\n'
                          'Patch size:         206 bytes\n'
                          'To size:            2.78 KB\n'
                          'Patch/to ratio:     7.4 % (lower is better)\n'
@@ -412,6 +490,109 @@ class DetoolsTest(unittest.TestCase):
                          'Total extra size:   28 bytes\n'
                          'Average extra size: 14 bytes\n'
                          'Median extra size:  14 bytes\n')
+
+    def test_command_line_create_patch_foo_in_place(self):
+        foo_patch = 'foo-in-place-3000-1500.patch'
+        argv = [
+            'detools',
+            'create_patch',
+            '--type', 'in-place',
+            '--memory-size', '3000',
+            '--segment-size', '1500',
+            'tests/files/foo.old',
+            'tests/files/foo.new',
+            foo_patch
+        ]
+
+        if os.path.exists(foo_patch):
+            os.remove(foo_patch)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_patch),
+                         read_file('tests/files/foo-in-place-3000-1500.patch'))
+
+    def test_command_line_apply_patch_foo_in_place(self):
+        foo_new = 'foo.new'
+        argv = [
+            'detools',
+            '--debug',
+            'apply_patch',
+            'tests/files/foo.old',
+            'tests/files/foo-in-place-3000-1500.patch',
+            foo_new
+        ]
+
+        if os.path.exists(foo_new):
+            os.remove(foo_new)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_new),
+                         read_file('tests/files/foo.new'))
+
+    def test_command_line_patch_info_foo_in_place(self):
+        argv = [
+            'detools',
+            'patch_info',
+            'tests/files/foo-in-place-3000-1500.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(
+            stdout.getvalue(),
+            'Type:               in-place\n'
+            'Number of segments: 2\n'
+            'From shift size:    3000\n'
+            '\n'
+            '-------------------- Patch 1 --------------------\n'
+            '\n'
+            'From offset:        0 bytes\n'
+            'Type:               normal\n'
+            'Patch size:         1.21 KB\n'
+            'To size:            1.5 KB\n'
+            'Patch/to ratio:     80.5 % (lower is better)\n'
+            'Diff/extra ratio:   0.0 % (higher is better)\n'
+            'Size/data ratio:    0.3 % (lower is better)\n'
+            'Compression:        lzma\n'
+            '\n'
+            'Number of diffs:    1\n'
+            'Total diff size:    0 bytes\n'
+            'Average diff size:  0 bytes\n'
+            'Median diff size:   0 bytes\n'
+            '\n'
+            'Number of extras:   1\n'
+            'Total extra size:   1.5 KB\n'
+            'Average extra size: 1.5 KB\n'
+            'Median extra size:  1.5 KB\n'
+            '\n'
+            '-------------------- Patch 2 --------------------\n'
+            '\n'
+            'From offset:        0 bytes\n'
+            'Type:               normal\n'
+            'Patch size:         1.02 KB\n'
+            'To size:            1.28 KB\n'
+            'Patch/to ratio:     79.4 % (lower is better)\n'
+            'Diff/extra ratio:   0.0 % (higher is better)\n'
+            'Size/data ratio:    0.3 % (lower is better)\n'
+            'Compression:        lzma\n'
+            '\n'
+            'Number of diffs:    1\n'
+            'Total diff size:    0 bytes\n'
+            'Average diff size:  0 bytes\n'
+            'Median diff size:   0 bytes\n'
+            '\n'
+            'Number of extras:   1\n'
+            'Total extra size:   1.28 KB\n'
+            'Average extra size: 1.28 KB\n'
+            'Median extra size:  1.28 KB\n'
+            '\n')
 
 
 if __name__ == '__main__':
