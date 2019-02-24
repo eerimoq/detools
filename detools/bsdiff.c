@@ -249,10 +249,10 @@ static int create_patch_loop(PyObject *list_p,
     int64_t s;
     int64_t sf;
     int64_t lenf;
-    int64_t Sb;
+    int64_t sb;
     int64_t lenb;
     int64_t overlap;
-    int64_t Ss;
+    int64_t ss;
     int64_t lens;
     int64_t i;
 
@@ -315,15 +315,15 @@ static int create_patch_loop(PyObject *list_p,
 
             if (scan < to_size) {
                 s = 0;
-                Sb = 0;
+                sb = 0;
 
                 for (i = 1; (scan >= last_scan + i) && (pos >= i); i++) {
                     if (from_p[pos - i] == to_p[scan - i]) {
                         s++;
                     }
 
-                    if (s * 2 - i > Sb * 2 - lenb) {
-                        Sb = s;
+                    if (s * 2 - i > sb * 2 - lenb) {
+                        sb = s;
                         lenb = i;
                     }
                 }
@@ -332,7 +332,7 @@ static int create_patch_loop(PyObject *list_p,
             if (last_scan + lenf > scan - lenb) {
                 overlap = (last_scan + lenf) - (scan - lenb);
                 s = 0;
-                Ss = 0;
+                ss = 0;
                 lens = 0;
 
                 for (i = 0; i < overlap; i++) {
@@ -345,8 +345,8 @@ static int create_patch_loop(PyObject *list_p,
                         s--;
                     }
 
-                    if (s > Ss) {
-                        Ss = s;
+                    if (s > ss) {
+                        ss = s;
                         lens = (i + 1);
                     }
                 }
