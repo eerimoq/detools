@@ -9,7 +9,7 @@ class DetoolsCrleTest(unittest.TestCase):
 
     def test_compress(self):
         datas = [
-            (                       [b''], b''),
+            (                       [b''], b'\x00\x00'),
             (                      [b'A'], b'\x00\x01A'),
             (                  [5 * b'A'], b'\x00\x05AAAAA'),
             (                  [6 * b'A'], b'\x01\x06A'),
@@ -33,9 +33,17 @@ class DetoolsCrleTest(unittest.TestCase):
 
             self.assertEqual(data, compressed)
 
+    def test_decompress_no_data(self):
+        compressed = b'\x00\x00'
+
+        decompressor = CrleDecompressor(len(compressed))
+
+        self.assertEqual(decompressor.needs_input, True)
+        self.assertEqual(decompressor.decompress(compressed, 1), b'')
+        self.assertEqual(decompressor.eof, True)
+
     def test_decompress(self):
         datas = [
-            (                            [b''], b''),
             (                   [b'\x00\x01A'], b'A'),
             (             [b'\x00\x07AAAAAAA'], 7 * b'A'),
             (                   [b'\x01\x08A'], 8 * b'A'),
@@ -52,19 +60,17 @@ class DetoolsCrleTest(unittest.TestCase):
             decompressor = CrleDecompressor(sum([len(c) for c in chunks]))
 
             for chunk in chunks:
+                self.assertEqual(decompressor.needs_input, True)
+                self.assertEqual(decompressor.eof, False)
                 decompressor.decompress(chunk, 0)
+
+            self.assertEqual(decompressor.needs_input, False)
 
             data = b''
 
-            while True:
-                byte = decompressor.decompress(b'', 1)
+            while not decompressor.eof:
+                data += decompressor.decompress(b'', 1)
 
-                if not byte:
-                    break
-
-                data += byte
-
-            self.assertEqual(decompressor.eof, True)
             self.assertEqual(data, decompressed)
 
     def test_decompress_bad_kind(self):
