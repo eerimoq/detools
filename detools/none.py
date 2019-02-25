@@ -21,14 +21,13 @@ class NoneDecompressor(object):
         self._data = b''
 
     def decompress(self, data, size):
+        if self.eof:
+            raise Error('Already at end of stream.')
+
         self._data += data
         decompressed = self._data[:size]
         self._data = self._data[size:]
-
         self._number_of_bytes_left -= len(decompressed)
-
-        if self._number_of_bytes_left < 0:
-            raise Error('Out of data to decompress.')
 
         return decompressed
 
