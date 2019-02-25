@@ -1,3 +1,7 @@
+"""None encoding leaves the data as is. No compression is performed.
+
+"""
+
 from .errors import Error
 
 

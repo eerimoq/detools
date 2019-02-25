@@ -1,4 +1,4 @@
-"""Conditional Run Length Encoding (CRLE) is compresses repeated bytes
+"""Conditional Run Length Encoding (CRLE) compresses repeated bytes
 with RLE, but leaves other data sequences as is.
 
 """
