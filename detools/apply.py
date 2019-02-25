@@ -4,37 +4,11 @@ from lzma import LZMADecompressor
 from io import BytesIO
 from .errors import Error
 from .crle import CrleDecompressor
+from .none import NoneDecompressor
 
 
 TYPE_NORMAL    = ord('0')
 TYPE_IN_PLACE  = ord('1')
-
-
-class NoneDecompressor(object):
-
-    def __init__(self, number_of_bytes):
-        self._number_of_bytes_left = number_of_bytes
-        self._data = b''
-
-    def decompress(self, data, size):
-        self._data += data
-        decompressed = self._data[:size]
-        self._data = self._data[size:]
-
-        self._number_of_bytes_left -= len(decompressed)
-
-        if self._number_of_bytes_left < 0:
-            raise Error('Out of data to decompress.')
-
-        return decompressed
-
-    @property
-    def needs_input(self):
-        return self._data == b'' and not self.eof
-
-    @property
-    def eof(self):
-        return self._number_of_bytes_left == 0
 
 
 def patch_length(fpatch):
@@ -129,6 +103,10 @@ def peek_header_type(fpatch):
 
 
 def read_header_normal(fpatch):
+    """Read a normal header.
+
+    """
+
     header = fpatch.read(20)
 
     if len(header) != 20:
@@ -165,6 +143,10 @@ def read_header_normal(fpatch):
 
 
 def read_header_in_place(fpatch):
+    """Read an in-place header.
+
+    """
+
     header = fpatch.read(8)
 
     if len(header) != 8:
@@ -188,6 +170,10 @@ def read_header_in_place(fpatch):
 
 
 def apply_patch_normal(ffrom, fpatch, fto):
+    """Apply given normal patch.
+
+    """
+
     to_size, compression = read_header_normal(fpatch)
     patch_reader = PatchReader(fpatch, compression)
     to_pos = 0
@@ -230,6 +216,10 @@ def apply_patch_normal(ffrom, fpatch, fto):
 
 
 def apply_patch_in_place(ffrom, fpatch, fto):
+    """Apply given in-place patch.
+
+    """
+
     number_of_segments, _ = read_header_in_place(fpatch)
 
     for _ in range(number_of_segments):

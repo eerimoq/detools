@@ -66,6 +66,11 @@ def search(suffix_array, from_data, to_data, st, en):
         return search(suffix_array, from_data, to_data, st, x)
 
 
+def append_buffer(chunks, buf):
+    chunks.append(pack_size(len(buf)))
+    chunks.append(buf)
+
+
 def pack_size(value):
     packed = bytearray()
 
@@ -90,11 +95,6 @@ def pack_size(value):
     packed[-1] &= 0x7f
 
     return packed
-
-
-def append_buffer(chunks, buf):
-    chunks.append(pack_size(len(buf)))
-    chunks.append(buf)
 
 
 def create_patch(suffix_array, from_data, to_data):

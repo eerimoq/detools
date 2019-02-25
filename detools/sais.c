@@ -792,7 +792,7 @@ static int sais(const uint8_t *t_p, int *sa_p, int n)
 /**
  * def sais(data) -> suffix array
  */
-static PyObject* sais_wrapper(PyObject* self_p, PyObject* arg_p)
+static PyObject* m_sais(PyObject* self_p, PyObject* arg_p)
 {
     int res;
     char *buf_p;
@@ -861,14 +861,8 @@ static PyObject* sais_wrapper(PyObject* self_p, PyObject* arg_p)
 }
 
 static PyMethodDef module_methods[] = {
-    {
-        "sais",
-        sais_wrapper,
-        METH_O
-    },
-    {
-        NULL
-    }
+    { "sais", m_sais, METH_O },
+    { NULL }
 };
 
 static PyModuleDef module = {

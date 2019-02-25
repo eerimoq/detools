@@ -4,6 +4,7 @@ from lzma import LZMACompressor
 from io import BytesIO
 from .errors import Error
 from .crle import CrleCompressor
+from .none import NoneCompressor
 
 try:
     from . import csais as sais
@@ -19,15 +20,6 @@ COMPRESSIONS = {
     'crle': b'crle',
     'none': b'none'
 }
-
-
-class NoneCompressor(object):
-
-    def compress(self, data):
-        return data
-
-    def flush(self):
-        return b''
 
 
 def _get_fsize(f):

@@ -237,4 +237,8 @@ def accurate_lms_sort(string,
 
 
 def sais(data):
+    """Calculates the suffix array and returns it as a list.
+
+    """
+
     return make_suffix_array_by_induced_sorting(data, 256)
