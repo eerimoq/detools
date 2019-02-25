@@ -1,9 +1,4 @@
-import os
-import struct
-from lzma import LZMACompressor
-from io import BytesIO
 from .errors import Error
-from .crle import CrleCompressor
 
 
 class NoneCompressor(object):
