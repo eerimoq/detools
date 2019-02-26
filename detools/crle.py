@@ -192,6 +192,12 @@ class CrleDecompressor(object):
 
             if kind == SCATTERED:
                 length, offset = unpack_size(self._indata, 1)
+                remaining = (offset + length - len(self._indata))
+
+                if remaining > 0:
+                    self._number_of_scattered_bytes_left = remaining
+                    length = (len(self._indata) - offset)
+
                 repetitions = 1
             elif kind == REPEATED:
                 repetitions, offset = unpack_size(self._indata, 1)
@@ -200,11 +206,13 @@ class CrleDecompressor(object):
                 raise Error(
                     'Expected kind scattered(0) or repeated(1), but got {}.'.format(
                         kind))
-        else:
+        elif len(self._indata) > 0:
             length = min(len(self._indata), self._number_of_scattered_bytes_left)
             offset = 0
             repetitions = 1
             self._number_of_scattered_bytes_left -= length
+        else:
+            raise IndexError
 
         if len(self._indata) < offset + length:
             raise IndexError
