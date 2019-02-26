@@ -196,7 +196,7 @@ class CrleDecompressor(object):
 
                 if remaining > 0:
                     self._number_of_scattered_bytes_left = remaining
-                    length = (len(self._indata) - offset)
+                    length -= remaining
 
                 repetitions = 1
             elif kind == REPEATED:
