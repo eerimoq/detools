@@ -28,7 +28,8 @@ def setup(ext_modules):
         url='https://github.com/eerimoq/detools',
         packages=find_packages(exclude=['tests']),
         install_requires=[
-            'humanfriendly'
+            'humanfriendly',
+            'bitstruct'
         ],
         ext_modules=ext_modules,
         test_suite="tests",

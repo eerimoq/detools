@@ -2,13 +2,14 @@ import os
 import struct
 from lzma import LZMADecompressor
 from io import BytesIO
+import bitstruct
 from .errors import Error
 from .crle import CrleDecompressor
 from .none import NoneDecompressor
 
 
-TYPE_NORMAL    = ord('0')
-TYPE_IN_PLACE  = ord('1')
+TYPE_NORMAL    = 0
+TYPE_IN_PLACE  = 1
 
 
 def patch_length(fpatch):
@@ -85,21 +86,19 @@ def unpack_size(fin):
     return value, ((offset - 6) / 7 + 1)
 
 
+def unpack_header(data):
+    return bitstruct.unpack('p1u3u4', data)
+
+
 def peek_header_type(fpatch):
     position = fpatch.tell()
-    header = fpatch.read(8)
+    header = fpatch.read(1)
     fpatch.seek(position, os.SEEK_SET)
 
-    if len(header) != 8:
+    if len(header) != 1:
         raise Error('Failed to read the patch header.')
 
-    magic = header[0:7]
-
-    if magic != b'detools':
-        raise Error(
-            "Expected header magic b'detools', but got {}.".format(magic))
-
-    return header[7]
+    return unpack_header(header)[0]
 
 
 def read_header_normal(fpatch):
@@ -107,37 +106,28 @@ def read_header_normal(fpatch):
 
     """
 
-    header = fpatch.read(20)
+    header = fpatch.read(9)
 
-    if len(header) != 20:
+    if len(header) != 9:
         raise Error('Failed to read the patch header.')
 
-    magic = header[0:7]
+    patch_type, compression = unpack_header(header)
 
-    if magic != b'detools':
+    if patch_type != 0:
+        raise Error("Expected patch type 0, but got {}.".format(patch_type))
+
+    if compression == 0:
+        compression = 'none'
+    elif compression == 1:
+        compression = 'lzma'
+    elif compression == 2:
+        compression = 'crle'
+    else:
         raise Error(
-            "Expected header magic b'detools', but got {}.".format(magic))
+            "Expected compression none(0), lzma(1) or crle(2), but "
+            "got {}.".format(compression))
 
-    patch_type = header[7]
-
-    if patch_type != 48:
-        raise Error("Expected patch type 48, but got {}.".format(patch_type))
-
-    compression = header[8:12]
-
-    try:
-        compression = compression.decode('ascii')
-    except UnicodeDecodeError:
-        raise Error(
-            'Failed to decode the compression field in the header (got {}).'.format(
-                compression))
-
-    if compression not in ['lzma', 'crle', 'none']:
-        raise Error(
-            "Expected compression 'lzma' or 'none', but got '{}'.".format(
-                compression))
-
-    to_size = struct.unpack('>Q', header[12:20])[0]
+    to_size = struct.unpack('>Q', header[1:9])[0]
 
     return to_size, compression
 
@@ -147,21 +137,15 @@ def read_header_in_place(fpatch):
 
     """
 
-    header = fpatch.read(8)
+    header = fpatch.read(1)
 
-    if len(header) != 8:
+    if len(header) != 1:
         raise Error('Failed to read the patch header.')
 
-    magic = header[0:7]
+    patch_type, _ = unpack_header(header)
 
-    if magic != b'detools':
-        raise Error(
-            "Expected header magic b'detools', but got {}.".format(magic))
-
-    patch_type = header[7]
-
-    if patch_type != 49:
-        raise Error("Expected patch type 49, but got {}.".format(patch_type))
+    if patch_type != 1:
+        raise Error("Expected patch type 1, but got {}.".format(patch_type))
 
     number_of_segments = unpack_size(fpatch)[0]
     shift_size = unpack_size(fpatch)[0]

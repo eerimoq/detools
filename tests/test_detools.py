@@ -215,18 +215,6 @@ class DetoolsTest(unittest.TestCase):
                                            'tests/files/foo.new',
                                            'tests/files/foo-no-delta.patch')
 
-    def test_apply_patch_bad_header_magic(self):
-        fnew = BytesIO()
-
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/bad-header-magic.patch', 'rb') as fpatch:
-                with self.assertRaises(detools.Error) as cm:
-                    detools.apply_patch(fold, fpatch, fnew)
-
-                self.assertEqual(
-                    str(cm.exception),
-                    "Expected header magic b'detools', but got b'eetools'.")
-
     def test_apply_patch_empty(self):
         fnew = BytesIO()
 
@@ -300,21 +288,9 @@ class DetoolsTest(unittest.TestCase):
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
-                self.assertEqual(str(cm.exception),
-                                 "Expected patch type 48 or 49, but got 57.")
-
-    def test_apply_patch_foo_non_ascii_compression(self):
-        fnew = BytesIO()
-
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-non-ascii-compression.patch', 'rb') as fpatch:
-                with self.assertRaises(detools.Error) as cm:
-                    detools.apply_patch(fold, fpatch, fnew)
-
                 self.assertEqual(
                     str(cm.exception),
-                    "Failed to decode the compression field in the header "
-                    "(got b'\\xdczma').")
+                    "Expected patch type 0 or 1, but got 7.")
 
     def test_apply_patch_foo_bad_compression(self):
         fnew = BytesIO()
@@ -326,7 +302,7 @@ class DetoolsTest(unittest.TestCase):
 
                 self.assertEqual(
                     str(cm.exception),
-                    "Expected compression 'lzma' or 'none', but got 'abcd'.")
+                    "Expected compression none(0), lzma(1) or crle(2), but got 15.")
 
     def test_command_line_create_patch_foo(self):
         foo_patch = 'foo.patch'
@@ -381,9 +357,9 @@ class DetoolsTest(unittest.TestCase):
 
         self.assertEqual(stdout.getvalue(),
                          'Type:               normal\n'
-                         'Patch size:         188 bytes\n'
+                         'Patch size:         177 bytes\n'
                          'To size:            2.78 KB\n'
-                         'Patch/to ratio:     6.8 % (lower is better)\n'
+                         'Patch/to ratio:     6.4 % (lower is better)\n'
                          'Diff/extra ratio:   9828.6 % (higher is better)\n'
                          'Size/data ratio:    0.3 % (lower is better)\n'
                          'Compression:        lzma\n'
@@ -412,9 +388,9 @@ class DetoolsTest(unittest.TestCase):
 
         self.assertEqual(stdout.getvalue(),
                          'Type:               normal\n'
-                         'Patch size:         112 bytes\n'
+                         'Patch size:         101 bytes\n'
                          'To size:            2.78 KB\n'
-                         'Patch/to ratio:     4.0 % (lower is better)\n'
+                         'Patch/to ratio:     3.6 % (lower is better)\n'
                          'Diff/extra ratio:   inf % (higher is better)\n'
                          'Size/data ratio:    0.2 % (lower is better)\n'
                          'Compression:        lzma\n'
@@ -443,9 +419,9 @@ class DetoolsTest(unittest.TestCase):
 
         self.assertEqual(stdout.getvalue(),
                          'Type:               normal\n'
-                         'Patch size:         2.81 KB\n'
+                         'Patch size:         2.8 KB\n'
                          'To size:            2.78 KB\n'
-                         'Patch/to ratio:     101.0 % (lower is better)\n'
+                         'Patch/to ratio:     100.6 % (lower is better)\n'
                          'Diff/extra ratio:   9828.6 % (higher is better)\n'
                          'Size/data ratio:    0.3 % (lower is better)\n'
                          'Compression:        none\n'
@@ -474,9 +450,9 @@ class DetoolsTest(unittest.TestCase):
 
         self.assertEqual(stdout.getvalue(),
                          'Type:               normal\n'
-                         'Patch size:         206 bytes\n'
+                         'Patch size:         195 bytes\n'
                          'To size:            2.78 KB\n'
-                         'Patch/to ratio:     7.4 % (lower is better)\n'
+                         'Patch/to ratio:     7.0 % (lower is better)\n'
                          'Diff/extra ratio:   9828.6 % (higher is better)\n'
                          'Size/data ratio:    0.3 % (lower is better)\n'
                          'Compression:        crle\n'
@@ -555,9 +531,9 @@ class DetoolsTest(unittest.TestCase):
             '\n'
             'From offset:        0 bytes\n'
             'Type:               normal\n'
-            'Patch size:         1.21 KB\n'
+            'Patch size:         1.2 KB\n'
             'To size:            1.5 KB\n'
-            'Patch/to ratio:     80.5 % (lower is better)\n'
+            'Patch/to ratio:     79.8 % (lower is better)\n'
             'Diff/extra ratio:   0.0 % (higher is better)\n'
             'Size/data ratio:    0.3 % (lower is better)\n'
             'Compression:        lzma\n'
@@ -576,9 +552,9 @@ class DetoolsTest(unittest.TestCase):
             '\n'
             'From offset:        0 bytes\n'
             'Type:               normal\n'
-            'Patch size:         1.02 KB\n'
+            'Patch size:         1 KB\n'
             'To size:            1.28 KB\n'
-            'Patch/to ratio:     79.4 % (lower is better)\n'
+            'Patch/to ratio:     78.5 % (lower is better)\n'
             'Diff/extra ratio:   0.0 % (higher is better)\n'
             'Size/data ratio:    0.3 % (lower is better)\n'
             'Compression:        lzma\n'

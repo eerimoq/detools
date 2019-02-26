@@ -2,6 +2,7 @@ import os
 import struct
 from lzma import LZMACompressor
 from io import BytesIO
+import bitstruct
 from .errors import Error
 from .crle import CrleCompressor
 from .none import NoneCompressor
@@ -16,16 +17,20 @@ except ImportError:
 
 
 COMPRESSIONS = {
-    'lzma': b'lzma',
-    'crle': b'crle',
-    'none': b'none'
+    'none': 0,
+    'lzma': 1,
+    'crle': 2
 }
 
 
-def _get_fsize(f):
+def get_fsize(f):
     f.seek(0, os.SEEK_END)
 
     return f.tell()
+
+
+def pack_header(patch_type, compression):
+    return bitstruct.pack('p1u3u4', patch_type, compression)
 
 
 def fread(f):
@@ -34,11 +39,9 @@ def fread(f):
     return f.read()
 
 
-def _write_header(fpatch, fto, compression):
-    fpatch.write(b'detools')
-    fpatch.write(b'0')
-    fpatch.write(COMPRESSIONS[compression])
-    fpatch.write(struct.pack('>Q', _get_fsize(fto)))
+def _write_header_normal(fpatch, fto, compression):
+    fpatch.write(pack_header(0, COMPRESSIONS[compression]))
+    fpatch.write(struct.pack('>Q', get_fsize(fto)))
 
 
 def _write_data(ffrom, fto, fpatch, compression):
@@ -64,7 +67,7 @@ def _write_data(ffrom, fto, fpatch, compression):
 
 
 def _create_patch_normal(ffrom, fto, fpatch, compression):
-    _write_header(fpatch, fto, compression)
+    _write_header_normal(fpatch, fto, compression)
     _write_data(ffrom, fto, fpatch, compression)
 
 
@@ -116,8 +119,7 @@ def _create_patch_in_place(ffrom,
     number_of_to_segments = _div_ceil(len(to_data), segment_size)
 
     # Write the header.
-    fpatch.write(b'detools')
-    fpatch.write(b'1')
+    fpatch.write(pack_header(1, 0))
     fpatch.write(bsdiff.pack_size(number_of_to_segments))
     fpatch.write(bsdiff.pack_size(shift_size))
 

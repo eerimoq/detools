@@ -47,7 +47,6 @@ class DetoolsSaisTest(unittest.TestCase):
 
     def test_sais_c_and_py_compatibility(self):
         datas = [
-            read_file('tests/files/bad-header-magic.patch'),
             read_file('tests/files/foo-backwards.patch'),
             read_file('tests/files/foo-bad-lzma-end.patch'),
             read_file('tests/files/foo-diff-data-too-long.patch'),
