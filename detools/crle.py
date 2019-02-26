@@ -1,6 +1,9 @@
 """Conditional Run Length Encoding (CRLE) compresses repeated bytes
 with RLE, but leaves other data sequences as is.
 
+It compresses diffs fairly well, but extras poorly. Not very useful in
+general.
+
 """
 
 import struct
