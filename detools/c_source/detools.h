@@ -110,7 +110,11 @@ int detools_apply_patch_buffers(const uint8_t *from_p,
                                 size_t to_size);
 
 /**
- * Initialize the apply patch object.
+ * Initialize given apply patch object.
+ *
+ * @param[out] self_p Patcher object to initialize.
+ * @param[in] from_read Callback to read from-data.
+ * @param[in] arg_p Argument passed to the raed callback.
  *
  * @return zero(0) or negative error code.
  */
@@ -119,38 +123,33 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
                              void *arg_p);
 
 /**
- * Feed data into the patcher and at the same time generate patched
+ * Feed data into given patcher and at the same time generate patched
  * output, ready to be written to disk/flash.
  *
- * @param[out] to_p Destination buffer for output.
- * @param[in] to_size Destination buffer size.
+ * @param[in,out] self_p Patcher object.
  * @param[in] patch_p Next chunk of the patch.
  * @param[in,out] patch_size_p Patch buffer size. Number of consumed
  *                             bytes on return.
+ * @param[out] to_p Destination buffer for output.
+ * @param[in] to_size Destination buffer size.
  *
  * @return Zero or more number of bytes written to the destination
- *         buffer or -EEOF once the whole patch has been applied or
- *         -ENEEDSINPUT if more input is needed.
+ *         buffer, or negative error code.
  */
 int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
-                                uint8_t *to_p,
-                                size_t to_size,
                                 const uint8_t *patch_p,
-                                size_t *patch_size_p);
+                                size_t *patch_size_p,
+                                uint8_t *to_p,
+                                size_t to_size);
 
 /**
- * Feed data into the patcher and at the same time generate patched
- * output, ready to be written to disk/flash.
+ * Call once after all data has been processed to finalize the
+ * patching.
  *
- * @param[out] to_p Destination buffer for output.
- * @param[in] to_size Destination buffer size.
- * @param[in] patch_p Next chunk of the patch.
- * @param[in,out] patch_size_p Patch buffer size. Number of consumed
- *                             bytes on return.
+ * @param[in,out] self_p Patcher object.
  *
- * @return Zero or more number of bytes written to the destination
- *         buffer or -EEOF once the whole patch has been applied or
- *         -ENEEDSINPUT if more input is needed.
+ * @return Zero(0) if the patch was applied successfully, or negative
+ *         error code.
  */
 int detools_apply_patch_flush(struct detools_apply_patch_t *self_p);
 
