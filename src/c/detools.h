@@ -30,6 +30,8 @@
 #define DETOOLS_H
 
 #include <stdint.h>
+#include <string.h>
+#include <stdio.h>
 
 /**
  * Read callback.
@@ -52,10 +54,9 @@ struct detools_apply_patch_t {
 /**
  * Apply given patch with file names.
  *
- * @param[in] from_read Destination buffer for output.
- * @param[in] patch_read Destination buffer for output.
- * @param[in] to_write Destination buffer for output.
- * @param[in] arg_p Destination buffer for output.
+ * @param[in] from_p Source file name.
+ * @param[in] patch_p Patch file name.
+ * @param[in] to_p Destination file name.
  *
  * @return zero(0) or negative error code.
  */
@@ -66,10 +67,9 @@ int detools_apply_patch_filenames(const char *from_p,
 /**
  * Apply given patch with file descriptors.
  *
- * @param[in] from_read Destination buffer for output.
- * @param[in] patch_read Destination buffer for output.
- * @param[in] to_write Destination buffer for output.
- * @param[in] arg_p Destination buffer for output.
+ * @param[in] from Source file descriptor.
+ * @param[in] patch Patch file descriptor.
+ * @param[in] to Destination file descriptor.
  *
  * @return zero(0) or negative error code.
  */
@@ -80,10 +80,10 @@ int detools_apply_patch_file_descriptors(int from,
 /**
  * Apply given patch with callbacks.
  *
- * @param[in] from_read Destination buffer for output.
- * @param[in] patch_read Destination buffer for output.
- * @param[in] to_write Destination buffer for output.
- * @param[in] arg_p Destination buffer for output.
+ * @param[in] from_read Source callback.
+ * @param[in] patch_read Patch callback.
+ * @param[in] to_write Destination callback.
+ * @param[in] arg_p Argument passed to callbacks.
  *
  * @return zero(0) or negative error code.
  */
@@ -95,10 +95,12 @@ int detools_apply_patch_callbacks(detools_read_t from_read,
 /**
  * Apply given patch with buffers.
  *
- * @param[in] from_read Destination buffer for output.
- * @param[in] patch_read Destination buffer for output.
- * @param[in] to_write Destination buffer for output.
- * @param[in] arg_p Destination buffer for output.
+ * @param[in] from_p Source buffer.
+ * @param[in] from_size Source buffer size.
+ * @param[in] patch_p Patch buffer.
+ * @param[in] patch_size Patch buffer size.
+ * @param[out] to_p Destination buffer.
+ * @param[in] to_size Destination buffer size.
  *
  * @return zero(0) or negative error code.
  */
@@ -114,7 +116,7 @@ int detools_apply_patch_buffers(const uint8_t *from_p,
  *
  * @param[out] self_p Patcher object to initialize.
  * @param[in] from_read Callback to read from-data.
- * @param[in] arg_p Argument passed to the raed callback.
+ * @param[in] arg_p Argument passed to the read callback.
  *
  * @return zero(0) or negative error code.
  */
@@ -125,6 +127,9 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
 /**
  * Feed data into given patcher and at the same time generate patched
  * output, ready to be written to disk/flash.
+ *
+ * NOTE: The minimum patch chunk size needed to produce any to-bytes
+ *       depends on the patch compression algorithm and settings.
  *
  * @param[in,out] self_p Patcher object.
  * @param[in] patch_p Next chunk of the patch.
