@@ -1,45 +1,69 @@
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "../src/c/detools.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 struct reader_t {
-    int dummy;
+    FILE *ffrom_p;
 };
 
 static void reader_init(struct reader_t *self_p, const char *from_p)
 {
-    (void)self_p;
-    (void)from_p;
+    self_p->ffrom_p = fopen(from_p, "rb");
+    assert(self_p->ffrom_p);
 }
 
 static int reader_read(void *arg_p, uint8_t *buf_p, size_t size)
 {
-    (void)arg_p;
-    (void)buf_p;
-    (void)size;
+    struct reader_t *self_p;
 
-    return (-1);
+    self_p = (struct reader_t *)arg_p;
+
+    return ((int)fread(buf_p, size, 1, self_p->ffrom_p));
+}
+
+static uint8_t *read_init(const char *name_p, size_t *size_p)
+{
+    FILE *file_p;
+    void *buf_p;
+    long size;
+
+    file_p = fopen(name_p, "rb");
+    assert(file_p);
+
+    assert(fseek(file_p, 0, SEEK_END) == 0);
+    size = ftell(file_p);
+    assert(size > 0);
+    *size_p = (size_t)size;
+    assert(fseek(file_p, 0, SEEK_SET) == 0);
+
+    buf_p = malloc(*size_p);
+    assert(buf_p != NULL);
+    assert(fread(buf_p, *size_p, 1, file_p) == 1);
+
+    fclose(file_p);
+
+    return (buf_p);
 }
 
 static uint8_t *patch_init(const char *patch_p, size_t *patch_size_p)
 {
-    (void)patch_p;
-    (void)patch_size_p;
-
-    return (NULL);
+    return (read_init(patch_p, patch_size_p));
 }
 
 static uint8_t *to_init(const char *to_p,
-                        const uint8_t **expected_to_pp,
+                        uint8_t **expected_to_pp,
                         size_t *to_size_p)
 {
-    (void)to_p;
-    (void)expected_to_pp;
+    void *buf_p;
 
-    *to_size_p = 0;
+    *expected_to_pp = read_init(to_p, to_size_p);
+    buf_p = malloc(*to_size_p);
+    assert(buf_p != NULL);
 
-    return (NULL);
+    return (buf_p);
 }
 
 static void assert_apply_patch(const char *from_p,
@@ -81,7 +105,7 @@ static void test_apply_patch_foo_crle_compression_incremental(void)
     struct reader_t reader;
     const uint8_t *patch_p;
     uint8_t *to_p;
-    const uint8_t *expected_to_p;
+    uint8_t *expected_to_p;
     size_t patch_size;
     size_t to_size;
     size_t expected_patch_size;
@@ -130,8 +154,8 @@ static void test_apply_patch_foo_crle_compression_incremental(void)
 
 int main()
 {
-    test_apply_patch_foo();
     test_apply_patch_foo_crle_compression_incremental();
+    test_apply_patch_foo();
 
     return (0);
 }
