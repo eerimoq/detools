@@ -5,23 +5,91 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-struct reader_t {
+struct rwer_t {
     FILE *ffrom_p;
+    struct {
+        uint8_t *actual_p;
+        uint8_t *expected_p;
+        size_t size;
+        size_t written;
+    } to;
 };
 
-static void reader_init(struct reader_t *self_p, const char *from_p)
+static void *mymalloc(size_t size)
 {
-    self_p->ffrom_p = fopen(from_p, "rb");
-    assert(self_p->ffrom_p);
+    void *buf_p;
+
+    buf_p = malloc(size);
+    assert(buf_p != NULL);
+
+    return (buf_p);
 }
 
-static int reader_read(void *arg_p, uint8_t *buf_p, size_t size)
+static FILE *myfopen(const char *name_p, const char *flags_p)
 {
-    struct reader_t *self_p;
+    FILE *file_p;
 
-    self_p = (struct reader_t *)arg_p;
+    file_p = fopen(name_p, flags_p);
+    assert(file_p != NULL);
+
+    return (file_p);
+}
+
+static void rwer_init(struct rwer_t *self_p,
+                      const char *from_p,
+                      const char *to_p)
+{
+    FILE *file_p;
+    long size;
+
+    self_p->ffrom_p = myfopen(from_p, "rb");
+
+    file_p = myfopen(to_p, "rb");
+
+    assert(fseek(file_p, 0, SEEK_END) == 0);
+    size = ftell(file_p);
+    assert(size > 0);
+    self_p->to.size = (size_t)size;
+    assert(fseek(file_p, 0, SEEK_SET) == 0);
+
+    self_p->to.actual_p = mymalloc(self_p->to.size);
+    self_p->to.expected_p = mymalloc(self_p->to.size);
+    assert(fread(self_p->to.expected_p, self_p->to.size, 1, file_p) == 1);
+
+    fclose(file_p);
+
+    self_p->to.written = 0;
+}
+
+static void rwer_assert_to_ok(struct rwer_t *self_p)
+{
+    assert(self_p->to.written == self_p->to.size);
+    assert(memcmp(self_p->to.actual_p,
+                  self_p->to.expected_p,
+                  self_p->to.size) == 0);
+}
+
+static int rwer_read(void *arg_p, uint8_t *buf_p, size_t size)
+{
+    struct rwer_t *self_p;
+
+    self_p = (struct rwer_t *)arg_p;
 
     return ((int)fread(buf_p, size, 1, self_p->ffrom_p));
+}
+
+static int rwer_write(void *arg_p, const uint8_t *buf_p, size_t size)
+{
+    struct rwer_t *self_p;
+
+    self_p = (struct rwer_t *)arg_p;
+
+    assert(self_p->to.size - self_p->to.written >= size);
+
+    memcpy(&self_p->to.actual_p[self_p->to.written], buf_p, size);
+    self_p->to.written += size;
+
+    return ((int)size);
 }
 
 static uint8_t *read_init(const char *name_p, size_t *size_p)
@@ -30,8 +98,7 @@ static uint8_t *read_init(const char *name_p, size_t *size_p)
     void *buf_p;
     long size;
 
-    file_p = fopen(name_p, "rb");
-    assert(file_p);
+    file_p = myfopen(name_p, "rb");
 
     assert(fseek(file_p, 0, SEEK_END) == 0);
     size = ftell(file_p);
@@ -39,8 +106,7 @@ static uint8_t *read_init(const char *name_p, size_t *size_p)
     *size_p = (size_t)size;
     assert(fseek(file_p, 0, SEEK_SET) == 0);
 
-    buf_p = malloc(*size_p);
-    assert(buf_p != NULL);
+    buf_p = mymalloc(*size_p);
     assert(fread(buf_p, *size_p, 1, file_p) == 1);
 
     fclose(file_p);
@@ -51,19 +117,6 @@ static uint8_t *read_init(const char *name_p, size_t *size_p)
 static uint8_t *patch_init(const char *patch_p, size_t *patch_size_p)
 {
     return (read_init(patch_p, patch_size_p));
-}
-
-static uint8_t *to_init(const char *to_p,
-                        uint8_t **expected_to_pp,
-                        size_t *to_size_p)
-{
-    void *buf_p;
-
-    *expected_to_pp = read_init(to_p, to_size_p);
-    buf_p = malloc(*to_size_p);
-    assert(buf_p != NULL);
-
-    return (buf_p);
 }
 
 static void assert_apply_patch(const char *from_p,
@@ -80,10 +133,8 @@ static void assert_apply_patch(const char *from_p,
                                          patch_p,
                                          actual_to_p) == 0);
 
-    actual_fto_p = fopen(actual_to_p, "rb");
-    assert(actual_fto_p != NULL);
-    expected_fto_p = fopen(to_p, "rb");
-    assert(expected_fto_p != NULL);
+    actual_fto_p = myfopen(actual_to_p, "rb");
+    expected_fto_p = myfopen(to_p, "rb");
 
     do {
         actual_byte = getc(actual_fto_p);
@@ -102,53 +153,38 @@ static void test_apply_patch_foo(void)
 static void test_apply_patch_foo_crle_compression_incremental(void)
 {
     struct detools_apply_patch_t apply_patch;
-    struct reader_t reader;
+    struct rwer_t rwer;
     const uint8_t *patch_p;
-    uint8_t *to_p;
-    uint8_t *expected_to_p;
     size_t patch_size;
-    size_t to_size;
     size_t expected_patch_size;
-    size_t chunk_patch_size;
-    size_t to_offset;
     size_t patch_offset;
     int res;
-    size_t actual_to_size;
 
-    reader_init(&reader, "tests/files/foo.old");
+    rwer_init(&rwer, "tests/files/foo.old", "tests/files/foo.new");
     patch_p = patch_init("tests/files/foo-crle.patch", &patch_size);
-    to_p = to_init("tests/files/foo.new", &expected_to_p, &to_size);
     expected_patch_size = patch_size;
 
     assert(detools_apply_patch_init(&apply_patch,
-                                    reader_read,
-                                    &reader) == 0);
+                                    rwer_read,
+                                    rwer_write,
+                                    &rwer) == 0);
 
     /* Process up to 64 new patch bytes per iteration. */
     patch_offset = 0;
-    to_offset = 0;
-    actual_to_size = 0;
 
     while (patch_offset < expected_patch_size) {
         patch_size = MIN(expected_patch_size - patch_offset, 64);
-        chunk_patch_size = patch_size;
 
         res = detools_apply_patch_process(&apply_patch,
                                           &patch_p[patch_offset],
-                                          &patch_size,
-                                          &to_p[to_offset],
-                                          to_size - to_offset);
+                                          patch_size);
 
         assert(res >= 0);
-        assert(patch_size <= chunk_patch_size);
-        actual_to_size += (size_t)res;
-        to_offset += (size_t)res;
-        patch_offset += patch_size;
+        assert(res <= (int)patch_size);
+        patch_offset += (size_t)res;
     }
 
-    assert(actual_to_size == to_size);
-    assert(memcmp(to_p, expected_to_p, to_size) == 0);
-
+    rwer_assert_to_ok(&rwer);
     assert(detools_apply_patch_flush(&apply_patch) == 0);
 }
 

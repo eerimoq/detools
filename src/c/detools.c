@@ -86,9 +86,11 @@ int detools_apply_patch_buffers(const uint8_t *from_p,
 
 int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
                              detools_read_t from_read,
+                             detools_write_t to_write,
                              void *arg_p)
 {
     self_p->from_read = from_read;
+    self_p->to_write = to_write;
     self_p->arg_p = arg_p;
 
     return (0);
@@ -96,15 +98,11 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
 
 int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
                                 const uint8_t *patch_p,
-                                size_t *patch_size_p,
-                                uint8_t *to_p,
-                                size_t to_size)
+                                size_t size)
 {
     (void)self_p;
     (void)patch_p;
-    (void)patch_size_p;
-    (void)to_p;
-    (void)to_size;
+    (void)size;
 
     return (-1);
 }
