@@ -118,6 +118,14 @@ class DetoolsTest(unittest.TestCase):
                                            memory_size=3000,
                                            segment_size=1500)
 
+    def test_create_and_apply_patch_foo_in_place_3k_1_5k(self):
+        self.assert_create_and_apply_patch('tests/files/foo.old',
+                                           'tests/files/foo.new',
+                                           'tests/files/foo-in-place-3k-1.5k.patch',
+                                           patch_type='in-place',
+                                           memory_size=3072,
+                                           segment_size=1536)
+
     def test_create_and_apply_patch_foo_in_place_3000_1500_1500(self):
         self.assert_create_and_apply_patch('tests/files/foo.old',
                                            'tests/files/foo.new',
@@ -358,16 +366,16 @@ class DetoolsTest(unittest.TestCase):
         self.assertEqual(stdout.getvalue(),
                          'Type:               normal\n'
                          'Patch size:         177 bytes\n'
-                         'To size:            2.78 KB\n'
+                         'To size:            2.71 KiB\n'
                          'Patch/to ratio:     6.4 % (lower is better)\n'
                          'Diff/extra ratio:   9828.6 % (higher is better)\n'
                          'Size/data ratio:    0.3 % (lower is better)\n'
                          'Compression:        lzma\n'
                          '\n'
                          'Number of diffs:    2\n'
-                         'Total diff size:    2.75 KB\n'
-                         'Average diff size:  1.38 KB\n'
-                         'Median diff size:   1.38 KB\n'
+                         'Total diff size:    2.69 KiB\n'
+                         'Average diff size:  1.34 KiB\n'
+                         'Median diff size:   1.34 KiB\n'
                          '\n'
                          'Number of extras:   2\n'
                          'Total extra size:   28 bytes\n'
@@ -389,16 +397,16 @@ class DetoolsTest(unittest.TestCase):
         self.assertEqual(stdout.getvalue(),
                          'Type:               normal\n'
                          'Patch size:         101 bytes\n'
-                         'To size:            2.78 KB\n'
+                         'To size:            2.71 KiB\n'
                          'Patch/to ratio:     3.6 % (lower is better)\n'
                          'Diff/extra ratio:   inf % (higher is better)\n'
                          'Size/data ratio:    0.2 % (lower is better)\n'
                          'Compression:        lzma\n'
                          '\n'
                          'Number of diffs:    1\n'
-                         'Total diff size:    2.78 KB\n'
-                         'Average diff size:  2.78 KB\n'
-                         'Median diff size:   2.78 KB\n'
+                         'Total diff size:    2.71 KiB\n'
+                         'Average diff size:  2.71 KiB\n'
+                         'Median diff size:   2.71 KiB\n'
                          '\n'
                          'Number of extras:   1\n'
                          'Total extra size:   0 bytes\n'
@@ -419,17 +427,17 @@ class DetoolsTest(unittest.TestCase):
 
         self.assertEqual(stdout.getvalue(),
                          'Type:               normal\n'
-                         'Patch size:         2.8 KB\n'
-                         'To size:            2.78 KB\n'
+                         'Patch size:         2.73 KiB\n'
+                         'To size:            2.71 KiB\n'
                          'Patch/to ratio:     100.6 % (lower is better)\n'
                          'Diff/extra ratio:   9828.6 % (higher is better)\n'
                          'Size/data ratio:    0.3 % (lower is better)\n'
                          'Compression:        none\n'
                          '\n'
                          'Number of diffs:    2\n'
-                         'Total diff size:    2.75 KB\n'
-                         'Average diff size:  1.38 KB\n'
-                         'Median diff size:   1.38 KB\n'
+                         'Total diff size:    2.69 KiB\n'
+                         'Average diff size:  1.34 KiB\n'
+                         'Median diff size:   1.34 KiB\n'
                          '\n'
                          'Number of extras:   2\n'
                          'Total extra size:   28 bytes\n'
@@ -451,16 +459,16 @@ class DetoolsTest(unittest.TestCase):
         self.assertEqual(stdout.getvalue(),
                          'Type:               normal\n'
                          'Patch size:         195 bytes\n'
-                         'To size:            2.78 KB\n'
+                         'To size:            2.71 KiB\n'
                          'Patch/to ratio:     7.0 % (lower is better)\n'
                          'Diff/extra ratio:   9828.6 % (higher is better)\n'
                          'Size/data ratio:    0.3 % (lower is better)\n'
                          'Compression:        crle\n'
                          '\n'
                          'Number of diffs:    2\n'
-                         'Total diff size:    2.75 KB\n'
-                         'Average diff size:  1.38 KB\n'
-                         'Median diff size:   1.38 KB\n'
+                         'Total diff size:    2.69 KiB\n'
+                         'Average diff size:  1.34 KiB\n'
+                         'Median diff size:   1.34 KiB\n'
                          '\n'
                          'Number of extras:   2\n'
                          'Total extra size:   28 bytes\n'
@@ -525,14 +533,14 @@ class DetoolsTest(unittest.TestCase):
             stdout.getvalue(),
             'Type:               in-place\n'
             'Number of segments: 2\n'
-            'From shift size:    3000\n'
+            'From shift size:    2.93 KiB\n'
             '\n'
             '-------------------- Patch 1 --------------------\n'
             '\n'
             'From offset:        0 bytes\n'
             'Type:               normal\n'
-            'Patch size:         1.2 KB\n'
-            'To size:            1.5 KB\n'
+            'Patch size:         1.17 KiB\n'
+            'To size:            1.46 KiB\n'
             'Patch/to ratio:     79.8 % (lower is better)\n'
             'Diff/extra ratio:   0.0 % (higher is better)\n'
             'Size/data ratio:    0.3 % (lower is better)\n'
@@ -544,16 +552,16 @@ class DetoolsTest(unittest.TestCase):
             'Median diff size:   0 bytes\n'
             '\n'
             'Number of extras:   1\n'
-            'Total extra size:   1.5 KB\n'
-            'Average extra size: 1.5 KB\n'
-            'Median extra size:  1.5 KB\n'
+            'Total extra size:   1.46 KiB\n'
+            'Average extra size: 1.46 KiB\n'
+            'Median extra size:  1.46 KiB\n'
             '\n'
             '-------------------- Patch 2 --------------------\n'
             '\n'
             'From offset:        0 bytes\n'
             'Type:               normal\n'
-            'Patch size:         1 KB\n'
-            'To size:            1.28 KB\n'
+            'Patch size:         1005 bytes\n'
+            'To size:            1.25 KiB\n'
             'Patch/to ratio:     78.5 % (lower is better)\n'
             'Diff/extra ratio:   0.0 % (higher is better)\n'
             'Size/data ratio:    0.3 % (lower is better)\n'
@@ -565,9 +573,174 @@ class DetoolsTest(unittest.TestCase):
             'Median diff size:   0 bytes\n'
             '\n'
             'Number of extras:   1\n'
-            'Total extra size:   1.28 KB\n'
-            'Average extra size: 1.28 KB\n'
-            'Median extra size:  1.28 KB\n'
+            'Total extra size:   1.25 KiB\n'
+            'Average extra size: 1.25 KiB\n'
+            'Median extra size:  1.25 KiB\n'
+            '\n')
+
+    def test_command_line_patch_info_foo_in_place_no_human(self):
+        argv = [
+            'detools',
+            'patch_info',
+            '--no-human',
+            'tests/files/foo-in-place-3000-1500.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(
+            stdout.getvalue(),
+            'Type:               in-place\n'
+            'Number of segments: 2\n'
+            'From shift size:    3000 bytes\n'
+            '\n'
+            '-------------------- Patch 1 --------------------\n'
+            '\n'
+            'From offset:        0 bytes\n'
+            'Type:               normal\n'
+            'Patch size:         1197 bytes\n'
+            'To size:            1500 bytes\n'
+            'Patch/to ratio:     79.8 % (lower is better)\n'
+            'Diff/extra ratio:   0.0 % (higher is better)\n'
+            'Size/data ratio:    0.3 % (lower is better)\n'
+            'Compression:        lzma\n'
+            '\n'
+            'Number of diffs:    1\n'
+            'Total diff size:    0 bytes\n'
+            'Average diff size:  0 bytes\n'
+            'Median diff size:   0 bytes\n'
+            '\n'
+            'Number of extras:   1\n'
+            'Total extra size:   1500 bytes\n'
+            'Average extra size: 1500 bytes\n'
+            'Median extra size:  1500 bytes\n'
+            '\n'
+            '-------------------- Patch 2 --------------------\n'
+            '\n'
+            'From offset:        0 bytes\n'
+            'Type:               normal\n'
+            'Patch size:         1005 bytes\n'
+            'To size:            1280 bytes\n'
+            'Patch/to ratio:     78.5 % (lower is better)\n'
+            'Diff/extra ratio:   0.0 % (higher is better)\n'
+            'Size/data ratio:    0.3 % (lower is better)\n'
+            'Compression:        lzma\n'
+            '\n'
+            'Number of diffs:    1\n'
+            'Total diff size:    0 bytes\n'
+            'Average diff size:  0 bytes\n'
+            'Median diff size:   0 bytes\n'
+            '\n'
+            'Number of extras:   1\n'
+            'Total extra size:   1280 bytes\n'
+            'Average extra size: 1280 bytes\n'
+            'Median extra size:  1280 bytes\n'
+            '\n')
+
+    def test_command_line_create_patch_foo_in_place_size_units(self):
+        foo_patch = 'foo-in-place-3k-1.5k.patch'
+        argv = [
+            'detools',
+            'create_patch',
+            '--type', 'in-place',
+            '--memory-size', '3k',
+            '--segment-size', '1.5k',
+            'tests/files/foo.old',
+            'tests/files/foo.new',
+            foo_patch
+        ]
+
+        if os.path.exists(foo_patch):
+            os.remove(foo_patch)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_patch),
+                         read_file('tests/files/foo-in-place-3k-1.5k.patch'))
+
+    def test_command_line_apply_patch_foo_in_place_size_units(self):
+        foo_new = 'foo.new'
+        argv = [
+            'detools',
+            '--debug',
+            'apply_patch',
+            'tests/files/foo.old',
+            'tests/files/foo-in-place-3k-1.5k.patch',
+            foo_new
+        ]
+
+        if os.path.exists(foo_new):
+            os.remove(foo_new)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_new),
+                         read_file('tests/files/foo.new'))
+
+    def test_command_line_patch_info_foo_in_place_size_units(self):
+        argv = [
+            'detools',
+            'patch_info',
+            'tests/files/foo-in-place-3k-1.5k.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(
+            stdout.getvalue(),
+            'Type:               in-place\n'
+            'Number of segments: 2\n'
+            'From shift size:    3 KiB\n'
+            '\n'
+            '-------------------- Patch 1 --------------------\n'
+            '\n'
+            'From offset:        0 bytes\n'
+            'Type:               normal\n'
+            'Patch size:         1.2 KiB\n'
+            'To size:            1.5 KiB\n'
+            'Patch/to ratio:     79.8 % (lower is better)\n'
+            'Diff/extra ratio:   0.0 % (higher is better)\n'
+            'Size/data ratio:    0.3 % (lower is better)\n'
+            'Compression:        lzma\n'
+            '\n'
+            'Number of diffs:    1\n'
+            'Total diff size:    0 bytes\n'
+            'Average diff size:  0 bytes\n'
+            'Median diff size:   0 bytes\n'
+            '\n'
+            'Number of extras:   1\n'
+            'Total extra size:   1.5 KiB\n'
+            'Average extra size: 1.5 KiB\n'
+            'Median extra size:  1.5 KiB\n'
+            '\n'
+            '-------------------- Patch 2 --------------------\n'
+            '\n'
+            'From offset:        0 bytes\n'
+            'Type:               normal\n'
+            'Patch size:         961 bytes\n'
+            'To size:            1.21 KiB\n'
+            'Patch/to ratio:     77.3 % (lower is better)\n'
+            'Diff/extra ratio:   0.0 % (higher is better)\n'
+            'Size/data ratio:    0.3 % (lower is better)\n'
+            'Compression:        lzma\n'
+            '\n'
+            'Number of diffs:    1\n'
+            'Total diff size:    0 bytes\n'
+            'Average diff size:  0 bytes\n'
+            'Median diff size:   0 bytes\n'
+            '\n'
+            'Number of extras:   1\n'
+            'Total extra size:   1.21 KiB\n'
+            'Average extra size: 1.21 KiB\n'
+            'Median extra size:  1.21 KiB\n'
             '\n')
 
 

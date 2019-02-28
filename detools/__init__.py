@@ -3,6 +3,7 @@ import argparse
 from statistics import mean
 from statistics import median
 from humanfriendly import format_size
+from humanfriendly import parse_size
 
 from .create import create_patch
 from .apply import apply_patch
@@ -39,7 +40,16 @@ def _do_apply_patch(args):
                 apply_patch(ffrom, fpatch, fto)
 
 
-def _patch_info_normal(compression,
+def _format_size(value):
+    return format_size(value, binary=True)
+
+
+def _format_bytes(value):
+    return '{} bytes'.format(value)
+
+
+def _patch_info_normal(fsize,
+                       compression,
                        patch_size,
                        to_size,
                        diff_sizes,
@@ -58,35 +68,35 @@ def _patch_info_normal(compression,
         diff_extra_ratio = 'inf'
 
     print('Type:               normal')
-    print('Patch size:         {}'.format(format_size(patch_size)))
-    print('To size:            {}'.format(format_size(to_size)))
+    print('Patch size:         {}'.format(fsize(patch_size)))
+    print('To size:            {}'.format(fsize(to_size)))
     print('Patch/to ratio:     {} % (lower is better)'.format(patch_to_ratio))
     print('Diff/extra ratio:   {} % (higher is better)'.format(diff_extra_ratio))
     print('Size/data ratio:    {} % (lower is better)'.format(size_data_ratio))
     print('Compression:        {}'.format(compression))
     print()
     print('Number of diffs:    {}'.format(len(diff_sizes)))
-    print('Total diff size:    {}'.format(format_size(sum(diff_sizes))))
-    print('Average diff size:  {}'.format(format_size(int(mean(diff_sizes)))))
-    print('Median diff size:   {}'.format(format_size(int(median(diff_sizes)))))
+    print('Total diff size:    {}'.format(fsize(sum(diff_sizes))))
+    print('Average diff size:  {}'.format(fsize(int(mean(diff_sizes)))))
+    print('Median diff size:   {}'.format(fsize(int(median(diff_sizes)))))
     print()
     print('Number of extras:   {}'.format(len(extra_sizes)))
-    print('Total extra size:   {}'.format(format_size(sum(extra_sizes))))
-    print('Average extra size: {}'.format(format_size(int(mean(extra_sizes)))))
-    print('Median extra size:  {}'.format(format_size(int(median(extra_sizes)))))
+    print('Total extra size:   {}'.format(fsize(sum(extra_sizes))))
+    print('Average extra size: {}'.format(fsize(int(mean(extra_sizes)))))
+    print('Median extra size:  {}'.format(fsize(int(median(extra_sizes)))))
 
 
-def _patch_info_in_place(number_of_segments, from_shift_size, info):
+def _patch_info_in_place(fsize, number_of_segments, from_shift_size, info):
     print('Type:               in-place')
     print('Number of segments: {}'.format(number_of_segments))
-    print('From shift size:    {}'.format(from_shift_size))
+    print('From shift size:    {}'.format(fsize(from_shift_size)))
     print()
 
     for i, (from_offset, _, normal_info) in enumerate(info):
         print('-------------------- Patch {} --------------------'.format(i + 1))
         print()
-        print('From offset:        {}'.format(format_size(from_offset)))
-        _patch_info_normal(*normal_info)
+        print('From offset:        {}'.format(fsize(from_offset)))
+        _patch_info_normal(fsize, *normal_info)
         print()
 
 
@@ -94,16 +104,21 @@ def _do_patch_info(args):
     with open(args.patchfile, 'rb') as fpatch:
         patch_type, info = patch_info(fpatch)
 
-        if patch_type == 'normal':
-            _patch_info_normal(*info)
-        elif patch_type == 'in-place':
-            _patch_info_in_place(*info)
-        else:
-            raise Error('Bad patch type {}.'.format(patch_type))
+    if args.no_human:
+        fsize = _format_bytes
+    else:
+        fsize = _format_size
+
+    if patch_type == 'normal':
+        _patch_info_normal(fsize, *info)
+    elif patch_type == 'in-place':
+        _patch_info_in_place(fsize, *info)
+    else:
+        raise Error('Bad patch type {}.'.format(patch_type))
 
 
-def to_int(value):
-    return int(value, 0)
+def to_binary_size(value):
+    return parse_size(value, binary=True)
 
 
 def _main():
@@ -132,15 +147,15 @@ def _main():
                            default='lzma',
                            help='Compression algorithm (default: lzma).')
     subparser.add_argument('--memory-size',
-                           type=to_int,
+                           type=to_binary_size,
                            help='Target memory size.')
     subparser.add_argument(
         '--segment-size',
-        type=to_int,
+        type=to_binary_size,
         help='Segment size. Must be a multiple of the largest erase block size.')
     subparser.add_argument(
         '--minimum-shift-size',
-        type=to_int,
+        type=to_binary_size,
         help='Minimum shift size (default: 2 * segment size).')
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
@@ -158,6 +173,9 @@ def _main():
     # Patch info subparser.
     subparser = subparsers.add_parser('patch_info',
                                       description='Display patch info.')
+    subparser.add_argument('--no-human',
+                           action='store_true',
+                           help='Print sizes without units.')
     subparser.add_argument('patchfile', help='Patch file.')
     subparser.set_defaults(func=_do_patch_info)
 
