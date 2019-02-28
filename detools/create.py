@@ -41,7 +41,7 @@ def fread(f):
 
 def _write_header_normal(fpatch, fto, compression):
     fpatch.write(pack_header(0, COMPRESSIONS[compression]))
-    fpatch.write(struct.pack('>Q', get_fsize(fto)))
+    fpatch.write(bsdiff.pack_size(get_fsize(fto)))
 
 
 def _write_data(ffrom, fto, fpatch, compression):

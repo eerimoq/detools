@@ -106,9 +106,9 @@ def read_header_normal(fpatch):
 
     """
 
-    header = fpatch.read(9)
+    header = fpatch.read(1)
 
-    if len(header) != 9:
+    if len(header) != 1:
         raise Error('Failed to read the patch header.')
 
     patch_type, compression = unpack_header(header)
@@ -127,7 +127,7 @@ def read_header_normal(fpatch):
             "Expected compression none(0), lzma(1) or crle(2), but "
             "got {}.".format(compression))
 
-    to_size = struct.unpack('>Q', header[1:9])[0]
+    to_size = unpack_size(fpatch)[0]
 
     return to_size, compression
 
