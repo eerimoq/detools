@@ -153,6 +153,53 @@ sequences below for clarity.
 
 #. Update to application version 2 complete!
 
+ToDo: Make it possible to resume an interrupted in-place update by
+      introducing a step state, persistentely stored in a separate
+      memory region. Also store the patch header persistentely. Reject
+      any other patch until the currently active patch has been
+      successfully applied.
+
+   .. code-block:: text
+
+          0       1       2       3       4       5
+      +-------+-------+-------+-------+-------+-------+
+      |0123456789abcdefghijklmnopqr|                  | Step: 0
+      +-------+-------+-------+-------+-------+-------+
+      |0123456789abcdefghijklmnopqr|          |opqr|  | Step: 1
+      +-------+-------+-------+-------+-------+-------+
+      |0123456789abcdefghijklmn|              |opqr|  | Step: 2
+      +-------+-------+-------+-------+-------+-------+
+      |0123456789abcdefghijklmn|      |ghijklmnopqr|  | Step: 3
+      +-------+-------+-------+-------+-------+-------+
+      |0123456789abcdef|              |ghijklmnopqr|  | Step: 4
+      +-------+-------+-------+-------+-------+-------+
+      |0123456789abcdef|      |89abcdefghijklmnopqr|  | Step: 5
+      +-------+-------+-------+-------+-------+-------+
+      |01234567|              |89abcdefghijklmnopqr|  | Step: 6
+      +-------+-------+-------+-------+-------+-------+
+      |01234567|      |0123456789abcdefghijklmnopqr|  | Step: 7
+      +-------+-------+-------+-------+-------+-------+
+      |               |0123456789abcdefghijklmnopqr|  | Step: 8
+      +-------+-------+-------+-------+-------+-------+
+      |ABCDEFG|       |0123456789abcdefghijklmnopqr|  | Step: 9
+      +-------+-------+-------+-------+-------+-------+
+      |ABCDEFGHIJKLMNO|0123456789abcdefghijklmnopqr|  | Step: 10
+      +-------+-------+-------+-------+-------+-------+
+      |ABCDEFGHIJKLMNO|       |89abcdefghijklmnopqr|  | Step: 11
+      +-------+-------+-------+-------+-------+-------+
+      |ABCDEFGHIJKLMNOPQRSTUVW|89abcdefghijklmnopqr|  | Step: 12
+      +-------+-------+-------+-------+-------+-------+
+      |ABCDEFGHIJKLMNOPQRSTUVW|       |ghijklmnopqr|  | Step: 13
+      +-------+-------+-------+-------+-------+-------+
+      |ABCDEFGHIJKLMNOPQRSTUVWXYZstuvw|ghijklmnopqr|  | Step: 14
+      +-------+-------+-------+-------+-------+-------+
+      |ABCDEFGHIJKLMNOPQRSTUVWXYZstuvw|       |opqr|  | Step: 15
+      +-------+-------+-------+-------+-------+-------+
+      |ABCDEFGHIJKLMNOPQRSTUVWXYZstuvwxyz|    |opqr|  | Step: 16
+      +-------+-------+-------+-------+-------+-------+
+      |ABCDEFGHIJKLMNOPQRSTUVWXYZstuvwxyz|            | Step: 17
+      +-------+-------+-------+-------+-------+-------+
+
 Functions and classes
 =====================
 
