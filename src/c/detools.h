@@ -50,6 +50,8 @@ struct detools_apply_patch_t {
     detools_read_t from_read;
     detools_write_t to_write;
     void *arg_p;
+    int patch_type;
+    int compression;
 };
 
 /**
@@ -123,6 +125,6 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
  * @return Zero(0) if the patch was applied successfully, or negative
  *         error code.
  */
-int detools_apply_patch_flush(struct detools_apply_patch_t *self_p);
+int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p);
 
 #endif

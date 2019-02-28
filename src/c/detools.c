@@ -32,6 +32,53 @@
 
 #include "detools.h"
 
+#define PATCH_TYPE_NONE                                    -1
+#define PATCH_TYPE_NORMAL                                   0
+#define PATCH_TYPE_IN_PLACE                                 1
+
+#define COMPRESSION_NONE                                    0
+#define COMPRESSION_LZMA                                    1
+#define COMPRESSION_CRLE                                    2
+
+static int read_header_common(struct detools_apply_patch_t *self_p,
+                              const uint8_t *patch_p,
+                              size_t size)
+{
+    if (size < 1) {
+        return (-1);
+    }
+
+    self_p->patch_type = ((patch_p[0] >> 4) & 0x7);
+    self_p->compression = (patch_p[0] & 0xf);
+
+    return (1);
+}
+
+static int apply_patch_in_place(struct detools_apply_patch_t *self_p,
+                                const uint8_t *patch_p,
+                                size_t size)
+{
+    (void)self_p;
+    (void)patch_p;
+    (void)size;
+
+    return (-1);
+}
+
+static int apply_patch_normal(struct detools_apply_patch_t *self_p,
+                              const uint8_t *patch_p,
+                              size_t size)
+{
+    (void)self_p;
+    (void)patch_p;
+
+    if (size < 8) {
+        return (0);
+    }
+
+    return (-1);
+}
+
 int detools_apply_patch_filenames(const char *from_p,
                                   const char *patch_p,
                                   const char *to_p)
@@ -92,6 +139,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
     self_p->from_read = from_read;
     self_p->to_write = to_write;
     self_p->arg_p = arg_p;
+    self_p->patch_type = PATCH_TYPE_NONE;
 
     return (0);
 }
@@ -100,14 +148,22 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
                                 const uint8_t *patch_p,
                                 size_t size)
 {
-    (void)self_p;
-    (void)patch_p;
-    (void)size;
+    int res;
 
-    return (-1);
+    if (self_p->patch_type == PATCH_TYPE_NONE) {
+        res = read_header_common(self_p, patch_p, size);
+    } else if (self_p->patch_type == PATCH_TYPE_NORMAL) {
+        res = apply_patch_normal(self_p, patch_p, size);
+    } else if (self_p->patch_type == PATCH_TYPE_IN_PLACE) {
+        res = apply_patch_in_place(self_p, patch_p, size);
+    } else {
+        res = -1;
+    }
+
+    return (res);
 }
 
-int detools_apply_patch_flush(struct detools_apply_patch_t *self_p)
+int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
 {
     (void)self_p;
 

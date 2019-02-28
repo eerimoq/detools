@@ -179,13 +179,12 @@ static void test_apply_patch_foo_crle_compression_incremental(void)
                                           &patch_p[patch_offset],
                                           patch_size);
 
-        assert(res >= 0);
-        assert(res <= (int)patch_size);
+        assert((res >= 0) && (res <= (int)patch_size));
         patch_offset += (size_t)res;
     }
 
     rwer_assert_to_ok(&rwer);
-    assert(detools_apply_patch_flush(&apply_patch) == 0);
+    assert(detools_apply_patch_finalize(&apply_patch) == 0);
 }
 
 int main()
