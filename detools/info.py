@@ -1,12 +1,12 @@
 import os
 from .errors import Error
 from .apply import unpack_size
-from .apply import TYPE_NORMAL
-from .apply import TYPE_IN_PLACE
 from .apply import peek_header_type
 from .apply import read_header_normal
 from .apply import read_header_in_place
 from .apply import PatchReader
+from .common import PATCH_TYPE_NORMAL
+from .common import PATCH_TYPE_IN_PLACE
 
 
 def get_patch_size(fpatch):
@@ -89,9 +89,9 @@ def patch_info_in_place(fpatch):
 def patch_info(fpatch):
     patch_type = peek_header_type(fpatch)
 
-    if patch_type == TYPE_NORMAL:
+    if patch_type == PATCH_TYPE_NORMAL:
         return 'normal', patch_info_normal(fpatch)
-    elif patch_type == TYPE_IN_PLACE:
+    elif patch_type == PATCH_TYPE_IN_PLACE:
         return 'in-place', patch_info_in_place(fpatch)
     else:
         raise Error('Bad patch type.')

@@ -4,10 +4,8 @@ import bitstruct
 from .errors import Error
 from .crle import CrleDecompressor
 from .none import NoneDecompressor
-
-
-TYPE_NORMAL    = 0
-TYPE_IN_PLACE  = 1
+from .common import PATCH_TYPE_NORMAL
+from .common import PATCH_TYPE_IN_PLACE
 
 
 def patch_length(fpatch):
@@ -237,13 +235,13 @@ def apply_patch(ffrom, fpatch, fto):
 
     patch_type = peek_header_type(fpatch)
 
-    if patch_type == TYPE_NORMAL:
+    if patch_type == PATCH_TYPE_NORMAL:
         apply_patch_normal(ffrom, fpatch, fto)
-    elif patch_type == TYPE_IN_PLACE:
+    elif patch_type == PATCH_TYPE_IN_PLACE:
         apply_patch_in_place(ffrom, fpatch, fto)
     else:
         raise Error(
             "Expected patch type {} or {}, but got {}.".format(
-                TYPE_NORMAL,
-                TYPE_IN_PLACE,
+                PATCH_TYPE_NORMAL,
+                PATCH_TYPE_IN_PLACE,
                 patch_type))

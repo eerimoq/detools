@@ -5,6 +5,9 @@ import bitstruct
 from .errors import Error
 from .crle import CrleCompressor
 from .none import NoneCompressor
+from .common import PATCH_TYPE_NORMAL
+from .common import PATCH_TYPE_IN_PLACE
+from .common import COMPRESSIONS
 
 try:
     from . import csais as sais
@@ -13,13 +16,6 @@ except ImportError:
     print('detools: Failed to import C extensions. Using Python fallback.')
     from . import sais
     from . import bsdiff as bsdiff
-
-
-COMPRESSIONS = {
-    'none': 0,
-    'lzma': 1,
-    'crle': 2
-}
 
 
 def get_fsize(f):
@@ -53,12 +49,12 @@ def _create_compressor(compression):
     return compressor
 
 
-def _write_header_normal(fpatch, fto, compression):
-    fpatch.write(pack_header(0, COMPRESSIONS[compression]))
+def _create_patch_normal(ffrom, fto, fpatch, compression):
+    # Header.
+    fpatch.write(pack_header(PATCH_TYPE_NORMAL, COMPRESSIONS[compression]))
     fpatch.write(bsdiff.pack_size(get_fsize(fto)))
 
-
-def _write_data(ffrom, fto, fpatch, compression):
+    # Data.
     from_data = fread(ffrom)
     suffix_array = sais.sais(from_data)
     chunks = bsdiff.create_patch(suffix_array, from_data, fread(fto))
@@ -68,11 +64,6 @@ def _write_data(ffrom, fto, fpatch, compression):
         fpatch.write(compressor.compress(chunk))
 
     fpatch.write(compressor.flush())
-
-
-def _create_patch_normal(ffrom, fto, fpatch, compression):
-    _write_header_normal(fpatch, fto, compression)
-    _write_data(ffrom, fto, fpatch, compression)
 
 
 def _div_ceil(a, b):
@@ -122,28 +113,27 @@ def _create_patch_in_place(ffrom,
     from_data = from_data[:shifted_size]
     number_of_to_segments = _div_ceil(len(to_data), segment_size)
 
-    # Create segment patches.
-    fpatches = BytesIO()
+    # Create a normal patch for each segment.
+    fsegments = BytesIO()
 
     for segment in range(number_of_to_segments):
         to_offset = (segment * segment_size)
         from_offset = max(to_offset + segment_size - shift_size, 0)
-        fnpatch = BytesIO()
+        fsegment = BytesIO()
         _create_patch_normal(BytesIO(from_data[from_offset:]),
                              BytesIO(to_data[to_offset:to_offset + segment_size]),
-                             fnpatch,
+                             fsegment,
                              'none')
-        npatch_data = fnpatch.getvalue()
-
-        fpatches.write(bsdiff.pack_size(from_offset))
-        fpatches.write(npatch_data)
+        segment_data = fsegment.getvalue()
+        fsegments.write(bsdiff.pack_size(from_offset))
+        fsegments.write(segment_data)
 
     # Create the patch.
-    fpatch.write(pack_header(1, COMPRESSIONS[compression]))
+    fpatch.write(pack_header(PATCH_TYPE_IN_PLACE, COMPRESSIONS[compression]))
     fpatch.write(bsdiff.pack_size(len(to_data)))
     fpatch.write(bsdiff.pack_size(shift_size))
     compressor = _create_compressor(compression)
-    fpatch.write(compressor.compress(fpatches.getvalue()))
+    fpatch.write(compressor.compress(fsegments.getvalue()))
     fpatch.write(compressor.flush())
 
 

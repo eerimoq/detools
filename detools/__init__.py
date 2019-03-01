@@ -48,6 +48,13 @@ def _format_bytes(value):
     return '{} bytes'.format(value)
 
 
+def _format_ratio(numerator, denominator):
+    if denominator > 0:
+        return round(100 * numerator / denominator, 1)
+    else:
+        return 'inf'
+
+
 def _patch_info_in_place_segment(fsize,
                                  segment_index,
                                  from_offset,
@@ -59,12 +66,8 @@ def _patch_info_in_place_segment(fsize,
     number_of_diff_bytes = sum(diff_sizes)
     number_of_extra_bytes = sum(extra_sizes)
     number_of_data_bytes = (number_of_diff_bytes + number_of_extra_bytes)
-    size_data_ratio = round(100 * number_of_size_bytes / number_of_data_bytes, 1)
-
-    if number_of_extra_bytes > 0:
-        diff_extra_ratio = round(100 * number_of_diff_bytes / number_of_extra_bytes, 1)
-    else:
-        diff_extra_ratio = 'inf'
+    size_data_ratio = _format_ratio(number_of_size_bytes, number_of_data_bytes)
+    diff_extra_ratio = _format_ratio(number_of_diff_bytes, number_of_extra_bytes)
 
     print('------------------- Segment {} -------------------'.format(
         segment_index))
@@ -97,13 +100,9 @@ def _patch_info_normal(fsize,
     number_of_diff_bytes = sum(diff_sizes)
     number_of_extra_bytes = sum(extra_sizes)
     number_of_data_bytes = (number_of_diff_bytes + number_of_extra_bytes)
-    size_data_ratio = round(100 * number_of_size_bytes / number_of_data_bytes, 1)
-    patch_to_ratio = round(100 * patch_size / to_size, 1)
-
-    if number_of_extra_bytes > 0:
-        diff_extra_ratio = round(100 * number_of_diff_bytes / number_of_extra_bytes, 1)
-    else:
-        diff_extra_ratio = 'inf'
+    size_data_ratio = _format_ratio(number_of_size_bytes, number_of_data_bytes)
+    patch_to_ratio = _format_ratio(patch_size, to_size)
+    diff_extra_ratio = _format_ratio(number_of_diff_bytes, number_of_extra_bytes)
 
     print('Type:               normal')
     print('Patch size:         {}'.format(fsize(patch_size)))
@@ -130,7 +129,7 @@ def _patch_info_in_place(fsize,
                          to_size,
                          from_shift_size,
                          segments):
-    patch_to_ratio = round(100 * patch_size / to_size, 1)
+    patch_to_ratio = _format_ratio(patch_size, to_size)
 
     print('Type:               in-place')
     print('Patch size:         {}'.format(fsize(patch_size)))
