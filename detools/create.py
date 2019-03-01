@@ -1,6 +1,5 @@
 import os
-import struct
-from lzma import LZMACompressor
+import lzma
 from io import BytesIO
 import bitstruct
 from .errors import Error
@@ -39,6 +38,21 @@ def fread(f):
     return f.read()
 
 
+def _create_compressor(compression):
+    if compression == 'lzma':
+        compressor = lzma.LZMACompressor(format=lzma.FORMAT_ALONE)
+    elif compression == 'none':
+        compressor = NoneCompressor()
+    elif compression == 'crle':
+        compressor = CrleCompressor()
+    else:
+        raise Error(
+            'Expected compression lzma or none, but got {}.'.format(
+                compression))
+
+    return compressor
+
+
 def _write_header_normal(fpatch, fto, compression):
     fpatch.write(pack_header(0, COMPRESSIONS[compression]))
     fpatch.write(bsdiff.pack_size(get_fsize(fto)))
@@ -48,17 +62,7 @@ def _write_data(ffrom, fto, fpatch, compression):
     from_data = fread(ffrom)
     suffix_array = sais.sais(from_data)
     chunks = bsdiff.create_patch(suffix_array, from_data, fread(fto))
-
-    if compression == 'lzma':
-        compressor = LZMACompressor()
-    elif compression == 'none':
-        compressor = NoneCompressor()
-    elif compression == 'crle':
-        compressor = CrleCompressor()
-    else:
-        raise Error(
-            'Expected compression lzma or none, but got {}.'.format(
-                compression))
+    compressor = _create_compressor(compression)
 
     for chunk in chunks:
         fpatch.write(compressor.compress(chunk))
@@ -118,10 +122,8 @@ def _create_patch_in_place(ffrom,
     from_data = from_data[:shifted_size]
     number_of_to_segments = _div_ceil(len(to_data), segment_size)
 
-    # Write the header.
-    fpatch.write(pack_header(1, 0))
-    fpatch.write(bsdiff.pack_size(number_of_to_segments))
-    fpatch.write(bsdiff.pack_size(shift_size))
+    # Create segment patches.
+    fpatches = BytesIO()
 
     for segment in range(number_of_to_segments):
         to_offset = (segment * segment_size)
@@ -130,13 +132,19 @@ def _create_patch_in_place(ffrom,
         _create_patch_normal(BytesIO(from_data[from_offset:]),
                              BytesIO(to_data[to_offset:to_offset + segment_size]),
                              fnpatch,
-                             compression)
+                             'none')
         npatch_data = fnpatch.getvalue()
 
-        # Write the segment header and data.
-        fpatch.write(bsdiff.pack_size(from_offset))
-        fpatch.write(bsdiff.pack_size(len(npatch_data)))
-        fpatch.write(npatch_data)
+        fpatches.write(bsdiff.pack_size(from_offset))
+        fpatches.write(npatch_data)
+
+    # Create the patch.
+    fpatch.write(pack_header(1, COMPRESSIONS[compression]))
+    fpatch.write(bsdiff.pack_size(len(to_data)))
+    fpatch.write(bsdiff.pack_size(shift_size))
+    compressor = _create_compressor(compression)
+    fpatch.write(compressor.compress(fpatches.getvalue()))
+    fpatch.write(compressor.flush())
 
 
 def create_patch(ffrom,

@@ -48,9 +48,47 @@ def _format_bytes(value):
     return '{} bytes'.format(value)
 
 
+def _patch_info_in_place_segment(fsize,
+                                 segment_index,
+                                 from_offset,
+                                 to_size,
+                                 diff_sizes,
+                                 extra_sizes,
+                                 _,
+                                 number_of_size_bytes):
+    number_of_diff_bytes = sum(diff_sizes)
+    number_of_extra_bytes = sum(extra_sizes)
+    number_of_data_bytes = (number_of_diff_bytes + number_of_extra_bytes)
+    size_data_ratio = round(100 * number_of_size_bytes / number_of_data_bytes, 1)
+
+    if number_of_extra_bytes > 0:
+        diff_extra_ratio = round(100 * number_of_diff_bytes / number_of_extra_bytes, 1)
+    else:
+        diff_extra_ratio = 'inf'
+
+    print('------------------- Segment {} -------------------'.format(
+        segment_index))
+    print()
+    print('From offset:        {}'.format(fsize(from_offset)))
+    print('To size:            {}'.format(fsize(to_size)))
+    print('Diff/extra ratio:   {} % (higher is better)'.format(diff_extra_ratio))
+    print('Size/data ratio:    {} % (lower is better)'.format(size_data_ratio))
+    print()
+    print('Number of diffs:    {}'.format(len(diff_sizes)))
+    print('Total diff size:    {}'.format(fsize(sum(diff_sizes))))
+    print('Average diff size:  {}'.format(fsize(int(mean(diff_sizes)))))
+    print('Median diff size:   {}'.format(fsize(int(median(diff_sizes)))))
+    print()
+    print('Number of extras:   {}'.format(len(extra_sizes)))
+    print('Total extra size:   {}'.format(fsize(sum(extra_sizes))))
+    print('Average extra size: {}'.format(fsize(int(mean(extra_sizes)))))
+    print('Median extra size:  {}'.format(fsize(int(median(extra_sizes)))))
+    print()
+
+
 def _patch_info_normal(fsize,
-                       compression,
                        patch_size,
+                       compression,
                        to_size,
                        diff_sizes,
                        extra_sizes,
@@ -86,18 +124,25 @@ def _patch_info_normal(fsize,
     print('Median extra size:  {}'.format(fsize(int(median(extra_sizes)))))
 
 
-def _patch_info_in_place(fsize, number_of_segments, from_shift_size, info):
+def _patch_info_in_place(fsize,
+                         patch_size,
+                         compression,
+                         to_size,
+                         from_shift_size,
+                         segments):
+    patch_to_ratio = round(100 * patch_size / to_size, 1)
+
     print('Type:               in-place')
-    print('Number of segments: {}'.format(number_of_segments))
+    print('Patch size:         {}'.format(fsize(patch_size)))
+    print('To size:            {}'.format(fsize(to_size)))
+    print('Patch/to ratio:     {} % (lower is better)'.format(patch_to_ratio))
+    print('Number of segments: {}'.format(len(segments)))
     print('From shift size:    {}'.format(fsize(from_shift_size)))
+    print('Compression:        {}'.format(compression))
     print()
 
-    for i, (from_offset, _, normal_info) in enumerate(info):
-        print('-------------------- Patch {} --------------------'.format(i + 1))
-        print()
-        print('From offset:        {}'.format(fsize(from_offset)))
-        _patch_info_normal(fsize, *normal_info)
-        print()
+    for i, (from_offset, normal_info) in enumerate(segments):
+        _patch_info_in_place_segment(fsize, i + 1, from_offset, *normal_info)
 
 
 def _do_patch_info(args):

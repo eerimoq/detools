@@ -52,6 +52,9 @@ struct detools_apply_patch_t {
     void *arg_p;
     int patch_type;
     int compression;
+    int state;
+    size_t to_pos;
+    size_t to_size;
 };
 
 /**
@@ -109,8 +112,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
  * @param[in,out] patch_size_p Patch buffer size. Number of consumed
  *                             bytes on return.
  *
- * @return Zero or more number of consumed patch bytes, or negative
- *         error code.
+ * @return Number of consumed patch bytes, or negative error code.
  */
 int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
                                 const uint8_t *patch_p,

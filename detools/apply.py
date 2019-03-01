@@ -1,7 +1,5 @@
 import os
-import struct
 from lzma import LZMADecompressor
-from io import BytesIO
 import bitstruct
 from .errors import Error
 from .crle import CrleDecompressor
@@ -90,6 +88,21 @@ def unpack_header(data):
     return bitstruct.unpack('p1u3u4', data)
 
 
+def convert_compression(compression):
+    if compression == 0:
+        compression = 'none'
+    elif compression == 1:
+        compression = 'lzma'
+    elif compression == 2:
+        compression = 'crle'
+    else:
+        raise Error(
+            "Expected compression none(0), lzma(1) or crle(2), but "
+            "got {}.".format(compression))
+
+    return compression
+
+
 def peek_header_type(fpatch):
     position = fpatch.tell()
     header = fpatch.read(1)
@@ -116,20 +129,10 @@ def read_header_normal(fpatch):
     if patch_type != 0:
         raise Error("Expected patch type 0, but got {}.".format(patch_type))
 
-    if compression == 0:
-        compression = 'none'
-    elif compression == 1:
-        compression = 'lzma'
-    elif compression == 2:
-        compression = 'crle'
-    else:
-        raise Error(
-            "Expected compression none(0), lzma(1) or crle(2), but "
-            "got {}.".format(compression))
-
+    compression = convert_compression(compression)
     to_size = unpack_size(fpatch)[0]
 
-    return to_size, compression
+    return compression, to_size
 
 
 def read_header_in_place(fpatch):
@@ -142,24 +145,23 @@ def read_header_in_place(fpatch):
     if len(header) != 1:
         raise Error('Failed to read the patch header.')
 
-    patch_type, _ = unpack_header(header)
+    patch_type, compression = unpack_header(header)
 
     if patch_type != 1:
         raise Error("Expected patch type 1, but got {}.".format(patch_type))
 
-    number_of_segments = unpack_size(fpatch)[0]
+    compression = convert_compression(compression)
+    to_size = unpack_size(fpatch)[0]
     shift_size = unpack_size(fpatch)[0]
 
-    return number_of_segments, shift_size
+    return compression, to_size, shift_size
 
 
-def apply_patch_normal(ffrom, fpatch, fto):
+def apply_patch_normal_inner(ffrom, patch_reader, fto, to_size):
     """Apply given normal patch.
 
     """
 
-    to_size, compression = read_header_normal(fpatch)
-    patch_reader = PatchReader(fpatch, compression)
     to_pos = 0
 
     while to_pos < to_size:
@@ -177,7 +179,7 @@ def apply_patch_normal(ffrom, fpatch, fto):
             patch_data = patch_reader.decompress(chunk_size)
             from_data = ffrom.read(chunk_size)
             fto.write(bytearray(
-                (pb + ob) & 0xff for pb, ob in zip(patch_data, from_data)
+                (pb + fb) & 0xff for pb, fb in zip(patch_data, from_data)
             ))
 
         to_pos += size
@@ -195,6 +197,17 @@ def apply_patch_normal(ffrom, fpatch, fto):
         size = unpack_size(patch_reader)[0]
         ffrom.seek(size, os.SEEK_CUR)
 
+
+def apply_patch_normal(ffrom, fpatch, fto):
+    """Apply given normal patch.
+
+    """
+
+    compression, to_size = read_header_normal(fpatch)
+    patch_reader = PatchReader(fpatch, compression)
+
+    apply_patch_normal_inner(ffrom, patch_reader, fto, to_size)
+
     if not patch_reader.eof:
         raise Error('End of patch not found.')
 
@@ -204,16 +217,16 @@ def apply_patch_in_place(ffrom, fpatch, fto):
 
     """
 
-    number_of_segments, _ = read_header_in_place(fpatch)
+    compression, to_size, _ = read_header_in_place(fpatch)
+    patch_reader = PatchReader(fpatch, compression)
 
-    for _ in range(number_of_segments):
-        from_offset = unpack_size(fpatch)[0]
-        patch_size = unpack_size(fpatch)[0]
+    while fto.tell() < to_size:
+        ffrom.seek(unpack_size(patch_reader)[0], os.SEEK_SET)
+        segment_to_size = read_header_normal(patch_reader)[1]
+        apply_patch_normal_inner(ffrom, patch_reader, fto, segment_to_size)
 
-        ffrom.seek(from_offset, os.SEEK_SET)
-        apply_patch_normal(ffrom,
-                           BytesIO(fpatch.read(patch_size)),
-                           fto)
+    if not patch_reader.eof:
+        raise Error('End of patch not found.')
 
 
 def apply_patch(ffrom, fpatch, fto):
