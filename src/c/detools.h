@@ -35,11 +35,15 @@
 
 /**
  * Read callback.
+ *
+ * @return zero(0) or negative error code.
  */
 typedef int (*detools_read_t)(void *arg_p, uint8_t *buf_p, size_t size);
 
 /**
  * Write callback.
+ *
+ * @return zero(0) or negative error code.
  */
 typedef int (*detools_write_t)(void *arg_p, const uint8_t *buf_p, size_t size);
 
