@@ -124,8 +124,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
  *
  * @param[in,out] self_p Patcher object.
  * @param[in] patch_p Next chunk of the patch.
- * @param[in,out] patch_size_p Patch buffer size. Number of consumed
- *                             bytes on return.
+ * @param[in,out] patch_size_p Patch buffer size.
  *
  * @return Number of consumed patch bytes, or negative error code.
  */
