@@ -78,6 +78,15 @@ static int rwer_read(void *arg_p, uint8_t *buf_p, size_t size)
     return ((int)fread(buf_p, size, 1, self_p->ffrom_p));
 }
 
+static int rwer_seek(void *arg_p, int offset)
+{
+    struct rwer_t *self_p;
+
+    self_p = (struct rwer_t *)arg_p;
+
+    return (fseek(self_p->ffrom_p, offset, SEEK_CUR));
+}
+
 static int rwer_write(void *arg_p, const uint8_t *buf_p, size_t size)
 {
     struct rwer_t *self_p;
@@ -166,6 +175,7 @@ static void test_apply_patch_foo_crle_compression_incremental(void)
 
     assert(detools_apply_patch_init(&apply_patch,
                                     rwer_read,
+                                    rwer_seek,
                                     rwer_write,
                                     &rwer) == 0);
 

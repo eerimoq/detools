@@ -44,17 +44,30 @@ typedef int (*detools_read_t)(void *arg_p, uint8_t *buf_p, size_t size);
 typedef int (*detools_write_t)(void *arg_p, const uint8_t *buf_p, size_t size);
 
 /**
+ * Seek from current position callback.
+ */
+typedef int (*detools_seek_t)(void *arg_p, int offset);
+
+struct detools_apply_patch_patch_reader_t {
+    int dummy;
+};
+
+/**
  * The apply patch data structure.
  */
 struct detools_apply_patch_t {
     detools_read_t from_read;
+    detools_seek_t from_seek;
     detools_write_t to_write;
     void *arg_p;
     int patch_type;
     int compression;
+    int to_pos;
+    int to_size;
     int state;
-    size_t to_pos;
-    size_t to_size;
+    int chunk_pos;
+    int chunk_size;
+    struct detools_apply_patch_patch_reader_t patch_reader;
 };
 
 /**
@@ -90,6 +103,7 @@ int detools_apply_patch_callbacks(detools_read_t from_read,
  *
  * @param[out] self_p Patcher object to initialize.
  * @param[in] from_read Callback to read from-data.
+ * @param[in] from_seek Callback to seek from current position in from-data.
  * @param[in] to_write Destination callback.
  * @param[in] arg_p Argument passed to the callbacks.
  *
@@ -97,6 +111,7 @@ int detools_apply_patch_callbacks(detools_read_t from_read,
  */
 int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
                              detools_read_t from_read,
+                             detools_seek_t from_seek,
                              detools_write_t to_write,
                              void *arg_p);
 
