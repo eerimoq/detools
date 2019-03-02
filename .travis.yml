@@ -3,9 +3,11 @@ language: python
 python:
   - "3.6"
 
+before_install:
+  - sudo apt install -y liblzma-dev
+
 install:
   - pip install coveralls
-  - apt install liblzma-dev
 
 script:
   - env CFLAGS=--coverage coverage run --source=detools setup.py test
