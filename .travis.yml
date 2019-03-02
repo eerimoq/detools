@@ -5,10 +5,12 @@ python:
 
 install:
   - pip install coveralls
+  - apt install liblzma-dev
 
 script:
   - env CFLAGS=--coverage coverage run --source=detools setup.py test
   - make test-sdist
+  - ! make test-c
 
 after_success:
   - coveralls

@@ -32,9 +32,14 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <lzma.h>
 
 /**
  * Read callback.
+ *
+ * @param[in] arg_p User data passed to detools_apply_patch_init().
+ * @param[out] buf_p Buffer to read into.
+ * @param[in] size Number of bytes to read.
  *
  * @return zero(0) or negative error code.
  */
@@ -43,17 +48,51 @@ typedef int (*detools_read_t)(void *arg_p, uint8_t *buf_p, size_t size);
 /**
  * Write callback.
  *
+ * @param[in] arg_p User data passed to detools_apply_patch_init().
+ * @param[in] buf_p Buffer to write.
+ * @param[in] size Number of bytes to write.
+ *
  * @return zero(0) or negative error code.
  */
 typedef int (*detools_write_t)(void *arg_p, const uint8_t *buf_p, size_t size);
 
 /**
  * Seek from current position callback.
+ *
+ * @param[in] arg_p User data passed to detools_apply_patch_init().
+ * @param[in] offset Offset to seek to from current position.
+ *
+ * @return zero(0) or negative error code.
  */
 typedef int (*detools_seek_t)(void *arg_p, int offset);
 
+struct detools_apply_patch_patch_reader_none_t {
+    struct {
+        const uint8_t *buf_p;
+        size_t size;
+        size_t offset;
+    } chunk;
+};
+
+struct detools_apply_patch_patch_reader_lzma_t {
+    lzma_stream stream;
+    uint8_t *next_in_p;
+    uint8_t *next_out_p;
+};
+
 struct detools_apply_patch_patch_reader_t {
-    int dummy;
+    struct {
+        const uint8_t *buf_p;
+        size_t size;
+        size_t offset;
+    } chunk;
+    union {
+        struct detools_apply_patch_patch_reader_none_t none;
+        struct detools_apply_patch_patch_reader_lzma_t lzma;
+    } compression;
+    int (*decompress)(struct detools_apply_patch_patch_reader_t *self_p,
+                      uint8_t *buf_p,
+                      size_t size);
 };
 
 /**

@@ -159,7 +159,7 @@ static void test_apply_patch_foo(void)
                        "tests/files/foo.new");
 }
 
-static void test_apply_patch_foo_crle_compression_incremental(void)
+static void test_apply_patch_foo_compression_incremental(void)
 {
     struct detools_apply_patch_t apply_patch;
     struct rwer_t rwer;
@@ -170,7 +170,7 @@ static void test_apply_patch_foo_crle_compression_incremental(void)
     int res;
 
     rwer_init(&rwer, "tests/files/foo.old", "tests/files/foo.new");
-    patch_p = patch_init("tests/files/foo-crle.patch", &patch_size);
+    patch_p = patch_init("tests/files/foo.patch", &patch_size);
     expected_patch_size = patch_size;
 
     assert(detools_apply_patch_init(&apply_patch,
@@ -185,10 +185,14 @@ static void test_apply_patch_foo_crle_compression_incremental(void)
     while (patch_offset < expected_patch_size) {
         patch_size = MIN(expected_patch_size - patch_offset, 64);
 
+        if (patch_size > 0) {
+            printf("input: 0x%02x\n", patch_p[patch_offset]);
+        }
+
         res = detools_apply_patch_process(&apply_patch,
                                           &patch_p[patch_offset],
                                           patch_size);
-
+        printf("process res: %d\n", res);
         assert((res >= 0) && (res <= (int)patch_size));
         patch_offset += (size_t)res;
     }
@@ -199,7 +203,7 @@ static void test_apply_patch_foo_crle_compression_incremental(void)
 
 int main()
 {
-    test_apply_patch_foo_crle_compression_incremental();
+    test_apply_patch_foo_compression_incremental();
     test_apply_patch_foo();
 
     return (0);

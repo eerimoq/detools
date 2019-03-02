@@ -31,6 +31,7 @@
  */
 
 #include <stdbool.h>
+#include <stdlib.h>
 #include "detools.h"
 
 /* Patch types. */
@@ -53,6 +54,11 @@
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
+static int patch_reader_lzma_decompress(
+    struct detools_apply_patch_patch_reader_t *self_p,
+    uint8_t *buf_p,
+    size_t size);
+
 static int unpack_size(const uint8_t *buf_p, size_t size, int *size_p)
 {
     uint8_t byte;
@@ -64,7 +70,7 @@ static int unpack_size(const uint8_t *buf_p, size_t size, int *size_p)
     }
 
     byte = *buf_p++;
-    printf("byte: 0x%02x\n", byte);
+    printf("size byte: 0x%02x\n", byte);
     size--;
     is_signed = ((byte & 0x40) == 0x40);
     *size_p = (byte & 0x3f);
@@ -76,7 +82,7 @@ static int unpack_size(const uint8_t *buf_p, size_t size, int *size_p)
         }
 
         byte = *buf_p++;
-        printf("byte: 0x%02x\n", byte);
+        printf("size byte: 0x%02x\n", byte);
         size--;
         *size_p |= ((byte & 0x7f) << offset);
         offset += 7;
@@ -89,20 +95,274 @@ static int unpack_size(const uint8_t *buf_p, size_t size, int *size_p)
     return ((offset - 6) / 7 + 1);
 }
 
-static void patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p)
+static int patch_reader_none_init(struct detools_apply_patch_patch_reader_t *self_p)
 {
     (void)self_p;
+
+    return (-1);
+}
+
+static int patch_reader_lzma_init(struct detools_apply_patch_patch_reader_t *self_p)
+{
+    lzma_ret ret;
+    struct detools_apply_patch_patch_reader_lzma_t *lzma_p;
+
+    lzma_p = &self_p->compression.lzma;
+    memset(&lzma_p->stream, 0, sizeof(lzma_p->stream));
+
+    ret = lzma_alone_decoder(&lzma_p->stream, UINT64_MAX);
+
+    if (ret != LZMA_OK) {
+        return (-1);
+    }
+
+    self_p->decompress = patch_reader_lzma_decompress;
+
+    printf("lzma decompression init ok.\n");
+
+    return (0);
+}
+
+static int patch_reader_crle_init(struct detools_apply_patch_patch_reader_t *self_p)
+{
+    (void)self_p;
+
+    return (-1);
+}
+
+static int get_decompressed_data(lzma_stream *stream_p,
+                                 uint8_t *buf_p,
+                                 size_t size)
+{
+    int res;
+
+    if (stream_p->avail_out >= size) {
+        memcpy(buf_p, stream_p->next_out, size);
+        stream_p->next_out += size;
+        stream_p->avail_out -= size;
+        res = 0;
+    } else {
+        res = 1;
+    }
+
+    return (res);
+}
+
+static int prepare_input_buffer(struct detools_apply_patch_patch_reader_t *self_p)
+{
+    struct detools_apply_patch_patch_reader_lzma_t *lzma_p;
+    uint8_t *next_p;
+
+    lzma_p = &self_p->compression.lzma;
+
+    next_p = malloc(lzma_p->stream.avail_in + self_p->chunk.size);
+
+    if (next_p == NULL) {
+        return (-1);
+    }
+
+    if (lzma_p->stream.next_in != NULL) {
+        memcpy(next_p, lzma_p->stream.next_in, lzma_p->stream.avail_in);
+        free(lzma_p->next_in_p);
+    }
+
+    lzma_p->next_in_p = next_p;
+    memcpy(&lzma_p->next_in_p[lzma_p->stream.avail_in],
+           self_p->chunk.buf_p,
+           self_p->chunk.size);
+    lzma_p->stream.next_in = next_p;
+    lzma_p->stream.avail_in += self_p->chunk.size;
+    self_p->chunk.offset = self_p->chunk.size;
+
+    return (0);
+}
+
+static int prepare_output_buffer(struct detools_apply_patch_patch_reader_t *self_p,
+                                 size_t size)
+{
+    struct detools_apply_patch_patch_reader_lzma_t *lzma_p;
+    uint8_t *next_p;
+
+    lzma_p = &self_p->compression.lzma;
+
+    next_p = malloc(size);
+
+    if (next_p == NULL) {
+        return (-1);
+    }
+
+    if (lzma_p->stream.next_out != NULL) {
+        memcpy(lzma_p->next_out_p,
+               lzma_p->stream.next_out,
+               lzma_p->stream.avail_out);
+        free(lzma_p->next_out_p);
+    }
+
+    lzma_p->stream.next_out = next_p;
+
+    return (0);
+}
+
+/**
+ * Decompress exactly given number of bytes.
+ *
+ * @return zero(0) on success, one(1) if more input is needed, or
+ *         negative error code.
+ */
+static int patch_reader_lzma_decompress(
+    struct detools_apply_patch_patch_reader_t *self_p,
+    uint8_t *buf_p,
+    size_t size)
+{
+    int res;
+    struct detools_apply_patch_patch_reader_lzma_t *lzma_p;
+    lzma_ret ret;
+
+    lzma_p = &self_p->compression.lzma;
+
+    /* Check if enough decompressed data is available. */
+    res = get_decompressed_data(&lzma_p->stream, buf_p, size);
+
+    if (res == 0) {
+        return (res);
+    }
+
+    /* Decompress more data. */
+    res = prepare_input_buffer(self_p);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    res = prepare_output_buffer(self_p, size);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    ret = lzma_code(&lzma_p->stream, LZMA_RUN);
+
+    printf("avail out: %ld\n", lzma_p->stream.avail_out);
+
+    if (ret != LZMA_OK) {
+        return (-1);
+    }
+
+    return (get_decompressed_data(&lzma_p->stream, buf_p, size));
+}
+
+static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
+                              int compression)
+{
+    int res;
+
+    switch (compression) {
+
+    case COMPRESSION_NONE:
+        res = patch_reader_none_init(self_p);
+        break;
+
+    case COMPRESSION_LZMA:
+        res = patch_reader_lzma_init(self_p);
+        break;
+
+    case COMPRESSION_CRLE:
+        res = patch_reader_crle_init(self_p);
+        break;
+
+    default:
+        res = -1;
+        break;
+    }
+
+    return (res);
+}
+
+/**
+ * Set patch data to be consumed.
+ */
+static void patch_reader_chunk_set(
+    struct detools_apply_patch_patch_reader_t *self_p,
+    const uint8_t *buf_p,
+    size_t size)
+{
+    self_p->chunk.buf_p = buf_p;
+    self_p->chunk.size = size;
+    self_p->chunk.offset = 0;
+}
+
+/**
+ * @return Number of consumed patch bytes.
+ */
+static int patch_reader_chunk_offset(
+    struct detools_apply_patch_patch_reader_t *self_p)
+{
+    return ((int)self_p->chunk.offset);
+}
+
+/**
+ * Decompress exactly given number of bytes.
+ *
+ * @return zero(0) on success, one(1) if more input is needed, or
+ *         negative error code.
+ */
+static int patch_reader_decompress(
+    struct detools_apply_patch_patch_reader_t *self_p,
+    uint8_t *buf_p,
+    size_t size)
+{
+    return (self_p->decompress(self_p, buf_p, size));
+}
+
+static int patch_reader_unpack_size(struct detools_apply_patch_patch_reader_t *self_p,
+                                    int *size_p)
+{
+    int res;
+    uint8_t byte;
+    bool is_signed;
+    int offset;
+
+    res = patch_reader_decompress(self_p, &byte, 1);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    printf("size byte: 0x%02x\n", byte);
+    is_signed = ((byte & 0x40) == 0x40);
+    *size_p = (byte & 0x3f);
+    offset = 6;
+
+    while ((byte & 0x80) != 0) {
+        res = patch_reader_decompress(self_p, &byte, 1);
+
+        if (res != 0) {
+            return (res);
+        }
+
+        printf("size byte: 0x%02x\n", byte);
+        *size_p |= ((byte & 0x7f) << offset);
+        offset += 7;
+    }
+
+    if (is_signed) {
+        *size_p *= -1;
+    }
+
+    return ((offset - 6) / 7 + 1);
 }
 
 /**
  * @return Number of consumed patch bytes, or negative error code.
  */
-static int read_header_common(struct detools_apply_patch_t *self_p,
-                              const uint8_t *patch_p,
-                              size_t size)
+static int apply_patch_none(struct detools_apply_patch_t *self_p,
+                            const uint8_t *patch_p,
+                            size_t size)
 {
     int res;
+    int res2;
     int patch_type;
+    int compression;
     int to_size;
 
     if (size < 1) {
@@ -110,6 +370,7 @@ static int read_header_common(struct detools_apply_patch_t *self_p,
     }
 
     patch_type = ((patch_p[0] >> 4) & 0x7);
+    compression = (patch_p[0] & 0xf);
 
     switch (patch_type) {
 
@@ -119,12 +380,16 @@ static int read_header_common(struct detools_apply_patch_t *self_p,
         if (res > 0) {
             if (to_size > 0) {
                 self_p->patch_type = patch_type;
-                self_p->compression = (patch_p[0] & 0xf);
                 self_p->to_pos = 0;
                 self_p->to_size = (size_t)to_size;
                 self_p->state = STATE_DIFF_SIZE;
-                patch_reader_init(&self_p->patch_reader);
                 res++;
+
+                res2 = patch_reader_init(&self_p->patch_reader, compression);
+
+                if (res2 != 0) {
+                    res = res2;
+                }
             } else {
                 res = -1;
             }
@@ -138,21 +403,6 @@ static int read_header_common(struct detools_apply_patch_t *self_p,
     }
 
     return (res);
-}
-
-static int patch_reader_decompress(struct detools_apply_patch_patch_reader_t *self_p,
-                                   const uint8_t *patch_p,
-                                   size_t patch_size,
-                                   uint8_t *to_p,
-                                   size_t *to_size_p)
-{
-    (void)self_p;
-    (void)patch_p;
-    (void)patch_size;
-    (void)to_p;
-    (void)to_size_p;
-
-    return (-1);
 }
 
 static int apply_patch_in_place(struct detools_apply_patch_t *self_p,
@@ -170,16 +420,14 @@ static int apply_patch_in_place(struct detools_apply_patch_t *self_p,
  * @return Number of consumed patch bytes, or negative error code.
  */
 static int process_normal_size(struct detools_apply_patch_t *self_p,
-                               const uint8_t *patch_p,
-                               size_t patch_size,
                                int next_state)
 {
     int res;
     int size;
 
-    res = unpack_size(patch_p, patch_size, &size);
+    res = patch_reader_unpack_size(&self_p->patch_reader, &size);
 
-    if (res <= 0) {
+    if (res != 0) {
         return (res);
     }
 
@@ -200,8 +448,6 @@ static int process_normal_size(struct detools_apply_patch_t *self_p,
  * @return Number of consumed patch bytes, or negative error code.
  */
 static int process_normal_data(struct detools_apply_patch_t *self_p,
-                               const uint8_t *patch_p,
-                               size_t patch_size,
                                int next_state)
 {
     int res;
@@ -216,10 +462,8 @@ static int process_normal_data(struct detools_apply_patch_t *self_p,
     to_size = MIN(sizeof(to), (size_t)self_p->chunk_size);
 
     res = patch_reader_decompress(&self_p->patch_reader,
-                                  patch_p,
-                                  patch_size,
                                   &to[0],
-                                  &to_size);
+                                  to_size);
 
     if (res < 0) {
         return (res);
@@ -255,54 +499,49 @@ static int process_normal_data(struct detools_apply_patch_t *self_p,
 /**
  * @return Number of consumed patch bytes, or negative error code.
  */
-static int process_normal_diff_size(struct detools_apply_patch_t *self_p,
-                                    const uint8_t *patch_p,
-                                    size_t patch_size)
+static int process_normal_diff_size(struct detools_apply_patch_t *self_p)
 {
-    return (process_normal_size(self_p, patch_p, patch_size, STATE_DIFF_DATA));
+    printf("diff size\n");
+    return (process_normal_size(self_p, STATE_DIFF_DATA));
 }
 
 /**
  * @return Number of consumed patch bytes, or negative error code.
  */
-static int process_normal_diff_data(struct detools_apply_patch_t *self_p,
-                                    const uint8_t *patch_p,
-                                    size_t patch_size)
+static int process_normal_diff_data(struct detools_apply_patch_t *self_p)
 {
-    return (process_normal_data(self_p, patch_p, patch_size, STATE_EXTRA_SIZE));
+    printf("diff data\n");
+    return (process_normal_data(self_p, STATE_EXTRA_SIZE));
 }
 
 /**
  * @return Number of consumed patch bytes, or negative error code.
  */
-static int process_normal_extra_size(struct detools_apply_patch_t *self_p,
-                                     const uint8_t *patch_p,
-                                     size_t patch_size)
+static int process_normal_extra_size(struct detools_apply_patch_t *self_p)
 {
-    return (process_normal_size(self_p, patch_p, patch_size, STATE_EXTRA_DATA));
+    printf("extra size\n");
+    return (process_normal_size(self_p, STATE_EXTRA_DATA));
 }
 
 /**
  * @return Number of consumed patch bytes, or negative error code.
  */
-static int process_normal_extra_data(struct detools_apply_patch_t *self_p,
-                                     const uint8_t *patch_p,
-                                     size_t patch_size)
+static int process_normal_extra_data(struct detools_apply_patch_t *self_p)
 {
-    return (process_normal_data(self_p, patch_p, patch_size, STATE_ADJUSTMENT));
+    printf("extra data\n");
+    return (process_normal_data(self_p, STATE_ADJUSTMENT));
 }
 
 /**
  * @return Number of consumed patch bytes, or negative error code.
  */
-static int process_normal_adjustment(struct detools_apply_patch_t *self_p,
-                          const uint8_t *patch_p,
-                          size_t patch_size)
+static int process_normal_adjustment(struct detools_apply_patch_t *self_p)
 {
     int res;
     int offset;
 
-    res = unpack_size(patch_p, patch_size, &offset);
+    printf("adjustment\n");
+    res = patch_reader_unpack_size(&self_p->patch_reader, &offset);
 
     if (res <= 0) {
         return (res);
@@ -330,31 +569,37 @@ static int apply_patch_normal(struct detools_apply_patch_t *self_p,
 {
     int res;
 
+    patch_reader_chunk_set(&self_p->patch_reader, patch_p, size);
+
     switch (self_p->state) {
 
     case STATE_DIFF_SIZE:
-        res = process_normal_diff_size(self_p, patch_p, size);
+        res = process_normal_diff_size(self_p);
         break;
 
     case STATE_DIFF_DATA:
-        res = process_normal_diff_data(self_p, patch_p, size);
+        res = process_normal_diff_data(self_p);
         break;
 
     case STATE_EXTRA_SIZE:
-        res = process_normal_extra_size(self_p, patch_p, size);
+        res = process_normal_extra_size(self_p);
         break;
 
     case STATE_EXTRA_DATA:
-        res = process_normal_extra_data(self_p, patch_p, size);
+        res = process_normal_extra_data(self_p);
         break;
 
     case STATE_ADJUSTMENT:
-        res = process_normal_adjustment(self_p, patch_p, size);
+        res = process_normal_adjustment(self_p);
         break;
 
     default:
         res = -1;
         break;
+    }
+
+    if (res >= 0) {
+        res = patch_reader_chunk_offset(&self_p->patch_reader);
     }
 
     return (res);
@@ -408,7 +653,7 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
     switch (self_p->patch_type) {
 
     case PATCH_TYPE_NONE:
-        res = read_header_common(self_p, patch_p, size);
+        res = apply_patch_none(self_p, patch_p, size);
         break;
 
     case PATCH_TYPE_NORMAL:

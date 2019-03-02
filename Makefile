@@ -13,12 +13,17 @@ CFLAGS := \
 	-Wfloat-equal \
 	-Wformat=2 \
 	-Wshadow \
-	-Werror
+	-Werror \
+	-Wconversion \
+	-Wpedantic \
+	-std=c99 \
+	-O3
 
 test:
 	env CFLAGS=--coverage python3 setup.py test
 	$(MAKE) test-sdist
 	find . -name "*.gcno" -exec gcov {} +
+	! $(MAKE) test-c
 
 test-sdist:
 	rm -rf dist
@@ -31,8 +36,7 @@ test-sdist:
 	python3 setup.py test
 
 test-c:
-	$(CC) $(CFLAGS) -Wconversion -Wpedantic -std=c99 -O3 $(C_SOURCES) \
-	    -o main
+	$(CC) $(CFLAGS) $(C_SOURCES) -llzma -o main
 	./main
 
 release-to-pypi:
