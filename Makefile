@@ -23,7 +23,7 @@ test:
 	env CFLAGS=--coverage python3 setup.py test
 	$(MAKE) test-sdist
 	find . -name "*.gcno" -exec gcov {} +
-	! $(MAKE) test-c
+	$(MAKE) test-c
 
 test-sdist:
 	rm -rf dist
@@ -37,7 +37,7 @@ test-sdist:
 
 test-c:
 	$(CC) $(CFLAGS) $(C_SOURCES) -llzma -o main
-	./main
+	(! ./main)
 
 release-to-pypi:
 	python3 setup.py sdist
