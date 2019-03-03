@@ -272,7 +272,7 @@ static int patch_reader_lzma_decompress(
 }
 
 static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
-                              int compression)
+                             int compression)
 {
     int res;
 
@@ -623,46 +623,56 @@ static int apply_patch_normal(struct detools_apply_patch_t *self_p,
     return (res);
 }
 
-struct rwer_t {
+struct io_t {
     FILE *ffrom_p;
     FILE *fto_p;
 };
 
-static void *mymalloc(size_t size)
-{
-    void *buf_p;
-
-    buf_p = malloc(size);
-    assert(buf_p != NULL);
-
-    return (buf_p);
-}
-
-static FILE *myfopen(const char *name_p, const char *flags_p)
-{
-    FILE *file_p;
-
-    file_p = fopen(name_p, flags_p);
-    assert(file_p != NULL);
-
-    return (file_p);
-}
-
-static void rwer_init(struct rwer_t *self_p,
-                      const char *from_p,
-                      const char *to_p)
-{
-    self_p->ffrom_p = myfopen(from_p, "rb");
-    self_p->fto_p = myfopen(to_p, "wb");
-}
-
-static int rwer_read(void *arg_p, uint8_t *buf_p, size_t size)
+static int io_init(struct io_t *self_p, const char *from_p, const char *to_p)
 {
     int res;
-    struct rwer_t *self_p;
+    FILE *file_p;
 
-    self_p = (struct rwer_t *)arg_p;
+    res = -1;
+    file_p = fopen(from_p, "rb");
+
+    if (file_p != NULL) {
+        self_p->ffrom_p = file_p;
+        file_p = fopen(to_p, "wb");
+
+        if (file_p != NULL) {
+            self_p->fto_p = file_p;
+            res = 0;
+        } else {
+            fclose(self_p->ffrom_p);
+        }
+    }
+
+    return (res);
+}
+
+static int io_cleanup(struct io_t *self_p)
+{
+    int res;
+    int res2;
+
+    res = fclose(self_p->ffrom_p);
+    res2 = fclose(self_p->fto_p);
+
+    if ((res != 0) || (res2 != 0)) {
+        res = -1;
+    }
+
+    return (res);
+}
+
+static int io_read(void *arg_p, uint8_t *buf_p, size_t size)
+{
+    int res;
+    struct io_t *self_p;
+
     res = 0;
+    self_p = (struct io_t *)arg_p;
 
     if (size > 0) {
         if (fread(buf_p, size, 1, self_p->ffrom_p) != 1) {
@@ -673,110 +683,211 @@ static int rwer_read(void *arg_p, uint8_t *buf_p, size_t size)
     return (res);
 }
 
-static int rwer_seek(void *arg_p, int offset)
+static int io_seek(void *arg_p, int offset)
 {
-    struct rwer_t *self_p;
+    struct io_t *self_p;
 
-    self_p = (struct rwer_t *)arg_p;
+    self_p = (struct io_t *)arg_p;
 
     return (fseek(self_p->ffrom_p, offset, SEEK_CUR));
 }
 
-static int rwer_write(void *arg_p, const uint8_t *buf_p, size_t size)
+static int io_write(void *arg_p, const uint8_t *buf_p, size_t size)
 {
     int res;
-    struct rwer_t *self_p;
+    struct io_t *self_p;
 
-    self_p = (struct rwer_t *)arg_p;
+    self_p = (struct io_t *)arg_p;
     res = 0;
 
     if (size > 0) {
         if (fwrite(buf_p, size, 1, self_p->fto_p) != 1) {
-            res = -1;
+            res = -DETOOLS_WRITE_FAILED;
         }
     }
 
     return (res);
 }
 
-static uint8_t *read_init(const char *name_p, size_t *size_p)
+static int get_file_size(FILE *file_p, size_t *size_p)
 {
-    FILE *file_p;
-    void *buf_p;
+    int res;
     long size;
 
-    file_p = myfopen(name_p, "rb");
+    res = fseek(file_p, 0, SEEK_END);
 
-    assert(fseek(file_p, 0, SEEK_END) == 0);
-    size = ftell(file_p);
-    assert(size > 0);
-    *size_p = (size_t)size;
-    assert(fseek(file_p, 0, SEEK_SET) == 0);
+    if (res == 0) {
+        res = -1;
+        size = ftell(file_p);
 
-    buf_p = mymalloc(*size_p);
-    assert(fread(buf_p, *size_p, 1, file_p) == 1);
+        if (size > 0) {
+            *size_p = (size_t)size;
 
-    fclose(file_p);
+            if (fseek(file_p, 0, SEEK_SET) == 0) {
+                res = 0;
+            }
+        }
+    }
 
-    return (buf_p);
+    return (res);
 }
 
-static uint8_t *patch_init(const char *patch_p, size_t *patch_size_p)
+static FILE *patch_init(const char *patch_p, size_t *size_p)
 {
-    return (read_init(patch_p, patch_size_p));
+    int res;
+    FILE *file_p;
+
+    file_p = fopen(patch_p, "rb");
+
+    if (file_p != NULL) {
+        res = get_file_size(file_p, size_p);
+
+        if (res != 0) {
+            fclose(file_p);
+            file_p = NULL;
+        }
+    }
+
+    return (file_p);
+}
+
+static int filenames_init(const char *from_p,
+                          const char *patch_p,
+                          const char *to_p,
+                          struct detools_apply_patch_t *apply_patch_p,
+                          struct io_t *io_p,
+                          FILE **fpatch_pp,
+                          size_t *patch_size_p)
+{
+    int res;
+
+    res = io_init(io_p, from_p, to_p);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    *fpatch_pp = patch_init(patch_p, patch_size_p);
+
+    if (*fpatch_pp == NULL) {
+        res = -1;
+        goto err1;
+    }
+
+    res = detools_apply_patch_init(apply_patch_p,
+                                   io_read,
+                                   io_seek,
+                                   io_write,
+                                   io_p);
+
+    if (res != 0) {
+        goto err2;
+    }
+
+    return (res);
+
+ err2:
+    (void)fclose(*fpatch_pp);
+
+ err1:
+    (void)io_cleanup(io_p);
+
+    return (res);
+}
+
+static int filenames_cleanup(struct io_t *io_p,
+                             FILE *fpatch_p)
+{
+    int res;
+    int res2;
+
+    res = io_cleanup(io_p);
+    res2 = fclose(fpatch_p);
+
+    if ((res != 0) || (res2 != 0)) {
+        res = -1;
+    }
+
+    return (res);
+}
+
+/**
+ * Process up to 512 new patch bytes per iteration.
+ */
+static int filenames_process(struct detools_apply_patch_t *apply_patch_p,
+                             FILE *fpatch_p,
+                             size_t patch_size)
+{
+    int res;
+    size_t patch_offset;
+    size_t chunk_size;
+    size_t chunk_offset;
+    uint8_t chunk[512];
+
+    res = 0;
+    patch_offset = 0;
+
+    while (patch_offset < patch_size) {
+        chunk_size = MIN(patch_size - patch_offset, 512);
+
+        res = (int)fread(&chunk[0], chunk_size, 1, fpatch_p);
+
+        if (res != 1) {
+            return (-DETOOLS_READ_FAILED);
+        }
+
+        chunk_offset = 0;
+
+        while (chunk_offset < chunk_size) {
+            res = detools_apply_patch_process(apply_patch_p,
+                                              &chunk[chunk_offset],
+                                              chunk_size - chunk_offset);
+
+            if (res < 0) {
+                return (res);
+            }
+
+            chunk_offset += (size_t)res;
+        }
+
+        patch_offset += chunk_size;
+    }
+
+    return (detools_apply_patch_finalize(apply_patch_p));
 }
 
 int detools_apply_patch_filenames(const char *from_p,
                                   const char *patch_p,
                                   const char *to_p)
 {
-    struct detools_apply_patch_t apply_patch;
-    struct rwer_t rwer;
-    const uint8_t *patch_buf_p;
-    size_t patch_size;
-    size_t patch_offset;
-    size_t chunk_size;
     int res;
+    struct detools_apply_patch_t apply_patch;
+    struct io_t io;
+    FILE *fpatch_p;
+    size_t patch_size;
 
-    rwer_init(&rwer, from_p, to_p);
-    patch_buf_p = patch_init(patch_p, &patch_size);
-
-    res = detools_apply_patch_init(&apply_patch,
-                                   rwer_read,
-                                   rwer_seek,
-                                   rwer_write,
-                                   &rwer);
-
-    if (res != 0) {
-        return (res);
-    }
-
-    /* Process up to 512 new patch bytes per iteration. */
-    patch_offset = 0;
-
-    while (patch_offset < patch_size) {
-        chunk_size = MIN(patch_size - patch_offset, 512);
-
-        res = detools_apply_patch_process(&apply_patch,
-                                          &patch_buf_p[patch_offset],
-                                          chunk_size);
-
-        if (res < 0) {
-            return (res);
-        }
-
-        patch_offset += (size_t)res;
-    }
-
-    res = detools_apply_patch_finalize(&apply_patch);
+    res = filenames_init(from_p,
+                         patch_p,
+                         to_p,
+                         &apply_patch,
+                         &io,
+                         &fpatch_p,
+                         &patch_size);
 
     if (res != 0) {
         return (res);
     }
 
-    if (fclose(rwer.fto_p) != 0) {
-        res = -1;
+    res = filenames_process(&apply_patch, fpatch_p, patch_size);
+
+    if (res != 0) {
+        goto err1;
     }
+
+    return (filenames_cleanup(&io, fpatch_p));
+
+ err1:
+    (void)filenames_cleanup(&io, fpatch_p);
 
     return (res);
 }
