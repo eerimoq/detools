@@ -17,7 +17,7 @@ CFLAGS := \
 	-Wconversion \
 	-Wpedantic \
 	-std=c99 \
-	-Og \
+	-g \
 	--coverage
 
 test:
