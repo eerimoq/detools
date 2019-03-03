@@ -34,6 +34,22 @@
 #include <stdio.h>
 #include <lzma.h>
 
+/* Error codes. */
+#define DETOOLS_OK                              0
+#define DETOOLS_NOT_IMPLEMENTED                 1
+#define DETOOLS_NOT_DONE                        2
+#define DETOOLS_BAD_PATCH_TYPE                  3
+#define DETOOLS_BAD_COMPRESSION                 4
+#define DETOOLS_INTERNAL_ERROR                  5
+#define DETOOLS_LZMA_INIT                       6
+#define DETOOLS_LZMA_DECODE                     7
+#define DETOOLS_OUT_OF_MEMORY                   8
+#define DETOOLS_CORRUPT_PATCH                   9
+#define DETOOLS_READ_FAILED                    10
+#define DETOOLS_WRITE_FAILED                   11
+#define DETOOLS_SEEK_FAILED                    12
+#define DETOOLS_ALREADY_DONE                   13
+
 /**
  * Read callback.
  *
@@ -76,8 +92,9 @@ struct detools_apply_patch_patch_reader_none_t {
 
 struct detools_apply_patch_patch_reader_lzma_t {
     lzma_stream stream;
-    uint8_t *next_in_p;
-    uint8_t *next_out_p;
+    uint8_t *input_p;
+    uint8_t *output_p;
+    size_t output_size;
 };
 
 struct detools_apply_patch_patch_reader_t {
@@ -108,7 +125,6 @@ struct detools_apply_patch_t {
     int to_pos;
     int to_size;
     int state;
-    int chunk_pos;
     int chunk_size;
     struct detools_apply_patch_patch_reader_t patch_reader;
 };

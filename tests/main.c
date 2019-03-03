@@ -75,7 +75,11 @@ static int rwer_read(void *arg_p, uint8_t *buf_p, size_t size)
 
     self_p = (struct rwer_t *)arg_p;
 
-    return ((int)fread(buf_p, size, 1, self_p->ffrom_p));
+    if (fread(buf_p, size, 1, self_p->ffrom_p) == 1) {
+        return (0);
+    } else {
+        return (-1);
+    }
 }
 
 static int rwer_seek(void *arg_p, int offset)
@@ -98,7 +102,7 @@ static int rwer_write(void *arg_p, const uint8_t *buf_p, size_t size)
     memcpy(&self_p->to.actual_p[self_p->to.written], buf_p, size);
     self_p->to.written += size;
 
-    return ((int)size);
+    return (0);
 }
 
 static uint8_t *read_init(const char *name_p, size_t *size_p)
@@ -159,6 +163,21 @@ static void test_apply_patch_foo(void)
                        "tests/files/foo.new");
 }
 
+static void test_apply_patch_foo_backwards(void)
+{
+    assert_apply_patch("tests/files/foo.new",
+                       "tests/files/foo-backwards.patch",
+                       "tests/files/foo.old");
+}
+
+static void test_apply_patch_micropython(void)
+{
+    assert_apply_patch(
+        "tests/files/micropython-esp8266-20180511-v1.9.4.bin",
+        "tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10.patch",
+        "tests/files/micropython-esp8266-20190125-v1.10.bin");
+}
+
 static void test_apply_patch_foo_compression_incremental(void)
 {
     struct detools_apply_patch_t apply_patch;
@@ -184,27 +203,23 @@ static void test_apply_patch_foo_compression_incremental(void)
 
     while (patch_offset < expected_patch_size) {
         patch_size = MIN(expected_patch_size - patch_offset, 64);
-
-        if (patch_size > 0) {
-            printf("input: 0x%02x\n", patch_p[patch_offset]);
-        }
-
         res = detools_apply_patch_process(&apply_patch,
                                           &patch_p[patch_offset],
                                           patch_size);
-        printf("process res: %d\n", res);
         assert((res >= 0) && (res <= (int)patch_size));
         patch_offset += (size_t)res;
     }
 
-    rwer_assert_to_ok(&rwer);
     assert(detools_apply_patch_finalize(&apply_patch) == 0);
+    rwer_assert_to_ok(&rwer);
 }
 
 int main()
 {
     test_apply_patch_foo_compression_incremental();
     test_apply_patch_foo();
+    test_apply_patch_foo_backwards();
+    test_apply_patch_micropython();
 
     return (0);
 }

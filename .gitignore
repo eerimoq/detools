@@ -70,4 +70,7 @@ target/
 
 /foo*
 *.gcov
+*.gcda
+*.gcno
 /main
+/assert-apply-patch.new
