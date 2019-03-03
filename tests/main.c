@@ -211,6 +211,22 @@ static void test_apply_patch_foo_crle_compression(void)
                              -DETOOLS_NOT_IMPLEMENTED);
 }
 
+static void test_apply_patch_micropython_in_place(void)
+{
+    assert_apply_patch_error(
+        "tests/files/micropython-esp8266-20180511-v1.9.4.bin",
+        "tests/files/micropython-esp8266-20180511-v1.9.4--"
+        "20190125-v1.10-in-place.patch",
+        -DETOOLS_NOT_IMPLEMENTED);
+}
+
+static void test_apply_patch_foo_in_place_3000_1500(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-in-place-3000-1500.patch",
+                             -DETOOLS_NOT_IMPLEMENTED);
+}
+
 static void test_apply_patch_foo_bad_patch_type(void)
 {
     assert_apply_patch_error("tests/files/foo.old",
@@ -269,6 +285,8 @@ int main()
     test_apply_patch_foo_none_compression();
     test_apply_patch_micropython_none_compression();
     test_apply_patch_foo_crle_compression();
+    test_apply_patch_micropython_in_place();
+    test_apply_patch_foo_in_place_3000_1500();
     test_apply_patch_foo_bad_patch_type();
     test_apply_patch_foo_bad_compression();
 
