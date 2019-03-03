@@ -128,7 +128,8 @@ struct detools_apply_patch_t {
 };
 
 /**
- * Apply given patch with file names.
+ * Apply given patch file to given from file and write the output to
+ * given to file.
  *
  * @param[in] from_p Source file name.
  * @param[in] patch_p Patch file name.
@@ -141,7 +142,7 @@ int detools_apply_patch_filenames(const char *from_p,
                                   const char *to_p);
 
 /**
- * Apply given patch with callbacks.
+ * Apply given patch using read and write callbacks.
  *
  * @param[in] from_read Source callback.
  * @param[in] patch_read Patch callback.
@@ -158,7 +159,7 @@ int detools_apply_patch_callbacks(detools_read_t from_read,
 /**
  * Initialize given apply patch object.
  *
- * @param[out] self_p Patcher object to initialize.
+ * @param[out] self_p Apply patch object to initialize.
  * @param[in] from_read Callback to read from-data.
  * @param[in] from_seek Callback to seek from current position in from-data.
  * @param[in] to_write Destination callback.
@@ -173,16 +174,16 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
                              void *arg_p);
 
 /**
- * Feed data into given patcher.
+ * Call this function repeatedly until all patch data has been
+ * processed or an error occurres. Call detools_apply_patch_finalize()
+ * to finalize the patching if no error occurred.
  *
- * NOTE: The minimum patch chunk size needed to produce any to-bytes
- *       depends on the patch compression algorithm and settings.
- *
- * @param[in,out] self_p Patcher object.
+ * @param[in,out] self_p Initialized apply patch object.
  * @param[in] patch_p Next chunk of the patch.
  * @param[in] size Patch buffer size.
  *
- * @return Number of consumed patch bytes, or negative error code.
+ * @return Zero or more number of consumed patch bytes, or negative
+ *         error code.
  */
 int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
                                 const uint8_t *patch_p,
@@ -192,7 +193,7 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
  * Call once after all data has been processed to finalize the
  * patching.
  *
- * @param[in,out] self_p Patcher object.
+ * @param[in,out] self_p Initialized apply patch object.
  *
  * @return zero(0) if the patch was applied successfully, or negative
  *         error code.
