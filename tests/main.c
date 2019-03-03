@@ -156,6 +156,17 @@ static void assert_apply_patch(const char *from_p,
     } while (actual_byte != EOF);
 }
 
+static void assert_apply_patch_error(const char *from_p,
+                                     const char *patch_p,
+                                     int expected_res)
+{
+    const char *actual_to_p = "assert-apply-patch.new";
+
+    assert(detools_apply_patch_filenames(from_p,
+                                         patch_p,
+                                         actual_to_p) == expected_res);
+}
+
 static void test_apply_patch_foo(void)
 {
     assert_apply_patch("tests/files/foo.old",
@@ -176,6 +187,42 @@ static void test_apply_patch_micropython(void)
         "tests/files/micropython-esp8266-20180511-v1.9.4.bin",
         "tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10.patch",
         "tests/files/micropython-esp8266-20190125-v1.10.bin");
+}
+
+static void test_apply_patch_foo_none_compression(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-none.patch",
+                             -DETOOLS_NOT_IMPLEMENTED);
+}
+
+static void test_apply_patch_micropython_none_compression(void)
+{
+    assert_apply_patch_error(
+        "tests/files/micropython-esp8266-20180511-v1.9.4.bin",
+        "tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-none.patch",
+        -DETOOLS_NOT_IMPLEMENTED);
+}
+
+static void test_apply_patch_foo_crle_compression(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-crle.patch",
+                             -DETOOLS_NOT_IMPLEMENTED);
+}
+
+static void test_apply_patch_foo_bad_patch_type(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-bad-patch-type.patch",
+                             -DETOOLS_BAD_PATCH_TYPE);
+}
+
+static void test_apply_patch_foo_bad_compression(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-bad-compression.patch",
+                             -DETOOLS_BAD_COMPRESSION);
 }
 
 static void test_apply_patch_foo_compression_incremental(void)
@@ -216,10 +263,16 @@ static void test_apply_patch_foo_compression_incremental(void)
 
 int main()
 {
-    test_apply_patch_foo_compression_incremental();
     test_apply_patch_foo();
     test_apply_patch_foo_backwards();
     test_apply_patch_micropython();
+    test_apply_patch_foo_none_compression();
+    test_apply_patch_micropython_none_compression();
+    test_apply_patch_foo_crle_compression();
+    test_apply_patch_foo_bad_patch_type();
+    test_apply_patch_foo_bad_compression();
+
+    test_apply_patch_foo_compression_incremental();
 
     return (0);
 }

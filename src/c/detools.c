@@ -379,7 +379,6 @@ static int apply_patch_none(struct detools_apply_patch_t *self_p,
                             size_t size)
 {
     int res;
-    int res2;
     int patch_type;
     int compression;
     int to_size;
@@ -394,6 +393,12 @@ static int apply_patch_none(struct detools_apply_patch_t *self_p,
     switch (patch_type) {
 
     case PATCH_TYPE_NORMAL:
+        res = patch_reader_init(&self_p->patch_reader, compression);
+
+        if (res != 0) {
+            return (res);
+        }
+
         res = unpack_size(&patch_p[1], size - 1, &to_size);
 
         if (res > 0) {
@@ -403,12 +408,6 @@ static int apply_patch_none(struct detools_apply_patch_t *self_p,
                 self_p->to_size = (size_t)to_size;
                 self_p->state = STATE_DIFF_SIZE;
                 res++;
-
-                res2 = patch_reader_init(&self_p->patch_reader, compression);
-
-                if (res2 != 0) {
-                    res = res2;
-                }
             } else {
                 res = -DETOOLS_CORRUPT_PATCH;
             }
