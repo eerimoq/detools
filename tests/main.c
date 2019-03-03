@@ -5,7 +5,7 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-struct rwer_t {
+struct io_t {
     FILE *ffrom_p;
     struct {
         uint8_t *actual_p;
@@ -35,9 +35,9 @@ static FILE *myfopen(const char *name_p, const char *flags_p)
     return (file_p);
 }
 
-static void rwer_init(struct rwer_t *self_p,
-                      const char *from_p,
-                      const char *to_p)
+static void io_init(struct io_t *self_p,
+                    const char *from_p,
+                    const char *to_p)
 {
     FILE *file_p;
     long size;
@@ -61,7 +61,7 @@ static void rwer_init(struct rwer_t *self_p,
     self_p->to.written = 0;
 }
 
-static void rwer_assert_to_ok(struct rwer_t *self_p)
+static void io_assert_to_ok(struct io_t *self_p)
 {
     assert(self_p->to.written == self_p->to.size);
     assert(memcmp(self_p->to.actual_p,
@@ -69,11 +69,11 @@ static void rwer_assert_to_ok(struct rwer_t *self_p)
                   self_p->to.size) == 0);
 }
 
-static int rwer_read(void *arg_p, uint8_t *buf_p, size_t size)
+static int io_read(void *arg_p, uint8_t *buf_p, size_t size)
 {
-    struct rwer_t *self_p;
+    struct io_t *self_p;
 
-    self_p = (struct rwer_t *)arg_p;
+    self_p = (struct io_t *)arg_p;
 
     if (fread(buf_p, size, 1, self_p->ffrom_p) == 1) {
         return (0);
@@ -82,20 +82,20 @@ static int rwer_read(void *arg_p, uint8_t *buf_p, size_t size)
     }
 }
 
-static int rwer_seek(void *arg_p, int offset)
+static int io_seek(void *arg_p, int offset)
 {
-    struct rwer_t *self_p;
+    struct io_t *self_p;
 
-    self_p = (struct rwer_t *)arg_p;
+    self_p = (struct io_t *)arg_p;
 
     return (fseek(self_p->ffrom_p, offset, SEEK_CUR));
 }
 
-static int rwer_write(void *arg_p, const uint8_t *buf_p, size_t size)
+static int io_write(void *arg_p, const uint8_t *buf_p, size_t size)
 {
-    struct rwer_t *self_p;
+    struct io_t *self_p;
 
-    self_p = (struct rwer_t *)arg_p;
+    self_p = (struct io_t *)arg_p;
 
     assert(self_p->to.size - self_p->to.written >= size);
 
@@ -244,22 +244,22 @@ static void test_apply_patch_foo_bad_compression(void)
 static void test_apply_patch_foo_compression_incremental(void)
 {
     struct detools_apply_patch_t apply_patch;
-    struct rwer_t rwer;
+    struct io_t io;
     const uint8_t *patch_p;
     size_t patch_size;
     size_t expected_patch_size;
     size_t patch_offset;
     int res;
 
-    rwer_init(&rwer, "tests/files/foo.old", "tests/files/foo.new");
+    io_init(&io, "tests/files/foo.old", "tests/files/foo.new");
     patch_p = patch_init("tests/files/foo.patch", &patch_size);
     expected_patch_size = patch_size;
 
     assert(detools_apply_patch_init(&apply_patch,
-                                    rwer_read,
-                                    rwer_seek,
-                                    rwer_write,
-                                    &rwer) == 0);
+                                    io_read,
+                                    io_seek,
+                                    io_write,
+                                    &io) == 0);
 
     /* Process up to 64 new patch bytes per iteration. */
     patch_offset = 0;
@@ -274,7 +274,7 @@ static void test_apply_patch_foo_compression_incremental(void)
     }
 
     assert(detools_apply_patch_finalize(&apply_patch) == 0);
-    rwer_assert_to_ok(&rwer);
+    io_assert_to_ok(&io);
 }
 
 int main()

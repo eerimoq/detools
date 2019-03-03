@@ -45,10 +45,8 @@
 #define DETOOLS_LZMA_DECODE                     7
 #define DETOOLS_OUT_OF_MEMORY                   8
 #define DETOOLS_CORRUPT_PATCH                   9
-#define DETOOLS_READ_FAILED                    10
-#define DETOOLS_WRITE_FAILED                   11
-#define DETOOLS_SEEK_FAILED                    12
-#define DETOOLS_ALREADY_DONE                   13
+#define DETOOLS_IO_FAILED                      10
+#define DETOOLS_ALREADY_DONE                   11
 
 /**
  * Read callback.
