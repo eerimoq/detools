@@ -173,15 +173,14 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
                              void *arg_p);
 
 /**
- * Feed data into given patcher and at the same time generate patched
- * output, ready to be written to disk/flash.
+ * Feed data into given patcher.
  *
  * NOTE: The minimum patch chunk size needed to produce any to-bytes
  *       depends on the patch compression algorithm and settings.
  *
  * @param[in,out] self_p Patcher object.
  * @param[in] patch_p Next chunk of the patch.
- * @param[in,out] size Patch buffer size.
+ * @param[in] size Patch buffer size.
  *
  * @return Number of consumed patch bytes, or negative error code.
  */
@@ -195,7 +194,7 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
  *
  * @param[in,out] self_p Patcher object.
  *
- * @return Zero(0) if the patch was applied successfully, or negative
+ * @return zero(0) if the patch was applied successfully, or negative
  *         error code.
  */
 int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p);
