@@ -228,15 +228,19 @@ int detools_apply_patch_filenames(const char *from_p,
 /**
  * Apply given patch using read and write callbacks.
  *
- * @param[in] from_read Source callback.
- * @param[in] patch_read Patch callback.
- * @param[in] to_write Destination callback.
+ * @param[in] from_read Source read callback.
+ * @param[in] from_seek Source seek callback.
+ * @param[in] patch_read Patch read callback.
+ * @param[in] patch_size Patch size in bytes.
+ * @param[in] to_write Destination write callback.
  * @param[in] arg_p Argument passed to callbacks.
  *
  * @return zero(0) or negative error code.
  */
 int detools_apply_patch_callbacks(detools_read_t from_read,
+                                  detools_seek_t from_seek,
                                   detools_read_t patch_read,
+                                  size_t patch_size,
                                   detools_write_t to_write,
                                   void *arg_p);
 
