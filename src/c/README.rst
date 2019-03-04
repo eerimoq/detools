@@ -13,9 +13,9 @@ for details.
 Command line utility
 ====================
 
-Build and run the command line utility.
+Build and run the apply patch command line utility.
 
 .. code-block:: text
 
    $ make
-   $ ./detools ../../tests/files/foo.old ../../tests/files/foo.patch foo.new
+   $ ./detools-apply-patch ../../tests/files/foo.old ../../tests/files/foo.patch foo.new

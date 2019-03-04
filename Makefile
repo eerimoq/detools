@@ -48,7 +48,7 @@ test-c:
 	$(CC) $(CFLAGS) $(C_SOURCES) -llzma -o main
 	./main
 	$(MAKE) -C src/c
-	src/c/detools tests/files/foo.old tests/files/foo.patch foo.new
+	src/c/detools-apply-patch tests/files/foo.old tests/files/foo.patch foo.new
 	cmp foo.new tests/files/foo.new
 
 release-to-pypi:

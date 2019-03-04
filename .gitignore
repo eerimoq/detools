@@ -74,5 +74,5 @@ target/
 *.gcno
 /main
 /assert-apply-patch.new
-src/c/detools
+src/c/detools-apply-patch
 src/c/foo.new
