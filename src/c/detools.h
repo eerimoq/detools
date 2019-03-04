@@ -234,4 +234,13 @@ int detools_apply_patch_callbacks(detools_read_t from_read,
                                   detools_write_t to_write,
                                   void *arg_p);
 
+/**
+ * Get the error string for given error code.
+ *
+ * @param[in] Error code.
+ *
+ * @return Error string, or NULL.
+ */
+const char *detools_error_as_string(int error);
+
 #endif

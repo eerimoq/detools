@@ -34,11 +34,19 @@
 
 int main(int argc, const char *argv[])
 {
+    int res;
+
     if (argc != 4) {
         printf("Usage: %s <from-file> <patch-file> <to-file>\n", argv[0]);
 
         return (1);
     }
 
-    return (detools_apply_patch_filenames(argv[1], argv[2], argv[3]));
+    res = -detools_apply_patch_filenames(argv[1], argv[2], argv[3]);
+
+    if (res != 0) {
+        printf("error: %s (error code %d)\n", detools_error_as_string(res), res);
+    }
+
+    return (res);
 }

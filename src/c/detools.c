@@ -997,3 +997,45 @@ int detools_apply_patch_filenames(const char *from_p,
 }
 
 #endif
+
+const char *detools_error_as_string(int error)
+{
+    switch (error) {
+
+    case DETOOLS_NOT_IMPLEMENTED:
+        return "Function not implemented.";
+
+    case DETOOLS_NOT_DONE:
+        return "Not done.";
+
+    case DETOOLS_BAD_PATCH_TYPE:
+        return "Bad patch type.";
+
+    case DETOOLS_BAD_COMPRESSION:
+        return "Bad compression.";
+
+    case DETOOLS_INTERNAL_ERROR:
+        return "Internal error.";
+
+    case DETOOLS_LZMA_INIT:
+        return "LZMA init.";
+
+    case DETOOLS_LZMA_DECODE:
+        return "LZMA decode.";
+
+    case DETOOLS_OUT_OF_MEMORY:
+        return "Out of memory.";
+
+    case DETOOLS_CORRUPT_PATCH:
+        return "Corrupt patch.";
+
+    case DETOOLS_IO_FAILED:
+        return "Input/output failed.";
+
+    case DETOOLS_ALREADY_DONE:
+        return "Already done.";
+
+    default:
+        return "Unknown error.";
+    }
+}
