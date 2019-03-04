@@ -29,10 +29,31 @@
 #ifndef DETOOLS_H
 #define DETOOLS_H
 
+/*
+ * Configuration.
+ *
+ * Define any of the defines below to 0 to disable given feature.
+ */
+
+#ifndef DETOOLS_CONFIG_FILE_IO
+#    define DETOOLS_CONFIG_FILE_IO              1
+#endif
+
+#ifndef DETOOLS_CONFIG_COMPRESSION_NONE
+#    define DETOOLS_CONFIG_COMPRESSION_NONE     1
+#endif
+
+#ifndef DETOOLS_CONFIG_COMPRESSION_LZMA
+#    define DETOOLS_CONFIG_COMPRESSION_LZMA     1
+#endif
+
+#ifndef DETOOLS_CONFIG_COMPRESSION_CRLE
+#    define DETOOLS_CONFIG_COMPRESSION_CRLE     1
+#endif
+
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
-#include <lzma.h>
 
 /* Error codes. */
 #define DETOOLS_OK                              0
@@ -88,12 +109,18 @@ struct detools_apply_patch_patch_reader_none_t {
     } chunk;
 };
 
+#if DETOOLS_CONFIG_COMPRESSION_LZMA == 1
+
+#include <lzma.h>
+
 struct detools_apply_patch_patch_reader_lzma_t {
     lzma_stream stream;
     uint8_t *input_p;
     uint8_t *output_p;
     size_t output_size;
 };
+
+#endif
 
 struct detools_apply_patch_patch_reader_t {
     struct {
@@ -102,8 +129,12 @@ struct detools_apply_patch_patch_reader_t {
         size_t offset;
     } chunk;
     union {
+#if DETOOLS_CONFIG_COMPRESSION_NONE == 1
         struct detools_apply_patch_patch_reader_none_t none;
+#endif
+#if DETOOLS_CONFIG_COMPRESSION_LZMA == 1
         struct detools_apply_patch_patch_reader_lzma_t lzma;
+#endif
     } compression;
     int (*decompress)(struct detools_apply_patch_patch_reader_t *self_p,
                       uint8_t *buf_p,
@@ -119,42 +150,12 @@ struct detools_apply_patch_t {
     detools_write_t to_write;
     void *arg_p;
     int patch_type;
-    int compression;
     int to_pos;
     int to_size;
     int state;
     int chunk_size;
     struct detools_apply_patch_patch_reader_t patch_reader;
 };
-
-/**
- * Apply given patch file to given from file and write the output to
- * given to file.
- *
- * @param[in] from_p Source file name.
- * @param[in] patch_p Patch file name.
- * @param[in] to_p Destination file name.
- *
- * @return zero(0) or negative error code.
- */
-int detools_apply_patch_filenames(const char *from_p,
-                                  const char *patch_p,
-                                  const char *to_p);
-
-/**
- * Apply given patch using read and write callbacks.
- *
- * @param[in] from_read Source callback.
- * @param[in] patch_read Patch callback.
- * @param[in] to_write Destination callback.
- * @param[in] arg_p Argument passed to callbacks.
- *
- * @return zero(0) or negative error code.
- */
-int detools_apply_patch_callbacks(detools_read_t from_read,
-                                  detools_read_t patch_read,
-                                  detools_write_t to_write,
-                                  void *arg_p);
 
 /**
  * Initialize given apply patch object.
@@ -199,5 +200,38 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
  *         error code.
  */
 int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p);
+
+#if DETOOLS_CONFIG_FILE_IO == 1
+
+/**
+ * Apply given patch file to given from file and write the output to
+ * given to file.
+ *
+ * @param[in] from_p Source file name.
+ * @param[in] patch_p Patch file name.
+ * @param[in] to_p Destination file name.
+ *
+ * @return zero(0) or negative error code.
+ */
+int detools_apply_patch_filenames(const char *from_p,
+                                  const char *patch_p,
+                                  const char *to_p);
+
+#endif
+
+/**
+ * Apply given patch using read and write callbacks.
+ *
+ * @param[in] from_read Source callback.
+ * @param[in] patch_read Patch callback.
+ * @param[in] to_write Destination callback.
+ * @param[in] arg_p Argument passed to callbacks.
+ *
+ * @return zero(0) or negative error code.
+ */
+int detools_apply_patch_callbacks(detools_read_t from_read,
+                                  detools_read_t patch_read,
+                                  detools_write_t to_write,
+                                  void *arg_p);
 
 #endif

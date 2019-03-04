@@ -37,6 +37,14 @@ test-sdist:
 	python3 setup.py test
 
 test-c:
+	$(CC) -DDETOOLS_CONFIG_FILE_IO=0 -c src/c/detools.c \
+	    -o detools.no-file-io.o
+	$(CC) -DDETOOLS_CONFIG_COMPRESSION_NONE=0 -c src/c/detools.c \
+	    -o detools.no-none.o
+	$(CC) -DDETOOLS_CONFIG_COMPRESSION_LZMA=0 -c src/c/detools.c \
+	    -o detools.no-lzma.o
+	$(CC) -DDETOOLS_CONFIG_COMPRESSION_CRLE=0 -c src/c/detools.c \
+	    -o detools.no-crle.o
 	$(CC) $(CFLAGS) $(C_SOURCES) -llzma -o main
 	./main
 

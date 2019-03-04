@@ -30,7 +30,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include "detools.h"
@@ -94,98 +93,10 @@ static int unpack_size(const uint8_t *buf_p, size_t size, int *size_p)
 }
 
 /*
- * File names functionality.
- */
-
-struct file_io_t {
-    FILE *ffrom_p;
-    FILE *fto_p;
-};
-
-static int file_io_init(struct file_io_t *self_p, const char *from_p, const char *to_p)
-{
-    int res;
-    FILE *file_p;
-
-    res = -DETOOLS_IO_FAILED;
-    file_p = fopen(from_p, "rb");
-
-    if (file_p != NULL) {
-        self_p->ffrom_p = file_p;
-        file_p = fopen(to_p, "wb");
-
-        if (file_p != NULL) {
-            self_p->fto_p = file_p;
-            res = 0;
-        } else {
-            fclose(self_p->ffrom_p);
-        }
-    }
-
-    return (res);
-}
-
-static int file_io_cleanup(struct file_io_t *self_p)
-{
-    int res;
-    int res2;
-
-    res = fclose(self_p->ffrom_p);
-    res2 = fclose(self_p->fto_p);
-
-    if ((res != 0) || (res2 != 0)) {
-        res = -DETOOLS_IO_FAILED;
-    }
-
-    return (res);
-}
-
-static int file_io_read(void *arg_p, uint8_t *buf_p, size_t size)
-{
-    int res;
-    struct file_io_t *self_p;
-
-    res = 0;
-    self_p = (struct file_io_t *)arg_p;
-
-    if (size > 0) {
-        if (fread(buf_p, size, 1, self_p->ffrom_p) != 1) {
-            res = -DETOOLS_IO_FAILED;
-        }
-    }
-
-    return (res);
-}
-
-static int file_io_seek(void *arg_p, int offset)
-{
-    struct file_io_t *self_p;
-
-    self_p = (struct file_io_t *)arg_p;
-
-    return (fseek(self_p->ffrom_p, offset, SEEK_CUR));
-}
-
-static int file_io_write(void *arg_p, const uint8_t *buf_p, size_t size)
-{
-    int res;
-    struct file_io_t *self_p;
-
-    self_p = (struct file_io_t *)arg_p;
-    res = 0;
-
-    if (size > 0) {
-        if (fwrite(buf_p, size, 1, self_p->fto_p) != 1) {
-            res = -DETOOLS_IO_FAILED;
-        }
-    }
-
-    return (res);
-}
-
-/*
  * None patch reader.
  */
+
+#if DETOOLS_CONFIG_COMPRESSION_NONE == 1
 
 static int patch_reader_none_init(struct detools_apply_patch_patch_reader_t *self_p)
 {
@@ -194,9 +105,13 @@ static int patch_reader_none_init(struct detools_apply_patch_patch_reader_t *sel
     return (-DETOOLS_NOT_IMPLEMENTED);
 }
 
+#endif
+
 /*
  * LZMA patch reader.
  */
+
+#if DETOOLS_CONFIG_COMPRESSION_LZMA == 1
 
 static int get_decompressed_data(
     struct detools_apply_patch_patch_reader_lzma_t *lzma_p,
@@ -355,9 +270,13 @@ static int patch_reader_lzma_init(struct detools_apply_patch_patch_reader_t *sel
     return (0);
 }
 
+#endif
+
 /*
- * XRLE patch reader.
+ * CRLE patch reader.
  */
+
+#if DETOOLS_CONFIG_COMPRESSION_CRLE == 1
 
 static int patch_reader_crle_init(struct detools_apply_patch_patch_reader_t *self_p)
 {
@@ -365,6 +284,8 @@ static int patch_reader_crle_init(struct detools_apply_patch_patch_reader_t *sel
 
     return (-DETOOLS_NOT_IMPLEMENTED);
 }
+
+#endif
 
 /*
  * Patch reader.
@@ -380,17 +301,23 @@ static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
 
     switch (compression) {
 
+#if DETOOLS_CONFIG_COMPRESSION_NONE == 1
     case COMPRESSION_NONE:
         res = patch_reader_none_init(self_p);
         break;
+#endif
 
+#if DETOOLS_CONFIG_COMPRESSION_LZMA == 1
     case COMPRESSION_LZMA:
         res = patch_reader_lzma_init(self_p);
         break;
+#endif
 
+#if DETOOLS_CONFIG_COMPRESSION_CRLE == 1
     case COMPRESSION_CRLE:
         res = patch_reader_crle_init(self_p);
         break;
+#endif
 
     default:
         res = -DETOOLS_BAD_COMPRESSION;
@@ -476,6 +403,39 @@ static int patch_reader_unpack_size(
     return (0);
 }
 
+static int apply_patch_none_init_normal(struct detools_apply_patch_t *self_p,
+                                        const uint8_t *patch_p,
+                                        size_t size,
+                                        int compression)
+{
+    int res;
+    int to_size;
+
+    res = patch_reader_init(&self_p->patch_reader, compression);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    res = unpack_size(&patch_p[1], size - 1, &to_size);
+
+    if (res <= 0) {
+        return (res);
+    }
+
+    if (to_size <= 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+
+    self_p->patch_type = PATCH_TYPE_NORMAL;
+    self_p->to_pos = 0;
+    self_p->to_size = to_size;
+    self_p->state = STATE_DIFF_SIZE;
+    res++;
+
+    return (res);
+}
+
 /**
  * @return Number of consumed patch bytes, or negative error code.
  */
@@ -486,7 +446,6 @@ static int apply_patch_none(struct detools_apply_patch_t *self_p,
     int res;
     int patch_type;
     int compression;
-    int to_size;
 
     if (size < 1) {
         return (0);
@@ -498,26 +457,10 @@ static int apply_patch_none(struct detools_apply_patch_t *self_p,
     switch (patch_type) {
 
     case PATCH_TYPE_NORMAL:
-        res = patch_reader_init(&self_p->patch_reader, compression);
-
-        if (res != 0) {
-            return (res);
-        }
-
-        res = unpack_size(&patch_p[1], size - 1, &to_size);
-
-        if (res > 0) {
-            if (to_size > 0) {
-                self_p->patch_type = patch_type;
-                self_p->to_pos = 0;
-                self_p->to_size = (size_t)to_size;
-                self_p->state = STATE_DIFF_SIZE;
-                res++;
-            } else {
-                res = -DETOOLS_CORRUPT_PATCH;
-            }
-        }
-
+        res = apply_patch_none_init_normal(self_p,
+                                           patch_p,
+                                           size,
+                                           compression);
         break;
 
     case PATCH_TYPE_IN_PLACE:
@@ -710,6 +653,169 @@ static int apply_patch_in_place(struct detools_apply_patch_t *self_p,
     return (-DETOOLS_NOT_IMPLEMENTED);
 }
 
+int detools_apply_patch_callbacks(detools_read_t from_read,
+                                  detools_read_t patch_read,
+                                  detools_write_t to_write,
+                                  void *arg_p)
+{
+    (void)from_read;
+    (void)patch_read;
+    (void)to_write;
+    (void)arg_p;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
+                             detools_read_t from_read,
+                             detools_seek_t from_seek,
+                             detools_write_t to_write,
+                             void *arg_p)
+{
+    self_p->from_read = from_read;
+    self_p->from_seek = from_seek;
+    self_p->to_write = to_write;
+    self_p->arg_p = arg_p;
+    self_p->patch_type = PATCH_TYPE_NONE;
+
+    return (0);
+}
+
+int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
+                                const uint8_t *patch_p,
+                                size_t size)
+{
+    int res;
+
+    switch (self_p->patch_type) {
+
+    case PATCH_TYPE_NONE:
+        res = apply_patch_none(self_p, patch_p, size);
+        break;
+
+    case PATCH_TYPE_NORMAL:
+        res = apply_patch_normal(self_p, patch_p, size);
+        break;
+
+    case PATCH_TYPE_IN_PLACE:
+        res = apply_patch_in_place(self_p, patch_p, size);
+        break;
+
+    default:
+        res = -DETOOLS_INTERNAL_ERROR;
+        break;
+    }
+
+    return (res);
+}
+
+int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
+{
+    int res;
+
+    do {
+        res = detools_apply_patch_process(self_p, NULL, 0);
+    } while (res == 0);
+
+    if (res == -DETOOLS_ALREADY_DONE) {
+        res = 0;
+    }
+
+    return (res);
+}
+
+/*
+ * File io functionality.
+ */
+
+#if DETOOLS_CONFIG_FILE_IO == 1
+
+struct file_io_t {
+    FILE *ffrom_p;
+    FILE *fto_p;
+};
+
+static int file_io_init(struct file_io_t *self_p, const char *from_p, const char *to_p)
+{
+    int res;
+    FILE *file_p;
+
+    res = -DETOOLS_IO_FAILED;
+    file_p = fopen(from_p, "rb");
+
+    if (file_p != NULL) {
+        self_p->ffrom_p = file_p;
+        file_p = fopen(to_p, "wb");
+
+        if (file_p != NULL) {
+            self_p->fto_p = file_p;
+            res = 0;
+        } else {
+            fclose(self_p->ffrom_p);
+        }
+    }
+
+    return (res);
+}
+
+static int file_io_cleanup(struct file_io_t *self_p)
+{
+    int res;
+    int res2;
+
+    res = fclose(self_p->ffrom_p);
+    res2 = fclose(self_p->fto_p);
+
+    if ((res != 0) || (res2 != 0)) {
+        res = -DETOOLS_IO_FAILED;
+    }
+
+    return (res);
+}
+
+static int file_io_read(void *arg_p, uint8_t *buf_p, size_t size)
+{
+    int res;
+    struct file_io_t *self_p;
+
+    res = 0;
+    self_p = (struct file_io_t *)arg_p;
+
+    if (size > 0) {
+        if (fread(buf_p, size, 1, self_p->ffrom_p) != 1) {
+            res = -DETOOLS_IO_FAILED;
+        }
+    }
+
+    return (res);
+}
+
+static int file_io_seek(void *arg_p, int offset)
+{
+    struct file_io_t *self_p;
+
+    self_p = (struct file_io_t *)arg_p;
+
+    return (fseek(self_p->ffrom_p, offset, SEEK_CUR));
+}
+
+static int file_io_write(void *arg_p, const uint8_t *buf_p, size_t size)
+{
+    int res;
+    struct file_io_t *self_p;
+
+    self_p = (struct file_io_t *)arg_p;
+    res = 0;
+
+    if (size > 0) {
+        if (fwrite(buf_p, size, 1, self_p->fto_p) != 1) {
+            res = -DETOOLS_IO_FAILED;
+        }
+    }
+
+    return (res);
+}
+
 static int get_file_size(FILE *file_p, size_t *size_p)
 {
     int res;
@@ -812,9 +918,6 @@ static int filenames_cleanup(struct file_io_t *file_io_p,
     return (res);
 }
 
-/**
- * Process up to 512 new patch bytes per iteration.
- */
 static int filenames_process(struct detools_apply_patch_t *apply_patch_p,
                              FILE *fpatch_p,
                              size_t patch_size)
@@ -893,73 +996,4 @@ int detools_apply_patch_filenames(const char *from_p,
     return (res);
 }
 
-int detools_apply_patch_callbacks(detools_read_t from_read,
-                                  detools_read_t patch_read,
-                                  detools_write_t to_write,
-                                  void *arg_p)
-{
-    (void)from_read;
-    (void)patch_read;
-    (void)to_write;
-    (void)arg_p;
-
-    return (-DETOOLS_NOT_IMPLEMENTED);
-}
-
-int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
-                             detools_read_t from_read,
-                             detools_seek_t from_seek,
-                             detools_write_t to_write,
-                             void *arg_p)
-{
-    self_p->from_read = from_read;
-    self_p->from_seek = from_seek;
-    self_p->to_write = to_write;
-    self_p->arg_p = arg_p;
-    self_p->patch_type = PATCH_TYPE_NONE;
-
-    return (0);
-}
-
-int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
-                                const uint8_t *patch_p,
-                                size_t size)
-{
-    int res;
-
-    switch (self_p->patch_type) {
-
-    case PATCH_TYPE_NONE:
-        res = apply_patch_none(self_p, patch_p, size);
-        break;
-
-    case PATCH_TYPE_NORMAL:
-        res = apply_patch_normal(self_p, patch_p, size);
-        break;
-
-    case PATCH_TYPE_IN_PLACE:
-        res = apply_patch_in_place(self_p, patch_p, size);
-        break;
-
-    default:
-        res = -DETOOLS_INTERNAL_ERROR;
-        break;
-    }
-
-    return (res);
-}
-
-int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
-{
-    int res;
-
-    do {
-        res = detools_apply_patch_process(self_p, NULL, 0);
-    } while (res == 0);
-
-    if (res == -DETOOLS_ALREADY_DONE) {
-        res = 0;
-    }
-
-    return (res);
-}
+#endif

@@ -211,6 +211,14 @@ static void test_apply_patch_foo_crle_compression(void)
                              -DETOOLS_NOT_IMPLEMENTED);
 }
 
+static void test_apply_patch_micropython_crle_compression(void)
+{
+    assert_apply_patch_error(
+        "tests/files/micropython-esp8266-20180511-v1.9.4.bin",
+        "tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-crle.patch",
+        -DETOOLS_NOT_IMPLEMENTED);
+}
+
 static void test_apply_patch_micropython_in_place(void)
 {
     assert_apply_patch_error(
@@ -224,6 +232,41 @@ static void test_apply_patch_foo_in_place_3000_1500(void)
 {
     assert_apply_patch_error("tests/files/foo.old",
                              "tests/files/foo-in-place-3000-1500.patch",
+                             -DETOOLS_NOT_IMPLEMENTED);
+}
+
+static void test_apply_patch_foo_in_place_3k_1_5k(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-in-place-3k-1.5k.patch",
+                             -DETOOLS_NOT_IMPLEMENTED);
+}
+
+static void test_apply_patch_foo_in_place_3000_1500_1500(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-in-place-3000-1500-1500.patch",
+                             -DETOOLS_NOT_IMPLEMENTED);
+}
+
+static void test_apply_patch_foo_in_place_3000_500(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-in-place-3000-500.patch",
+                             -DETOOLS_NOT_IMPLEMENTED);
+}
+
+static void test_apply_patch_foo_in_place_3000_500_crle(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-in-place-3000-500-crle.patch",
+                             -DETOOLS_NOT_IMPLEMENTED);
+}
+
+static void test_apply_patch_foo_in_place_6000_1000_crle(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-in-place-6000-1000-crle.patch",
                              -DETOOLS_NOT_IMPLEMENTED);
 }
 
@@ -285,8 +328,14 @@ int main()
     test_apply_patch_foo_none_compression();
     test_apply_patch_micropython_none_compression();
     test_apply_patch_foo_crle_compression();
+    test_apply_patch_micropython_crle_compression();
     test_apply_patch_micropython_in_place();
     test_apply_patch_foo_in_place_3000_1500();
+    test_apply_patch_foo_in_place_3k_1_5k();
+    test_apply_patch_foo_in_place_3000_1500_1500();
+    test_apply_patch_foo_in_place_3000_500();
+    test_apply_patch_foo_in_place_3000_500_crle();
+    test_apply_patch_foo_in_place_6000_1000_crle();
     test_apply_patch_foo_bad_patch_type();
     test_apply_patch_foo_bad_compression();
 
