@@ -47,6 +47,9 @@ test-c:
 	    -o detools.no-crle.o
 	$(CC) $(CFLAGS) $(C_SOURCES) -llzma -o main
 	./main
+	$(MAKE) -C src/c
+	src/c/detools tests/files/foo.old tests/files/foo.patch foo.new
+	cmp foo.new tests/files/foo.new
 
 release-to-pypi:
 	python3 setup.py sdist
