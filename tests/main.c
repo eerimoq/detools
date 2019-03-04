@@ -284,6 +284,21 @@ static void test_apply_patch_foo_bad_compression(void)
                              -DETOOLS_BAD_COMPRESSION);
 }
 
+static void test_apply_patch_file_open_error(void)
+{
+    assert_apply_patch_error("tests/files/foo.old.missing",
+                             "tests/files/foo-bad-compression.patch",
+                             -DETOOLS_FILE_OPEN_FAILED);
+
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-bad-compression.patch.missing",
+                             -DETOOLS_FILE_OPEN_FAILED);
+
+    assert(detools_apply_patch_filenames("tests/files/foo.old",
+                                         "tests/files/foo-bad-compression.patch",
+                                         "") == -DETOOLS_FILE_OPEN_FAILED);
+}
+
 static void test_apply_patch_foo_compression_incremental(void)
 {
     struct detools_apply_patch_t apply_patch;
@@ -320,6 +335,42 @@ static void test_apply_patch_foo_compression_incremental(void)
     io_assert_to_ok(&io);
 }
 
+static void test_error_as_string(void)
+{
+    assert(strcmp(detools_error_as_string(DETOOLS_NOT_IMPLEMENTED),
+                  "Function not implemented.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_NOT_DONE),
+                  "Not done.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_BAD_PATCH_TYPE),
+                  "Bad patch type.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_BAD_COMPRESSION),
+                  "Bad compression.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_INTERNAL_ERROR),
+                  "Internal error.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_LZMA_INIT),
+                  "LZMA init.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_LZMA_DECODE),
+                  "LZMA decode.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_OUT_OF_MEMORY),
+                  "Out of memory.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_CORRUPT_PATCH),
+                  "Corrupt patch.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_IO_FAILED),
+                  "Input/output failed.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_ALREADY_DONE),
+                  "Already done.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_FILE_OPEN_FAILED),
+                  "File open failed.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_FILE_CLOSE_FAILED),
+                  "File close failed.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_FILE_READ_FAILED),
+                  "File read failed.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_FILE_WRITE_FAILED),
+                  "File write failed.") == 0);
+    assert(strcmp(detools_error_as_string(-1),
+                  "Unknown error.") == 0);
+}
+
 int main()
 {
     test_apply_patch_foo();
@@ -338,8 +389,11 @@ int main()
     test_apply_patch_foo_in_place_6000_1000_crle();
     test_apply_patch_foo_bad_patch_type();
     test_apply_patch_foo_bad_compression();
+    test_apply_patch_file_open_error();
 
     test_apply_patch_foo_compression_incremental();
+
+    test_error_as_string();
 
     return (0);
 }
