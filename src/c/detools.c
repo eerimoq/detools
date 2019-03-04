@@ -735,12 +735,14 @@ struct file_io_t {
     FILE *fto_p;
 };
 
-static int file_io_init(struct file_io_t *self_p, const char *from_p, const char *to_p)
+static int file_io_init(struct file_io_t *self_p,
+                        const char *from_p,
+                        const char *to_p)
 {
     int res;
     FILE *file_p;
 
-    res = -DETOOLS_IO_FAILED;
+    res = -DETOOLS_FILE_OPEN_FAILED;
     file_p = fopen(from_p, "rb");
 
     if (file_p != NULL) {
@@ -767,7 +769,7 @@ static int file_io_cleanup(struct file_io_t *self_p)
     res2 = fclose(self_p->fto_p);
 
     if ((res != 0) || (res2 != 0)) {
-        res = -DETOOLS_IO_FAILED;
+        res = -DETOOLS_FILE_CLOSE_FAILED;
     }
 
     return (res);
@@ -877,7 +879,7 @@ static int filenames_init(const char *from_p,
     *fpatch_pp = patch_init(patch_p, patch_size_p);
 
     if (*fpatch_pp == NULL) {
-        res = -DETOOLS_IO_FAILED;
+        res = -DETOOLS_FILE_OPEN_FAILED;
         goto err1;
     }
 
@@ -912,7 +914,7 @@ static int filenames_cleanup(struct file_io_t *file_io_p,
     res2 = fclose(fpatch_p);
 
     if ((res != 0) || (res2 != 0)) {
-        res = -DETOOLS_IO_FAILED;
+        res = -DETOOLS_FILE_CLOSE_FAILED;
     }
 
     return (res);
@@ -937,7 +939,7 @@ static int filenames_process(struct detools_apply_patch_t *apply_patch_p,
         res = (int)fread(&chunk[0], chunk_size, 1, fpatch_p);
 
         if (res != 1) {
-            return (-DETOOLS_IO_FAILED);
+            return (-DETOOLS_FILE_READ_FAILED);
         }
 
         chunk_offset = 0;
@@ -1034,6 +1036,18 @@ const char *detools_error_as_string(int error)
 
     case DETOOLS_ALREADY_DONE:
         return "Already done.";
+
+    case DETOOLS_FILE_OPEN_FAILED:
+        return "File open failed.";
+
+    case DETOOLS_FILE_CLOSE_FAILED:
+        return "File close failed.";
+
+    case DETOOLS_FILE_READ_FAILED:
+        return "File read failed.";
+
+    case DETOOLS_FILE_WRITE_FAILED:
+        return "File write failed.";
 
     default:
         return "Unknown error.";

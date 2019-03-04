@@ -68,6 +68,10 @@
 #define DETOOLS_CORRUPT_PATCH                   9
 #define DETOOLS_IO_FAILED                      10
 #define DETOOLS_ALREADY_DONE                   11
+#define DETOOLS_FILE_OPEN_FAILED               12
+#define DETOOLS_FILE_CLOSE_FAILED              13
+#define DETOOLS_FILE_READ_FAILED               14
+#define DETOOLS_FILE_WRITE_FAILED              15
 
 /**
  * Read callback.
