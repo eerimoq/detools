@@ -831,6 +831,8 @@ static int file_io_init(struct file_io_t *self_p,
     FILE *file_p;
 
     res = -DETOOLS_FILE_OPEN_FAILED;
+
+    /* From. */
     file_p = fopen(from_p, "rb");
 
     if (file_p == NULL) {
@@ -838,6 +840,8 @@ static int file_io_init(struct file_io_t *self_p,
     }
 
     self_p->ffrom_p = file_p;
+
+    /* To. */
     file_p = fopen(to_p, "wb");
 
     if (file_p == NULL) {
@@ -845,6 +849,8 @@ static int file_io_init(struct file_io_t *self_p,
     }
 
     self_p->fto_p = file_p;
+
+    /* Patch. */
     file_p = fopen(patch_p, "rb");
 
     if (file_p == NULL) {
@@ -852,14 +858,16 @@ static int file_io_init(struct file_io_t *self_p,
     }
 
     self_p->fpatch_p = file_p;
-
     res = get_file_size(self_p->fpatch_p, patch_size_p);
 
     if (res != 0) {
-        goto err2;
+        goto err3;
     }
 
     return (res);
+
+ err3:
+    fclose(self_p->fpatch_p);
 
  err2:
     fclose(self_p->fto_p);
