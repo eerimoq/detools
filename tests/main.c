@@ -367,6 +367,10 @@ static void test_error_as_string(void)
                   "File read failed.") == 0);
     assert(strcmp(detools_error_as_string(DETOOLS_FILE_WRITE_FAILED),
                   "File write failed.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_FILE_SEEK_FAILED),
+                  "File seek failed.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_FILE_TELL_FAILED),
+                  "File tell failed.") == 0);
     assert(strcmp(detools_error_as_string(-1),
                   "Unknown error.") == 0);
 }

@@ -72,6 +72,8 @@
 #define DETOOLS_FILE_CLOSE_FAILED              13
 #define DETOOLS_FILE_READ_FAILED               14
 #define DETOOLS_FILE_WRITE_FAILED              15
+#define DETOOLS_FILE_SEEK_FAILED               16
+#define DETOOLS_FILE_TELL_FAILED               17
 
 /**
  * Read callback.

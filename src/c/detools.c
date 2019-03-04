@@ -520,7 +520,7 @@ static int process_normal_data(struct detools_apply_patch_t *self_p,
         res = self_p->from_read(self_p->arg_p, &from[0], to_size);
 
         if (res != 0) {
-            return (-DETOOLS_IO_FAILED);
+            return (res);
         }
 
         for (i = 0; i < (int)to_size; i++) {
@@ -578,7 +578,7 @@ static int process_normal_adjustment(struct detools_apply_patch_t *self_p)
     res = self_p->from_seek(self_p->arg_p, offset);
 
     if (res != 0) {
-        return (-DETOOLS_IO_FAILED);
+        return (res);
     }
 
     if (self_p->to_pos == self_p->to_size) {
@@ -785,7 +785,7 @@ static int file_io_read(void *arg_p, uint8_t *buf_p, size_t size)
 
     if (size > 0) {
         if (fread(buf_p, size, 1, self_p->ffrom_p) != 1) {
-            res = -DETOOLS_IO_FAILED;
+            res = -DETOOLS_FILE_READ_FAILED;
         }
     }
 
@@ -811,7 +811,7 @@ static int file_io_write(void *arg_p, const uint8_t *buf_p, size_t size)
 
     if (size > 0) {
         if (fwrite(buf_p, size, 1, self_p->fto_p) != 1) {
-            res = -DETOOLS_IO_FAILED;
+            res = -DETOOLS_FILE_WRITE_FAILED;
         }
     }
 
@@ -825,17 +825,22 @@ static int get_file_size(FILE *file_p, size_t *size_p)
 
     res = fseek(file_p, 0, SEEK_END);
 
-    if (res == 0) {
-        res = -DETOOLS_IO_FAILED;
-        size = ftell(file_p);
+    if (res != 0) {
+        return (-DETOOLS_FILE_SEEK_FAILED);
+    }
 
-        if (size > 0) {
-            *size_p = (size_t)size;
+    size = ftell(file_p);
 
-            if (fseek(file_p, 0, SEEK_SET) == 0) {
-                res = 0;
-            }
-        }
+    if (size <= 0) {
+        return (-DETOOLS_FILE_TELL_FAILED);
+    }
+
+    *size_p = (size_t)size;
+
+    res = fseek(file_p, 0, SEEK_SET);
+
+    if (res != 0) {
+        return (-DETOOLS_FILE_SEEK_FAILED);
     }
 
     return (res);
@@ -1048,6 +1053,12 @@ const char *detools_error_as_string(int error)
 
     case DETOOLS_FILE_WRITE_FAILED:
         return "File write failed.";
+
+    case DETOOLS_FILE_SEEK_FAILED:
+        return "File seek failed.";
+
+    case DETOOLS_FILE_TELL_FAILED:
+        return "File tell failed.";
 
     default:
         return "Unknown error.";
