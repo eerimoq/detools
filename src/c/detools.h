@@ -156,10 +156,10 @@ struct detools_apply_patch_t {
     detools_write_t to_write;
     void *arg_p;
     int patch_type;
-    int to_pos;
-    int to_size;
     int state;
-    int chunk_size;
+    size_t to_pos;
+    size_t to_size;
+    size_t chunk_size;
     struct detools_apply_patch_patch_reader_t patch_reader;
 };
 

@@ -429,7 +429,7 @@ static int apply_patch_none_init_normal(struct detools_apply_patch_t *self_p,
 
     self_p->patch_type = PATCH_TYPE_NORMAL;
     self_p->to_pos = 0;
-    self_p->to_size = to_size;
+    self_p->to_size = (size_t)to_size;
     self_p->state = STATE_DIFF_SIZE;
     res++;
 
@@ -487,12 +487,12 @@ static int process_normal_size(struct detools_apply_patch_t *self_p,
         return (res);
     }
 
-    if (self_p->to_pos + size > self_p->to_size) {
+    if (self_p->to_pos + (size_t)size > self_p->to_size) {
         return (-DETOOLS_CORRUPT_PATCH);
     }
 
     self_p->state = next_state;
-    self_p->chunk_size = size;
+    self_p->chunk_size = (size_t)size;
 
     return (res);
 }
@@ -501,12 +501,12 @@ static int process_normal_data(struct detools_apply_patch_t *self_p,
                                int next_state)
 {
     int res;
-    int i;
+    size_t i;
     uint8_t to[128];
     size_t to_size;
     uint8_t from[128];
 
-    to_size = MIN(sizeof(to), (size_t)self_p->chunk_size);
+    to_size = MIN(sizeof(to), self_p->chunk_size);
 
     res = patch_reader_decompress(&self_p->patch_reader,
                                   &to[0],
@@ -523,13 +523,13 @@ static int process_normal_data(struct detools_apply_patch_t *self_p,
             return (res);
         }
 
-        for (i = 0; i < (int)to_size; i++) {
+        for (i = 0; i < to_size; i++) {
             to[i] = (uint8_t)(to[i] + from[i]);
         }
     }
 
-    self_p->to_pos += (int)to_size;
-    self_p->chunk_size -= (int)to_size;
+    self_p->to_pos += to_size;
+    self_p->chunk_size -= to_size;
 
     if (self_p->chunk_size == 0) {
         self_p->state = next_state;
