@@ -54,6 +54,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 /* Error codes. */
 #define DETOOLS_OK                              0
@@ -108,11 +109,8 @@ typedef int (*detools_write_t)(void *arg_p, const uint8_t *buf_p, size_t size);
 typedef int (*detools_seek_t)(void *arg_p, int offset);
 
 struct detools_apply_patch_patch_reader_none_t {
-    struct {
-        const uint8_t *buf_p;
-        size_t size;
-        size_t offset;
-    } chunk;
+    size_t patch_size;
+    size_t patch_offset;
 };
 
 #if DETOOLS_CONFIG_COMPRESSION_LZMA == 1
@@ -134,6 +132,12 @@ struct detools_apply_patch_patch_reader_t {
         size_t size;
         size_t offset;
     } chunk;
+    struct {
+        int state;
+        int value;
+        int offset;
+        bool is_signed;
+    } size;
     union {
 #if DETOOLS_CONFIG_COMPRESSION_NONE == 1
         struct detools_apply_patch_patch_reader_none_t none;
@@ -153,6 +157,7 @@ struct detools_apply_patch_patch_reader_t {
 struct detools_apply_patch_t {
     detools_read_t from_read;
     detools_seek_t from_seek;
+    size_t patch_size;
     detools_write_t to_write;
     void *arg_p;
     int patch_type;
@@ -177,6 +182,7 @@ struct detools_apply_patch_t {
 int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
                              detools_read_t from_read,
                              detools_seek_t from_seek,
+                             size_t patch_size,
                              detools_write_t to_write,
                              void *arg_p);
 

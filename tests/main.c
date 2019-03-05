@@ -191,17 +191,17 @@ static void test_apply_patch_micropython(void)
 
 static void test_apply_patch_foo_none_compression(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-none.patch",
-                             -DETOOLS_NOT_IMPLEMENTED);
+    assert_apply_patch("tests/files/foo.old",
+                       "tests/files/foo-none.patch",
+                       "tests/files/foo.new");
 }
 
 static void test_apply_patch_micropython_none_compression(void)
 {
-    assert_apply_patch_error(
+    assert_apply_patch(
         "tests/files/micropython-esp8266-20180511-v1.9.4.bin",
         "tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-none.patch",
-        -DETOOLS_NOT_IMPLEMENTED);
+        "tests/files/micropython-esp8266-20190125-v1.10.bin");
 }
 
 static void test_apply_patch_foo_crle_compression(void)
@@ -270,6 +270,80 @@ static void test_apply_patch_foo_in_place_6000_1000_crle(void)
                              -DETOOLS_NOT_IMPLEMENTED);
 }
 
+static void test_apply_patch_bsdiff(void)
+{
+    assert_apply_patch("tests/files/bsdiff.py",
+                       "tests/files/bsdiff-READ-ME.patch",
+                       "tests/files/READ-ME.rst");
+}
+
+static void test_apply_patch_sais(void)
+{
+    assert_apply_patch("tests/files/sais.c",
+                       "tests/files/sais-READ-ME.patch",
+                       "tests/files/READ-ME.rst");
+}
+
+static void test_apply_patch_3f5531ba56182a807a5c358f04678b3b026d3a(void)
+{
+    assert_apply_patch(
+        "tests/files/3f5531ba56182a807a5c358f04678b3b026d3a.bin",
+        "tests/files/3f5531ba56182a807a5c358f04678b3b026d3a-READ-ME.patch",
+        "tests/files/READ-ME.rst");
+}
+
+static void test_apply_patch_b2db59ab76ca36f67e61f720857021df8a660b(void)
+{
+    assert_apply_patch(
+        "tests/files/b2db59ab76ca36f67e61f720857021df8a660b.bin",
+        "tests/files/b2db59ab76ca36f67e61f720857021df8a660b-READ-ME.patch",
+        "tests/files/READ-ME.rst");
+}
+
+static void test_apply_patch_d027a1e1f752f15b6a13d9f9d775f3914c83f7(void)
+{
+    assert_apply_patch(
+        "tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7.bin",
+        "tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7-READ-ME.patch",
+        "tests/files/READ-ME.rst");
+}
+
+static void test_apply_patch_eb9ed88e9975028c4694e070cfaece2498e92d(void)
+{
+    assert_apply_patch(
+        "tests/files/eb9ed88e9975028c4694e070cfaece2498e92d.bin",
+        "tests/files/eb9ed88e9975028c4694e070cfaece2498e92d-READ-ME.patch",
+        "tests/files/READ-ME.rst");
+}
+
+static void test_apply_patch_no_delta(void)
+{
+    assert_apply_patch("tests/files/foo.new",
+                       "tests/files/foo-no-delta.patch",
+                       "tests/files/foo.new");
+}
+
+static void test_apply_patch_empty(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-empty.patch",
+                             -DETOOLS_FILE_TELL_FAILED);
+}
+
+static void test_apply_patch_foo_short(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-short.patch",
+                             -DETOOLS_CORRUPT_PATCH);
+}
+
+static void test_apply_patch_foo_short_none_compression(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-short-none.patch",
+                             -DETOOLS_CORRUPT_PATCH);
+}
+
 static void test_apply_patch_foo_bad_patch_type(void)
 {
     assert_apply_patch_error("tests/files/foo.old",
@@ -316,6 +390,7 @@ static void test_apply_patch_foo_compression_incremental(void)
     assert(detools_apply_patch_init(&apply_patch,
                                     io_read,
                                     io_seek,
+                                    patch_size,
                                     io_write,
                                     &io) == 0);
 
@@ -391,6 +466,16 @@ int main()
     test_apply_patch_foo_in_place_3000_500();
     test_apply_patch_foo_in_place_3000_500_crle();
     test_apply_patch_foo_in_place_6000_1000_crle();
+    test_apply_patch_bsdiff();
+    test_apply_patch_sais();
+    test_apply_patch_3f5531ba56182a807a5c358f04678b3b026d3a();
+    test_apply_patch_b2db59ab76ca36f67e61f720857021df8a660b();
+    test_apply_patch_d027a1e1f752f15b6a13d9f9d775f3914c83f7();
+    test_apply_patch_eb9ed88e9975028c4694e070cfaece2498e92d();
+    test_apply_patch_no_delta();
+    test_apply_patch_empty();
+    test_apply_patch_foo_short();
+    test_apply_patch_foo_short_none_compression();
     test_apply_patch_foo_bad_patch_type();
     test_apply_patch_foo_bad_compression();
     test_apply_patch_file_open_error();
