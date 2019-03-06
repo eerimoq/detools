@@ -344,6 +344,27 @@ static void test_apply_patch_foo_short_none_compression(void)
                              -DETOOLS_CORRUPT_PATCH);
 }
 
+static void test_apply_patch_foo_long(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-bad-lzma-end.patch",
+                             -DETOOLS_LZMA_DECODE);
+}
+
+static void test_apply_patch_foo_diff_data_too_long(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-diff-data-too-long.patch",
+                             -DETOOLS_CORRUPT_PATCH);
+}
+
+static void test_apply_patch_foo_extra_data_too_long(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-extra-data-too-long.patch",
+                             -DETOOLS_CORRUPT_PATCH);
+}
+
 static void test_apply_patch_foo_bad_patch_type(void)
 {
     assert_apply_patch_error("tests/files/foo.old",
@@ -476,6 +497,9 @@ int main()
     test_apply_patch_empty();
     test_apply_patch_foo_short();
     test_apply_patch_foo_short_none_compression();
+    test_apply_patch_foo_long();
+    test_apply_patch_foo_diff_data_too_long();
+    test_apply_patch_foo_extra_data_too_long();
     test_apply_patch_foo_bad_patch_type();
     test_apply_patch_foo_bad_compression();
     test_apply_patch_file_open_error();

@@ -180,6 +180,10 @@ static int prepare_input_buffer(struct detools_apply_patch_patch_reader_t *self_
 
     lzma_p = &self_p->compression.lzma;
 
+    if ((self_p->chunk.size - self_p->chunk.offset) == 0) {
+        return (1);
+    }
+
     next_p = malloc(lzma_p->stream.avail_in + self_p->chunk.size);
 
     if (next_p == NULL) {
@@ -236,54 +240,46 @@ static int patch_reader_lzma_decompress(
     int res;
     struct detools_apply_patch_patch_reader_lzma_t *lzma_p;
     lzma_ret ret;
-    size_t extra_size_out;
 
     lzma_p = &self_p->compression.lzma;
 
-    /* Check if enough decompressed data is available. */
-    res = get_decompressed_data(lzma_p, buf_p, size);
-
-    if (res == 0) {
-        return (res);
-    }
-
-    /* Decompress more data. */
-    res = prepare_input_buffer(self_p);
-
-    if (res != 0) {
-        return (res);
-    }
-
-    extra_size_out = 1024;
-
     while (1) {
-        res = prepare_output_buffer(self_p, size + extra_size_out);
+        /* Try to decompress requested data. */
+        if (lzma_p->stream.avail_in > 0) {
+            res = prepare_output_buffer(self_p, size);
 
-        if (res != 0) {
-            return (res);
+            if (res != 0) {
+                return (res);
+            }
+
+            ret = lzma_code(&lzma_p->stream, LZMA_RUN);
+
+            switch (ret) {
+
+            case LZMA_OK:
+            case LZMA_STREAM_END:
+                break;
+
+            default:
+                return (-DETOOLS_LZMA_DECODE);
+            }
+
+            lzma_p->output_size = (size_t)(lzma_p->stream.next_out - lzma_p->output_p);
         }
 
-        ret = lzma_code(&lzma_p->stream, LZMA_RUN);
-
-        switch (ret) {
-
-        case LZMA_OK:
-        case LZMA_STREAM_END:
-            break;
-
-        default:
-            return (-DETOOLS_LZMA_DECODE);
-        }
-
-        lzma_p->output_size = (size_t)(lzma_p->stream.next_out - lzma_p->output_p);
-
+        /* Check if enough decompressed data is available. */
         res = get_decompressed_data(lzma_p, buf_p, size);
 
         if (res == 0) {
             return (res);
         }
 
-        extra_size_out += 1024;
+        /* Get more data to decompress. */
+        res = prepare_input_buffer(self_p);
+
+        if (res != 0) {
+            return (res);
+        }
     }
 }
 
