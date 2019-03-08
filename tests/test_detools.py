@@ -312,6 +312,28 @@ class DetoolsTest(unittest.TestCase):
                     str(cm.exception),
                     "Expected compression none(0), lzma(1) or crle(2), but got 15.")
 
+    def test_apply_patch_one_byte(self):
+        fnew = BytesIO()
+
+        with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo-one-byte.patch', 'rb') as fpatch:
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
+
+                self.assertEqual(str(cm.exception),
+                                 "Failed to read first size byte.")
+
+    def test_apply_patch_short_to_size(self):
+        fnew = BytesIO()
+
+        with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo-short-to-size.patch', 'rb') as fpatch:
+                with self.assertRaises(detools.Error) as cm:
+                    detools.apply_patch(fold, fpatch, fnew)
+
+                self.assertEqual(str(cm.exception),
+                                 "Failed to read consecutive size byte.")
+
     def test_command_line_create_patch_foo(self):
         foo_patch = 'foo.patch'
         argv = [

@@ -68,7 +68,7 @@ static int unpack_size(const uint8_t *buf_p, size_t size, int *size_p)
     int offset;
 
     if (size == 0) {
-        return (0);
+        return (-DETOOLS_SHORT_HEADER);
     }
 
     byte = *buf_p++;
@@ -79,7 +79,7 @@ static int unpack_size(const uint8_t *buf_p, size_t size, int *size_p)
 
     while ((byte & 0x80) != 0) {
         if (size == 0) {
-            return (0);
+            return (-DETOOLS_SHORT_HEADER);
         }
 
         byte = *buf_p++;
@@ -473,7 +473,7 @@ static int apply_patch_none_init_normal(struct detools_apply_patch_t *self_p,
 
     res = unpack_size(&patch_p[1], size - 1, &to_size);
 
-    if (res <= 0) {
+    if (res < 0) {
         return (res);
     }
 

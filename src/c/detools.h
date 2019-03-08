@@ -75,6 +75,7 @@
 #define DETOOLS_FILE_WRITE_FAILED              15
 #define DETOOLS_FILE_SEEK_FAILED               16
 #define DETOOLS_FILE_TELL_FAILED               17
+#define DETOOLS_SHORT_HEADER                   18
 
 /**
  * Read callback.
@@ -174,6 +175,7 @@ struct detools_apply_patch_t {
  * @param[out] self_p Apply patch object to initialize.
  * @param[in] from_read Callback to read from-data.
  * @param[in] from_seek Callback to seek from current position in from-data.
+ * @param[in] patch_size Patch size in bytes.
  * @param[in] to_write Destination callback.
  * @param[in] arg_p Argument passed to the callbacks.
  *

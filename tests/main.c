@@ -379,6 +379,20 @@ static void test_apply_patch_foo_bad_compression(void)
                              -DETOOLS_BAD_COMPRESSION);
 }
 
+static void test_apply_patch_one_byte(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-one-byte.patch",
+                             -DETOOLS_SHORT_HEADER);
+}
+
+static void test_apply_patch_short_to_size(void)
+{
+    assert_apply_patch_error("tests/files/foo.old",
+                             "tests/files/foo-short-to-size.patch",
+                             -DETOOLS_SHORT_HEADER);
+}
+
 static void test_apply_patch_file_open_error(void)
 {
     assert_apply_patch_error("tests/files/foo.old.missing",
@@ -502,6 +516,8 @@ int main()
     test_apply_patch_foo_extra_data_too_long();
     test_apply_patch_foo_bad_patch_type();
     test_apply_patch_foo_bad_compression();
+    test_apply_patch_one_byte();
+    test_apply_patch_short_to_size();
     test_apply_patch_file_open_error();
 
     test_apply_patch_foo_compression_incremental();

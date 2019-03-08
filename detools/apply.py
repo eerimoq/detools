@@ -66,13 +66,21 @@ class PatchReader(object):
 
 
 def unpack_size(fin):
-    byte = fin.read(1)[0]
+    try:
+        byte = fin.read(1)[0]
+    except IndexError:
+        raise Error('Failed to read first size byte.')
+
     is_signed = (byte & 0x40)
     value = (byte & 0x3f)
     offset = 6
 
     while byte & 0x80:
-        byte = fin.read(1)[0]
+        try:
+            byte = fin.read(1)[0]
+        except IndexError:
+            raise Error('Failed to read consecutive size byte.')
+
         value |= ((byte & 0x7f) << offset)
         offset += 7
 
