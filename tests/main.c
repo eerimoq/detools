@@ -437,8 +437,8 @@ static void test_apply_patch_foo_compression_incremental(void)
         res = detools_apply_patch_process(&apply_patch,
                                           &patch_p[patch_offset],
                                           patch_size);
-        assert((res >= 0) && (res <= (int)patch_size));
-        patch_offset += (size_t)res;
+        assert(res == 0);
+        patch_offset += patch_size;
     }
 
     assert(detools_apply_patch_finalize(&apply_patch) == 0);

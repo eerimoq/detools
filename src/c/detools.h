@@ -128,11 +128,7 @@ struct detools_apply_patch_patch_reader_lzma_t {
 #endif
 
 struct detools_apply_patch_patch_reader_t {
-    struct {
-        const uint8_t *buf_p;
-        size_t size;
-        size_t offset;
-    } chunk;
+    struct detools_apply_patch_t *apply_patch_p;
     struct {
         int state;
         int value;
@@ -149,7 +145,7 @@ struct detools_apply_patch_patch_reader_t {
     } compression;
     int (*decompress)(struct detools_apply_patch_patch_reader_t *self_p,
                       uint8_t *buf_p,
-                      size_t size);
+                      size_t *size_p);
 };
 
 /**
@@ -167,6 +163,11 @@ struct detools_apply_patch_t {
     size_t to_size;
     size_t chunk_size;
     struct detools_apply_patch_patch_reader_t patch_reader;
+    struct {
+        const uint8_t *buf_p;
+        size_t size;
+        size_t offset;
+    } chunk;
 };
 
 /**
@@ -197,8 +198,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
  * @param[in] patch_p Next chunk of the patch.
  * @param[in] size Patch buffer size.
  *
- * @return Zero or more number of consumed patch bytes, or negative
- *         error code.
+ * @return zero(0) or negative error code.
  */
 int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
                                 const uint8_t *patch_p,
