@@ -685,6 +685,32 @@ static int apply_patch_in_place(struct detools_apply_patch_t *self_p)
     return (-DETOOLS_NOT_IMPLEMENTED);
 }
 
+static int apply_patch_process_once(struct detools_apply_patch_t *self_p)
+{
+    int res;
+
+    switch (self_p->patch_type) {
+
+    case PATCH_TYPE_NONE:
+        res = apply_patch_none(self_p);
+        break;
+
+    case PATCH_TYPE_NORMAL:
+        res = apply_patch_normal(self_p);
+        break;
+
+    case PATCH_TYPE_IN_PLACE:
+        res = apply_patch_in_place(self_p);
+        break;
+
+    default:
+        res = -DETOOLS_INTERNAL_ERROR;
+        break;
+    }
+
+    return (res);
+}
+
 int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
                              detools_read_t from_read,
                              detools_seek_t from_seek,
@@ -714,24 +740,7 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
     self_p->chunk.offset = 0;
 
     while ((self_p->chunk.offset < self_p->chunk.size) && (res >= 0)) {
-        switch (self_p->patch_type) {
-
-        case PATCH_TYPE_NONE:
-            res = apply_patch_none(self_p);
-            break;
-
-        case PATCH_TYPE_NORMAL:
-            res = apply_patch_normal(self_p);
-            break;
-
-        case PATCH_TYPE_IN_PLACE:
-            res = apply_patch_in_place(self_p);
-            break;
-
-        default:
-            res = -DETOOLS_INTERNAL_ERROR;
-            break;
-        }
+        res = apply_patch_process_once(self_p);
     }
 
     if (res == 1) {
@@ -748,24 +757,7 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
     res = 0;
 
     while (res == 0) {
-        switch (self_p->patch_type) {
-
-        case PATCH_TYPE_NONE:
-            res = apply_patch_none(self_p);
-            break;
-
-        case PATCH_TYPE_NORMAL:
-            res = apply_patch_normal(self_p);
-            break;
-
-        case PATCH_TYPE_IN_PLACE:
-            res = apply_patch_in_place(self_p);
-            break;
-
-        default:
-            res = -DETOOLS_INTERNAL_ERROR;
-            break;
-        }
+        res = apply_patch_process_once(self_p);
     }
 
     if (res == -DETOOLS_ALREADY_DONE) {
