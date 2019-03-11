@@ -728,13 +728,14 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
 {
     int res;
 
+    res = 0;
     self_p->chunk.buf_p = patch_p;
     self_p->chunk.size = size;
     self_p->chunk.offset = 0;
 
-    do {
+    while ((self_p->chunk.offset < self_p->chunk.size) && (res >= 0)) {
         res = apply_patch_process_once(self_p);
-    } while ((self_p->chunk.offset < self_p->chunk.size) && (res >= 0));
+    }
 
     if (res == 1) {
         res = 0;
