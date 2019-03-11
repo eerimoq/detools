@@ -381,7 +381,7 @@ static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
 }
 
 /**
- * Decompress exactly given number of bytes.
+ * Try to decompress given number of bytes.
  *
  * @return zero(0) on success, one(1) if more input is needed, or
  *         negative error code.
@@ -634,9 +634,6 @@ static int process_normal_adjustment(struct detools_apply_patch_t *self_p)
     return (res);
 }
 
-/**
- * @return Number of consumed patch bytes, or negative error code.
- */
 static int apply_patch_normal(struct detools_apply_patch_t *self_p)
 {
     int res;
@@ -675,9 +672,6 @@ static int apply_patch_normal(struct detools_apply_patch_t *self_p)
     return (res);
 }
 
-/**
- * @return Number of consumed patch bytes, or negative error code.
- */
 static int apply_patch_in_place(struct detools_apply_patch_t *self_p)
 {
     (void)self_p;
@@ -734,14 +728,13 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
 {
     int res;
 
-    res = 0;
     self_p->chunk.buf_p = patch_p;
     self_p->chunk.size = size;
     self_p->chunk.offset = 0;
 
-    while ((self_p->chunk.offset < self_p->chunk.size) && (res >= 0)) {
+    do {
         res = apply_patch_process_once(self_p);
-    }
+    } while ((self_p->chunk.offset < self_p->chunk.size) && (res >= 0));
 
     if (res == 1) {
         res = 0;
@@ -754,11 +747,9 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
 {
     int res;
 
-    res = 0;
-
-    while (res == 0) {
+    do {
         res = apply_patch_process_once(self_p);
-    }
+    } while (res == 0);
 
     if (res == -DETOOLS_ALREADY_DONE) {
         res = 0;
