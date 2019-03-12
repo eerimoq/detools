@@ -210,6 +210,10 @@ def apply_patch_normal(ffrom, fpatch, fto):
     """
 
     compression, to_size = read_header_normal(fpatch)
+
+    if to_size == 0:
+        return
+
     patch_reader = PatchReader(fpatch, compression)
 
     apply_patch_normal_inner(ffrom, patch_reader, fto, to_size)
@@ -224,6 +228,10 @@ def apply_patch_in_place(ffrom, fpatch, fto):
     """
 
     compression, to_size, _ = read_header_in_place(fpatch)
+
+    if to_size == 0:
+        return
+
     patch_reader = PatchReader(fpatch, compression)
 
     while fto.tell() < to_size:

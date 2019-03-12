@@ -20,6 +20,15 @@ CFLAGS := \
 	-g \
 	--coverage
 
+FUZZER_CFLAGS = \
+	-fprofile-instr-generate \
+	-fcoverage-mapping \
+	-Itests/files/c_source \
+	-g -fsanitize=address,fuzzer \
+	-fsanitize=signed-integer-overflow \
+	-fno-sanitize-recover=all
+FUZZER_EXECUTION_TIME ?= 5
+
 test:
 	env CFLAGS=--coverage python3 setup.py test
 	$(MAKE) test-sdist
@@ -50,6 +59,19 @@ test-c:
 	$(MAKE) -C src/c
 	src/c/detools-apply-patch tests/files/foo.old tests/files/foo.patch foo.new
 	cmp foo.new tests/files/foo.new
+
+test-c-fuzzer:
+	clang $(FUZZER_CFLAGS) src/c/detools.c tests/fuzzer.c -l lzma -o fuzzer
+	rm -f fuzzer.profraw
+	LLVM_PROFILE_FILE="fuzzer.profraw" \
+	    ./fuzzer \
+	    -max_total_time=$(FUZZER_EXECUTION_TIME) \
+	    -print_final_stats
+	llvm-profdata merge \
+	    -sparse fuzzer.profraw \
+	    -o fuzzer.profdata
+	llvm-cov show ./fuzzer \
+	    -instr-profile=fuzzer.profdata
 
 release-to-pypi:
 	python3 setup.py sdist

@@ -84,7 +84,8 @@ class DetoolsTest(unittest.TestCase):
         self.assert_create_and_apply_patch(
             'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
             'tests/files/micropython-esp8266-20190125-v1.10.bin',
-            'tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-none.patch',
+            'tests/files/micropython-esp8266-20180511-v1.9.4--'
+            '20190125-v1.10-none.patch',
             compression='none')
 
     def test_create_and_apply_patch_foo_crle_compression(self):
@@ -222,6 +223,23 @@ class DetoolsTest(unittest.TestCase):
         self.assert_create_and_apply_patch('tests/files/foo.new',
                                            'tests/files/foo.new',
                                            'tests/files/foo-no-delta.patch')
+
+    def test_create_and_apply_patch_empty(self):
+        self.assert_create_and_apply_patch('tests/files/empty.old',
+                                           'tests/files/empty.new',
+                                           'tests/files/empty.patch')
+
+    def test_create_and_apply_patch_empty_none_compression(self):
+        self.assert_create_and_apply_patch('tests/files/empty.old',
+                                           'tests/files/empty.new',
+                                           'tests/files/empty-none.patch',
+                                           compression='none')
+
+    def test_create_and_apply_patch_empty_crle_compression(self):
+        self.assert_create_and_apply_patch('tests/files/empty.old',
+                                           'tests/files/empty.new',
+                                           'tests/files/empty-crle.patch',
+                                           compression='crle')
 
     def test_apply_patch_empty(self):
         fnew = BytesIO()
@@ -752,6 +770,38 @@ class DetoolsTest(unittest.TestCase):
             'Average extra size: 1.21 KiB\n'
             'Median extra size:  1.21 KiB\n'
             '\n')
+
+    def test_command_line_patch_info_empty(self):
+        argv = [
+            'detools',
+            'patch_info',
+            'tests/files/empty.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(
+            stdout.getvalue(),
+            'Type:               normal\n'
+            'Patch size:         2 bytes\n'
+            'To size:            0 bytes\n'
+            'Patch/to ratio:     inf % (lower is better)\n'
+            'Diff/extra ratio:   inf % (higher is better)\n'
+            'Size/data ratio:    inf % (lower is better)\n'
+            'Compression:        lzma\n'
+            '\n'
+            'Number of diffs:    0\n'
+            'Total diff size:    0 bytes\n'
+            'Average diff size:  -\n'
+            'Median diff size:   -\n'
+            '\n'
+            'Number of extras:   0\n'
+            'Total extra size:   0 bytes\n'
+            'Average extra size: -\n'
+            'Median extra size:  -\n')
 
 
 if __name__ == '__main__':

@@ -50,9 +50,14 @@ def _create_compressor(compression):
 
 
 def _create_patch_normal(ffrom, fto, fpatch, compression):
+    to_size = get_fsize(fto)
+
     # Header.
     fpatch.write(pack_header(PATCH_TYPE_NORMAL, COMPRESSIONS[compression]))
-    fpatch.write(bsdiff.pack_size(get_fsize(fto)))
+    fpatch.write(bsdiff.pack_size(to_size))
+
+    if to_size == 0:
+        return
 
     # Data.
     from_data = fread(ffrom)
@@ -105,13 +110,14 @@ def _create_patch_in_place(ffrom,
 
     from_data = ffrom.read()
     to_data = fto.read()
+    to_size = len(to_data)
     shift_size = _calc_shift(memory_size,
                              segment_size,
                              minimum_shift_size,
                              len(from_data))
     shifted_size = (memory_size - shift_size)
     from_data = from_data[:shifted_size]
-    number_of_to_segments = _div_ceil(len(to_data), segment_size)
+    number_of_to_segments = _div_ceil(to_size, segment_size)
 
     # Create a normal patch for each segment.
     fsegments = BytesIO()
@@ -130,8 +136,12 @@ def _create_patch_in_place(ffrom,
 
     # Create the patch.
     fpatch.write(pack_header(PATCH_TYPE_IN_PLACE, COMPRESSIONS[compression]))
-    fpatch.write(bsdiff.pack_size(len(to_data)))
+    fpatch.write(bsdiff.pack_size(to_size))
     fpatch.write(bsdiff.pack_size(shift_size))
+
+    if to_size == 0:
+        return
+
     compressor = _create_compressor(compression)
     fpatch.write(compressor.compress(fsegments.getvalue()))
     fpatch.write(compressor.flush())

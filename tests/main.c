@@ -323,6 +323,14 @@ static void test_apply_patch_no_delta(void)
                        "tests/files/foo.new");
 }
 
+static void test_apply_patch_empty_to_and_from(void)
+{
+    return;
+    assert_apply_patch("tests/files/empty.old",
+                       "tests/files/empty.patch",
+                       "tests/files/empty.new");
+}
+
 static void test_apply_patch_empty(void)
 {
     assert_apply_patch_error("tests/files/foo.old",
@@ -508,6 +516,8 @@ int main()
     test_apply_patch_d027a1e1f752f15b6a13d9f9d775f3914c83f7();
     test_apply_patch_eb9ed88e9975028c4694e070cfaece2498e92d();
     test_apply_patch_no_delta();
+    test_apply_patch_empty_to_and_from();
+
     test_apply_patch_empty();
     test_apply_patch_foo_short();
     test_apply_patch_foo_short_none_compression();

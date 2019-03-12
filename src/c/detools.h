@@ -143,6 +143,7 @@ struct detools_apply_patch_patch_reader_t {
         struct detools_apply_patch_patch_reader_lzma_t lzma;
 #endif
     } compression;
+    int (*destroy)(struct detools_apply_patch_patch_reader_t *self_p);
     int (*decompress)(struct detools_apply_patch_patch_reader_t *self_p,
                       uint8_t *buf_p,
                       size_t *size_p);
@@ -234,14 +235,14 @@ int detools_apply_patch_filenames(const char *from_p,
 #endif
 
 /**
- * Apply given patch using read and write callbacks.
+ * Apply given patch using read, write and seek callbacks.
  *
  * @param[in] from_read Source read callback.
  * @param[in] from_seek Source seek callback.
  * @param[in] patch_read Patch read callback.
  * @param[in] patch_size Patch size in bytes.
  * @param[in] to_write Destination write callback.
- * @param[in] arg_p Argument passed to callbacks.
+ * @param[in] arg_p Argument passed to all callbacks.
  *
  * @return zero(0) or negative error code.
  */

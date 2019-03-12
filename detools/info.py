@@ -62,11 +62,15 @@ def patch_info_normal_inner(patch_reader, to_size):
 def patch_info_normal(fpatch):
     patch_size = get_patch_size(fpatch)
     compression, to_size = read_header_normal(fpatch)
-    patch_reader = PatchReader(fpatch, compression)
-    info = patch_info_normal_inner(patch_reader, to_size)
 
-    if not patch_reader.eof:
-        raise Error('End of patch not found.')
+    if to_size == 0:
+        info = (0, [], [], [], 0)
+    else:
+        patch_reader = PatchReader(fpatch, compression)
+        info = patch_info_normal_inner(patch_reader, to_size)
+
+        if not patch_reader.eof:
+            raise Error('End of patch not found.')
 
     return (patch_size, compression, *info)
 

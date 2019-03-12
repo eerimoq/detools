@@ -131,6 +131,20 @@ static int patch_reader_none_decompress(
     return (0);
 }
 
+static int patch_reader_none_destroy(
+    struct detools_apply_patch_patch_reader_t *self_p)
+{
+    struct detools_apply_patch_patch_reader_none_t *none_p;
+
+    none_p = &self_p->compression.none;
+
+    if (none_p->patch_offset == none_p->patch_size) {
+        return (0);
+    } else {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+}
+
 static int patch_reader_none_init(struct detools_apply_patch_patch_reader_t *self_p,
                                   size_t patch_size)
 {
@@ -139,6 +153,7 @@ static int patch_reader_none_init(struct detools_apply_patch_patch_reader_t *sel
     none_p = &self_p->compression.none;
     none_p->patch_size = patch_size;
     none_p->patch_offset = 0;
+    self_p->destroy = patch_reader_none_destroy;
     self_p->decompress = patch_reader_none_decompress;
 
     return (0);
@@ -292,6 +307,28 @@ static int patch_reader_lzma_decompress(
     }
 }
 
+static int patch_reader_lzma_destroy(
+    struct detools_apply_patch_patch_reader_t *self_p)
+{
+    struct detools_apply_patch_patch_reader_lzma_t *lzma_p;
+
+    lzma_p = &self_p->compression.lzma;
+
+    if (lzma_p->input_p != NULL) {
+        free(lzma_p->input_p);
+    }
+
+    if (lzma_p->output_p != NULL) {
+        free(lzma_p->output_p);
+    }
+
+    if ((lzma_p->stream.avail_in == 0) && (lzma_p->output_size == 0)) {
+        return (0);
+    } else {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+}
+
 static int patch_reader_lzma_init(struct detools_apply_patch_patch_reader_t *self_p)
 {
     lzma_ret ret;
@@ -309,6 +346,7 @@ static int patch_reader_lzma_init(struct detools_apply_patch_patch_reader_t *sel
     lzma_p->input_p = NULL;
     lzma_p->output_p = NULL;
     lzma_p->output_size = 0;
+    self_p->destroy = patch_reader_lzma_destroy;
     self_p->decompress = patch_reader_lzma_decompress;
 
     return (0);
@@ -475,14 +513,19 @@ static int apply_patch_none_init_normal(struct detools_apply_patch_t *self_p,
         return (res);
     }
 
-    if (to_size <= 0) {
+    if (to_size < 0) {
         return (-DETOOLS_CORRUPT_PATCH);
     }
 
     self_p->patch_type = PATCH_TYPE_NORMAL;
     self_p->to_pos = 0;
     self_p->to_size = (size_t)to_size;
-    self_p->state = STATE_DIFF_SIZE;
+
+    if (to_size > 0) {
+        self_p->state = STATE_DIFF_SIZE;
+    } else {
+        self_p->state = STATE_DONE;
+    }
 
     return (res);
 }
@@ -564,7 +607,7 @@ static int process_normal_data(struct detools_apply_patch_t *self_p,
         res = self_p->from_read(self_p->arg_p, &from[0], to_size);
 
         if (res != 0) {
-            return (res);
+            return (-DETOOLS_IO_FAILED);
         }
 
         for (i = 0; i < to_size; i++) {
@@ -622,7 +665,7 @@ static int process_normal_adjustment(struct detools_apply_patch_t *self_p)
     res = self_p->from_seek(self_p->arg_p, offset);
 
     if (res != 0) {
-        return (res);
+        return (-DETOOLS_IO_FAILED);
     }
 
     if (self_p->to_pos == self_p->to_size) {
@@ -754,6 +797,12 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
 
     if (res == -DETOOLS_ALREADY_DONE) {
         res = 0;
+    }
+
+    if (res == 0) {
+        res = self_p->patch_reader.destroy(&self_p->patch_reader);
+    } else {
+        (void)self_p->patch_reader.destroy(&self_p->patch_reader);
     }
 
     return (res);

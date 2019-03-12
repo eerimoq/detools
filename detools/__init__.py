@@ -104,6 +104,20 @@ def _patch_info_normal(fsize,
     patch_to_ratio = _format_ratio(patch_size, to_size)
     diff_extra_ratio = _format_ratio(number_of_diff_bytes, number_of_extra_bytes)
 
+    if diff_sizes:
+        mean_diff_size = fsize(int(mean(diff_sizes)))
+        median_diff_size = fsize(int(median(diff_sizes)))
+    else:
+        mean_diff_size = '-'
+        median_diff_size = '-'
+
+    if extra_sizes:
+        mean_extra_size = fsize(int(mean(extra_sizes)))
+        median_extra_size = fsize(int(median(extra_sizes)))
+    else:
+        mean_extra_size = '-'
+        median_extra_size = '-'
+
     print('Type:               normal')
     print('Patch size:         {}'.format(fsize(patch_size)))
     print('To size:            {}'.format(fsize(to_size)))
@@ -114,13 +128,13 @@ def _patch_info_normal(fsize,
     print()
     print('Number of diffs:    {}'.format(len(diff_sizes)))
     print('Total diff size:    {}'.format(fsize(sum(diff_sizes))))
-    print('Average diff size:  {}'.format(fsize(int(mean(diff_sizes)))))
-    print('Median diff size:   {}'.format(fsize(int(median(diff_sizes)))))
+    print('Average diff size:  {}'.format(mean_diff_size))
+    print('Median diff size:   {}'.format(median_diff_size))
     print()
     print('Number of extras:   {}'.format(len(extra_sizes)))
     print('Total extra size:   {}'.format(fsize(sum(extra_sizes))))
-    print('Average extra size: {}'.format(fsize(int(mean(extra_sizes)))))
-    print('Median extra size:  {}'.format(fsize(int(median(extra_sizes)))))
+    print('Average extra size: {}'.format(mean_extra_size))
+    print('Median extra size:  {}'.format(median_extra_size))
 
 
 def _patch_info_in_place(fsize,
