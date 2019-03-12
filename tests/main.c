@@ -161,10 +161,16 @@ static void assert_apply_patch_error(const char *from_p,
                                      int expected_res)
 {
     const char *actual_to_p = "assert-apply-patch.new";
+    int res;
 
-    assert(detools_apply_patch_filenames(from_p,
-                                         patch_p,
-                                         actual_to_p) == expected_res);
+    res = detools_apply_patch_filenames(from_p,
+                                        patch_p,
+                                        actual_to_p);
+
+    if (res != expected_res) {
+        printf("FAIL: res: %d, expected_res: %d\n", res, expected_res);
+        exit(1);
+    }
 }
 
 static void test_apply_patch_foo(void)
@@ -323,19 +329,25 @@ static void test_apply_patch_no_delta(void)
                        "tests/files/foo.new");
 }
 
-static void test_apply_patch_empty_to_and_from(void)
+static void test_apply_patch_empty(void)
 {
-    return;
     assert_apply_patch("tests/files/empty.old",
                        "tests/files/empty.patch",
                        "tests/files/empty.new");
 }
 
-static void test_apply_patch_empty(void)
+static void test_apply_patch_empty_none_compression(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-empty.patch",
-                             -DETOOLS_FILE_TELL_FAILED);
+    assert_apply_patch("tests/files/empty.old",
+                       "tests/files/empty-none.patch",
+                       "tests/files/empty.new");
+}
+
+static void test_apply_patch_empty_crle_compression(void)
+{
+    assert_apply_patch("tests/files/empty.old",
+                       "tests/files/empty.patch",
+                       "tests/files/empty.new");
 }
 
 static void test_apply_patch_foo_short(void)
@@ -516,7 +528,9 @@ int main()
     test_apply_patch_d027a1e1f752f15b6a13d9f9d775f3914c83f7();
     test_apply_patch_eb9ed88e9975028c4694e070cfaece2498e92d();
     test_apply_patch_no_delta();
-    test_apply_patch_empty_to_and_from();
+    test_apply_patch_empty();
+    test_apply_patch_empty_none_compression();
+    test_apply_patch_empty_crle_compression();
 
     test_apply_patch_empty();
     test_apply_patch_foo_short();

@@ -322,6 +322,8 @@ static int patch_reader_lzma_destroy(
         free(lzma_p->output_p);
     }
 
+    lzma_end(&lzma_p->stream);
+
     if ((lzma_p->stream.avail_in == 0) && (lzma_p->output_size == 0)) {
         return (0);
     } else {

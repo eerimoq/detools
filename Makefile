@@ -27,7 +27,7 @@ FUZZER_CFLAGS = \
 	-g -fsanitize=address,fuzzer \
 	-fsanitize=signed-integer-overflow \
 	-fno-sanitize-recover=all
-FUZZER_EXECUTION_TIME ?= 5
+FUZZER_EXECUTION_TIME ?= 30
 
 test:
 	env CFLAGS=--coverage python3 setup.py test
