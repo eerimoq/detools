@@ -76,3 +76,4 @@ target/
 /assert-apply-patch.new
 src/c/detools-apply-patch
 src/c/foo.new
+/fuzzer*

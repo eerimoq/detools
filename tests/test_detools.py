@@ -241,6 +241,14 @@ class DetoolsTest(unittest.TestCase):
                                            'tests/files/empty-crle.patch',
                                            compression='crle')
 
+    def test_create_and_apply_patch_empty_in_place(self):
+        self.assert_create_and_apply_patch('tests/files/empty.old',
+                                           'tests/files/empty.new',
+                                           'tests/files/empty-in-place.patch',
+                                           patch_type='in-place',
+                                           memory_size=30000,
+                                           segment_size=500)
+
     def test_apply_patch_empty(self):
         fnew = BytesIO()
 
@@ -802,6 +810,29 @@ class DetoolsTest(unittest.TestCase):
             'Total extra size:   0 bytes\n'
             'Average extra size: -\n'
             'Median extra size:  -\n')
+
+    def test_command_line_patch_info_empty_in_place(self):
+        argv = [
+            'detools',
+            'patch_info',
+            'tests/files/empty-in-place.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(
+            stdout.getvalue(),
+            'Type:               in-place\n'
+            'Patch size:         5 bytes\n'
+            'To size:            0 bytes\n'
+            'Patch/to ratio:     inf % (lower is better)\n'
+            'Number of segments: 0\n'
+            'From shift size:    29.3 KiB\n'
+            'Compression:        lzma\n'
+            '\n')
 
 
 if __name__ == '__main__':
