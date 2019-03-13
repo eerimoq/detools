@@ -12,7 +12,8 @@ differences:
 
 - LZMA or CRLE compression instead of BZ2.
 
-- Linear patch file access pattern to allow streaming.
+- Linear patch file access pattern to allow streaming and less RAM
+  usage.
 
 - `SA-IS`_ instead of qsufsort.
 
