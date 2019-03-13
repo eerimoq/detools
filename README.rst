@@ -5,7 +5,7 @@
 About
 =====
 
-Binary delta encoding in Python 3.
+Binary delta encoding in Python 3 and C.
 
 Based on http://www.daemonology.net/bsdiff/, with the following
 differences:
@@ -18,10 +18,16 @@ differences:
 
 - Variable length size fields.
 
+- `Incremental apply patch`_ implemented in C, suitable for memory
+  constrained embedded devices.
+
 Planned functionality:
 
-- Incremental apply patch implemented in C, suitable for memory
-  constrained embedded devices.
+- CRC of patched to-data.
+
+- CRLE support in C.
+
+- Make the in-place patch type resumable.
 
 Project homepage: https://github.com/eerimoq/detools
 
@@ -151,3 +157,5 @@ Contributing
 .. _codecov: https://codecov.io/gh/eerimoq/detools
 
 .. _SA-IS: https://sites.google.com/site/yuta256/sais
+
+.. _Incremental apply patch: https://github.com/eerimoq/detools/tree/master/src/c
