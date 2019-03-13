@@ -326,6 +326,16 @@ class DetoolsTest(unittest.TestCase):
                     str(cm.exception),
                     "Expected patch type 0 or 1, but got 7.")
 
+    def test_create_patch_foo_bad_patch_type(self):
+        fpatch = BytesIO()
+
+        with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo.new', 'rb') as fnew:
+                with self.assertRaises(detools.Error) as cm:
+                    detools.create_patch(fold, fnew, fpatch, patch_type='bad')
+
+                self.assertEqual(str(cm.exception), "Bad patch type 'bad'.")
+
     def test_apply_patch_foo_bad_compression(self):
         fnew = BytesIO()
 
@@ -337,6 +347,18 @@ class DetoolsTest(unittest.TestCase):
                 self.assertEqual(
                     str(cm.exception),
                     "Expected compression none(0), lzma(1) or crle(2), but got 15.")
+
+    def test_create_patch_foo_bad_compression(self):
+        fpatch = BytesIO()
+
+        with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo.new', 'rb') as fnew:
+                with self.assertRaises(detools.Error) as cm:
+                    detools.create_patch(fold, fnew, fpatch, compression='bad')
+
+                self.assertEqual(
+                    str(cm.exception),
+                    "Expected compression crle, lzma or none, but got bad.")
 
     def test_apply_patch_one_byte(self):
         fnew = BytesIO()

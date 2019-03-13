@@ -7,7 +7,8 @@ from .crle import CrleCompressor
 from .none import NoneCompressor
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
-from .common import COMPRESSIONS
+from .common import format_bad_compression_string
+from .common import compression_string_to_number
 
 try:
     from . import csais as sais
@@ -42,9 +43,7 @@ def _create_compressor(compression):
     elif compression == 'crle':
         compressor = CrleCompressor()
     else:
-        raise Error(
-            'Expected compression lzma or none, but got {}.'.format(
-                compression))
+        raise Error(format_bad_compression_string(compression))
 
     return compressor
 
@@ -53,7 +52,8 @@ def _create_patch_normal(ffrom, fto, fpatch, compression):
     to_size = get_fsize(fto)
 
     # Header.
-    fpatch.write(pack_header(PATCH_TYPE_NORMAL, COMPRESSIONS[compression]))
+    fpatch.write(pack_header(PATCH_TYPE_NORMAL,
+                             compression_string_to_number(compression)))
     fpatch.write(bsdiff.pack_size(to_size))
 
     if to_size == 0:
@@ -135,7 +135,8 @@ def _create_patch_in_place(ffrom,
         fsegments.write(segment_data)
 
     # Create the patch.
-    fpatch.write(pack_header(PATCH_TYPE_IN_PLACE, COMPRESSIONS[compression]))
+    fpatch.write(pack_header(PATCH_TYPE_IN_PLACE,
+                             compression_string_to_number(compression)))
     fpatch.write(bsdiff.pack_size(to_size))
     fpatch.write(bsdiff.pack_size(shift_size))
 

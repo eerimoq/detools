@@ -6,6 +6,8 @@ from .crle import CrleDecompressor
 from .none import NoneDecompressor
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
+from .common import format_bad_compression_string
+from .common import format_bad_compression_number
 
 
 def patch_length(fpatch):
@@ -27,7 +29,7 @@ class PatchReader(object):
         elif compression == 'none':
             self._decompressor = NoneDecompressor(patch_length(fpatch))
         else:
-            raise Error(compression)
+            raise Error(format_bad_compression_string(compression))
 
         self._fpatch = fpatch
 
@@ -102,9 +104,7 @@ def convert_compression(compression):
     elif compression == 2:
         compression = 'crle'
     else:
-        raise Error(
-            "Expected compression none(0), lzma(1) or crle(2), but "
-            "got {}.".format(compression))
+        raise Error(format_bad_compression_number(compression))
 
     return compression
 
