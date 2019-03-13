@@ -61,10 +61,9 @@
  * Utility functions.
  */
 
-static int unpack_size(struct detools_apply_patch_t *self_p, int *size_p)
+static int unpack_header_size(struct detools_apply_patch_t *self_p, int *size_p)
 {
     uint8_t byte;
-    bool is_signed;
     int offset;
 
     if (self_p->chunk.offset == self_p->chunk.size) {
@@ -73,7 +72,6 @@ static int unpack_size(struct detools_apply_patch_t *self_p, int *size_p)
 
     byte = self_p->chunk.buf_p[self_p->chunk.offset];
     self_p->chunk.offset++;
-    is_signed = ((byte & 0x40) == 0x40);
     *size_p = (byte & 0x3f);
     offset = 6;
 
@@ -86,10 +84,6 @@ static int unpack_size(struct detools_apply_patch_t *self_p, int *size_p)
         self_p->chunk.offset++;
         *size_p |= ((byte & 0x7f) << offset);
         offset += 7;
-    }
-
-    if (is_signed) {
-        *size_p *= -1;
     }
 
     return (0);
@@ -500,7 +494,7 @@ static int apply_patch_none_init_normal(struct detools_apply_patch_t *self_p,
     int res;
     int to_size;
 
-    res = unpack_size(self_p, &to_size);
+    res = unpack_header_size(self_p, &to_size);
 
     if (res != 0) {
         return (res);
