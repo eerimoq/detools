@@ -154,10 +154,9 @@ sequences below for clarity.
 #. Update to application version 2 complete!
 
 ToDo: Make it possible to resume an interrupted in-place update by
-      introducing a step state, persistentely stored in a separate
-      memory region. Also store the patch header persistentely. Reject
-      any other patch until the currently active patch has been
-      successfully applied.
+introducing a step state, persistentely stored in a separate memory
+region. Also store the patch header persistentely. Reject any other
+patch until the currently active patch has been successfully applied.
 
    .. code-block:: text
 
