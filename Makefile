@@ -34,6 +34,7 @@ test:
 	$(MAKE) test-sdist
 	$(MAKE) test-c
 	find . -name "*.gcno" -exec gcov {} +
+	$(MAKE) test-c-fuzzer FUZZER_EXECUTION_TIME=1
 
 test-sdist:
 	rm -rf dist

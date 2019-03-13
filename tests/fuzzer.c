@@ -39,8 +39,6 @@ static void create_patch(const char *from_p,
              to_p,
              patch_p);
     command[membersof(command) - 1] = '\0';
-    // printf("Command: %s\n", command);
-
     assert(system(command) == 0);
 }
 
