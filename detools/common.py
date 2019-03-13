@@ -38,10 +38,7 @@ def compression_string_to_number(compression):
     try:
         return COMPRESSIONS[compression]
     except KeyError:
-        raise Error(
-            "Expected compression {}, but got {}.".format(
-                format_or(sorted(COMPRESSIONS)),
-                compression))
+        raise Error(format_bad_compression_string(compression))
 
 
 def div_ceil(a, b):
