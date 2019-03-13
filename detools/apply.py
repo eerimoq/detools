@@ -132,7 +132,7 @@ def read_header_normal(fpatch):
 
     patch_type, compression = unpack_header(header)
 
-    if patch_type != 0:
+    if patch_type != PATCH_TYPE_NORMAL:
         raise Error("Expected patch type 0, but got {}.".format(patch_type))
 
     compression = convert_compression(compression)
@@ -153,7 +153,7 @@ def read_header_in_place(fpatch):
 
     patch_type, compression = unpack_header(header)
 
-    if patch_type != 1:
+    if patch_type != PATCH_TYPE_IN_PLACE:
         raise Error("Expected patch type 1, but got {}.".format(patch_type))
 
     compression = convert_compression(compression)
