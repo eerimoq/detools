@@ -9,6 +9,7 @@ from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import format_bad_compression_string
 from .common import compression_string_to_number
+from .common import div_ceil
 
 try:
     from . import csais as sais
@@ -71,17 +72,13 @@ def _create_patch_normal(ffrom, fto, fpatch, compression):
     fpatch.write(compressor.flush())
 
 
-def _div_ceil(a, b):
-    return (a + b - 1) // b
-
-
 def _calc_shift(memory_size, segment_size, minimum_shift_size, from_size):
     """Shift from data as many segments as possible.
 
     """
 
-    memory_segments = _div_ceil(memory_size, segment_size)
-    from_segments = _div_ceil(from_size, segment_size)
+    memory_segments = div_ceil(memory_size, segment_size)
+    from_segments = div_ceil(from_size, segment_size)
 
     shift_segments = (memory_segments - from_segments)
     shift_size = (shift_segments * segment_size)
@@ -117,7 +114,7 @@ def _create_patch_in_place(ffrom,
                              len(from_data))
     shifted_size = (memory_size - shift_size)
     from_data = from_data[:shifted_size]
-    number_of_to_segments = _div_ceil(to_size, segment_size)
+    number_of_to_segments = div_ceil(to_size, segment_size)
 
     # Create a normal patch for each segment.
     fsegments = BytesIO()

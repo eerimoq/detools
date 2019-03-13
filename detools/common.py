@@ -42,3 +42,7 @@ def compression_string_to_number(compression):
             "Expected compression {}, but got {}.".format(
                 format_or(sorted(COMPRESSIONS)),
                 compression))
+
+
+def div_ceil(a, b):
+    return (a + b - 1) // b
