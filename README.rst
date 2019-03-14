@@ -24,9 +24,11 @@ differences:
 
 Planned functionality:
 
-- CRC of patched to-data.
+- CRLE compression support in C.
 
-- CRLE support in C.
+Ideas:
+
+- CRC of patched to-data.
 
 - Make the in-place patch type resumable.
 
