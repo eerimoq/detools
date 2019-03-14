@@ -356,9 +356,146 @@ static int patch_reader_lzma_init(struct detools_apply_patch_patch_reader_t *sel
 
 #if DETOOLS_CONFIG_COMPRESSION_CRLE == 1
 
-static int patch_reader_crle_init(struct detools_apply_patch_patch_reader_t *self_p)
+static int patch_reader_crle_decompress_idle(
+    struct detools_apply_patch_patch_reader_t *self_p,
+    size_t *size_p)
+{
+    int res;
+    uint8_t kind;
+    struct detools_apply_patch_patch_reader_crle_t *crle_p;
+
+    crle_p = &self_p->compression.crle;
+
+    if (self_p->apply_patch_p->chunk.offset == self_p->apply_patch_p->chunk.size) {
+        return (1);
+    }
+
+    res = 0;
+    *size_p = 0;
+    kind = self_p->apply_patch_p->chunk.buf_p[self_p->apply_patch_p->chunk.offset];
+
+    switch (kind) {
+
+    case 0:
+        crle_p->state = DETOOLS_CRLE_STATE_SCATTERED_SIZE;
+        break;
+
+    case 1:
+        crle_p->state = DETOOLS_CRLE_STATE_REPEATED_REPETITIONS;
+        break;
+
+    default:
+        res = -DETOOLS_CORRUPT_PATCH;
+        break;
+    }
+
+    return (res);
+}
+
+static int patch_reader_crle_decompress_scattered_size(
+    struct detools_apply_patch_patch_reader_t *self_p,
+    size_t *size_p)
 {
     (void)self_p;
+
+    *size_p = 0;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+static int patch_reader_crle_decompress_scattered_data(
+    struct detools_apply_patch_patch_reader_t *self_p,
+    uint8_t *buf_p,
+    size_t *size_p)
+{
+    (void)self_p;
+    (void)buf_p;
+    (void)size_p;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+static int patch_reader_crle_decompress_repeated_repetitions(
+    struct detools_apply_patch_patch_reader_t *self_p,
+    size_t *size_p)
+{
+    (void)self_p;
+
+    *size_p = 0;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+static int patch_reader_crle_decompress_repeated_data(
+    struct detools_apply_patch_patch_reader_t *self_p,
+    uint8_t *buf_p,
+    size_t *size_p)
+{
+    (void)self_p;
+    (void)buf_p;
+    (void)size_p;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+static int patch_reader_crle_decompress(
+    struct detools_apply_patch_patch_reader_t *self_p,
+    uint8_t *buf_p,
+    size_t *size_p)
+{
+    int res;
+    struct detools_apply_patch_patch_reader_crle_t *crle_p;
+
+    crle_p = &self_p->compression.crle;
+
+    switch (crle_p->state) {
+
+    case DETOOLS_CRLE_STATE_IDLE:
+        res = patch_reader_crle_decompress_idle(self_p, size_p);
+        break;
+
+    case DETOOLS_CRLE_STATE_SCATTERED_SIZE:
+        res = patch_reader_crle_decompress_scattered_size(self_p, size_p);
+        break;
+
+    case DETOOLS_CRLE_STATE_SCATTERED_DATA:
+        res = patch_reader_crle_decompress_scattered_data(self_p, buf_p, size_p);
+        break;
+
+    case DETOOLS_CRLE_STATE_REPEATED_REPETITIONS:
+        res = patch_reader_crle_decompress_repeated_repetitions(self_p, size_p);
+        break;
+
+    case DETOOLS_CRLE_STATE_REPEATED_DATA:
+        res = patch_reader_crle_decompress_repeated_data(self_p, buf_p, size_p);
+        break;
+
+    default:
+        res = -DETOOLS_INTERNAL_ERROR;
+        break;
+    }
+
+    return (res);
+}
+
+static int patch_reader_crle_destroy(
+    struct detools_apply_patch_patch_reader_t *self_p)
+{
+    (void)self_p;
+
+    return (0);
+}
+
+static int patch_reader_crle_init(struct detools_apply_patch_patch_reader_t *self_p)
+{
+
+    struct detools_apply_patch_patch_reader_crle_t *crle_p;
+
+    crle_p = &self_p->compression.crle;
+
+    crle_p->state = DETOOLS_CRLE_STATE_IDLE;
+    self_p->destroy = patch_reader_crle_destroy;
+    self_p->decompress = patch_reader_crle_decompress;
 
     return (-DETOOLS_NOT_IMPLEMENTED);
 }

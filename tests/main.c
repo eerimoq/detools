@@ -136,15 +136,25 @@ static void assert_apply_patch(const char *from_p,
                                const char *patch_p,
                                const char *to_p)
 {
+    int res;
     const char *actual_to_p = "assert-apply-patch.new";
     FILE *actual_fto_p;
     FILE *expected_fto_p;
     int actual_byte;
     int expected_byte;
 
-    assert(detools_apply_patch_filenames(from_p,
-                                         patch_p,
-                                         actual_to_p) == 0);
+    res = detools_apply_patch_filenames(from_p,
+                                        patch_p,
+                                        actual_to_p);
+
+    if (res != 0) {
+        printf("FAIL: apply of '%s' to '%s' to '%s' failed with '%s'\n",
+               patch_p,
+               from_p,
+               to_p,
+               detools_error_as_string(-res));
+        exit(1);
+    }
 
     actual_fto_p = myfopen(actual_to_p, "rb");
     expected_fto_p = myfopen(to_p, "rb");

@@ -127,6 +127,25 @@ struct detools_apply_patch_patch_reader_lzma_t {
 
 #endif
 
+#define DETOOLS_CRLE_STATE_IDLE                              0
+#define DETOOLS_CRLE_STATE_SCATTERED_SIZE                    1
+#define DETOOLS_CRLE_STATE_SCATTERED_DATA                    2
+#define DETOOLS_CRLE_STATE_REPEATED_REPETITIONS              3
+#define DETOOLS_CRLE_STATE_REPEATED_DATA                     4
+
+struct detools_apply_patch_patch_reader_crle_t {
+    int state;
+    union {
+        struct {
+            size_t number_of_bytes_left;
+        } scattered;
+        struct {
+            uint8_t value;
+            size_t number_of_bytes_left;
+        } repeated;
+    } kind;
+};
+
 struct detools_apply_patch_patch_reader_t {
     struct detools_apply_patch_t *apply_patch_p;
     struct {
@@ -141,6 +160,9 @@ struct detools_apply_patch_patch_reader_t {
 #endif
 #if DETOOLS_CONFIG_COMPRESSION_LZMA == 1
         struct detools_apply_patch_patch_reader_lzma_t lzma;
+#endif
+#if DETOOLS_CONFIG_COMPRESSION_CRLE == 1
+        struct detools_apply_patch_patch_reader_crle_t crle;
 #endif
     } compression;
     int (*destroy)(struct detools_apply_patch_patch_reader_t *self_p);
