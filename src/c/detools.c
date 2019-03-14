@@ -373,6 +373,7 @@ static int patch_reader_crle_decompress_idle(
     res = 0;
     *size_p = 0;
     kind = self_p->apply_patch_p->chunk.buf_p[self_p->apply_patch_p->chunk.offset];
+    self_p->apply_patch_p->chunk.offset++;
 
     switch (kind) {
 
