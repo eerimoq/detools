@@ -77,19 +77,36 @@ def patch_info_normal(fpatch):
 
 def patch_info_in_place(fpatch):
     patch_size = get_patch_size(fpatch)
-    compression, to_size, shift_size = read_header_in_place(fpatch)
+    (compression,
+     memory_size,
+     segment_size,
+     shift_size,
+     from_size,
+     to_size) = read_header_in_place(fpatch)
     segments = []
 
     if to_size > 0:
         patch_reader = PatchReader(fpatch, compression)
 
-        while not patch_reader.eof:
-            from_offset = unpack_size(patch_reader)[0]
-            segment_to_size = read_header_normal(patch_reader)[1]
-            info = patch_info_normal_inner(patch_reader, segment_to_size)
-            segments.append((from_offset, info))
+        for to_pos in range(0, to_size, segment_size):
+            left = (to_size - to_pos)
 
-    return patch_size, compression, to_size, shift_size, segments
+            if left < segment_size:
+                segment_to_size = left
+            else:
+                segment_to_size = segment_size
+
+            info = patch_info_normal_inner(patch_reader, segment_to_size)
+            segments.append(info)
+
+    return (patch_size,
+            compression,
+            memory_size,
+            segment_size,
+            shift_size,
+            from_size,
+            to_size,
+            segments)
 
 
 def patch_info(fpatch):

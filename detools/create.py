@@ -49,13 +49,14 @@ def _create_compressor(compression):
     return compressor
 
 
-def _create_patch_normal(ffrom, fto, fpatch, compression):
+def _create_patch_normal(ffrom, fto, fpatch, compression, skip_header=False):
     to_size = get_fsize(fto)
 
     # Header.
-    fpatch.write(pack_header(PATCH_TYPE_NORMAL,
-                             compression_string_to_number(compression)))
-    fpatch.write(bsdiff.pack_size(to_size))
+    if not skip_header:
+        fpatch.write(pack_header(PATCH_TYPE_NORMAL,
+                                 compression_string_to_number(compression)))
+        fpatch.write(bsdiff.pack_size(to_size))
 
     if to_size == 0:
         return
@@ -106,6 +107,7 @@ def _create_patch_in_place(ffrom,
         raise Error('Minimum shift size must be a multiple of segment size.')
 
     from_data = ffrom.read()
+    from_size = len(from_data)
     to_data = fto.read()
     to_size = len(to_data)
     shift_size = _calc_shift(memory_size,
@@ -126,16 +128,18 @@ def _create_patch_in_place(ffrom,
         _create_patch_normal(BytesIO(from_data[from_offset:]),
                              BytesIO(to_data[to_offset:to_offset + segment_size]),
                              fsegment,
-                             'none')
-        segment_data = fsegment.getvalue()
-        fsegments.write(bsdiff.pack_size(from_offset))
-        fsegments.write(segment_data)
+                             'none',
+                             skip_header=True)
+        fsegments.write(fsegment.getvalue())
 
     # Create the patch.
     fpatch.write(pack_header(PATCH_TYPE_IN_PLACE,
                              compression_string_to_number(compression)))
-    fpatch.write(bsdiff.pack_size(to_size))
+    fpatch.write(bsdiff.pack_size(memory_size))
+    fpatch.write(bsdiff.pack_size(segment_size))
     fpatch.write(bsdiff.pack_size(shift_size))
+    fpatch.write(bsdiff.pack_size(from_size))
+    fpatch.write(bsdiff.pack_size(to_size))
 
     if to_size == 0:
         return

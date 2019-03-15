@@ -57,7 +57,6 @@ def _format_ratio(numerator, denominator):
 
 def _patch_info_in_place_segment(fsize,
                                  segment_index,
-                                 from_offset,
                                  to_size,
                                  diff_sizes,
                                  extra_sizes,
@@ -72,7 +71,6 @@ def _patch_info_in_place_segment(fsize,
     print('------------------- Segment {} -------------------'.format(
         segment_index))
     print()
-    print('From offset:        {}'.format(fsize(from_offset)))
     print('To size:            {}'.format(fsize(to_size)))
     print('Diff/extra ratio:   {} % (higher is better)'.format(diff_extra_ratio))
     print('Size/data ratio:    {} % (lower is better)'.format(size_data_ratio))
@@ -140,22 +138,28 @@ def _patch_info_normal(fsize,
 def _patch_info_in_place(fsize,
                          patch_size,
                          compression,
-                         to_size,
+                         memory_size,
+                         segment_size,
                          from_shift_size,
+                         from_size,
+                         to_size,
                          segments):
     patch_to_ratio = _format_ratio(patch_size, to_size)
 
     print('Type:               in-place')
     print('Patch size:         {}'.format(fsize(patch_size)))
+    print('Memory size:        {}'.format(fsize(memory_size)))
+    print('Segment size:       {}'.format(fsize(segment_size)))
+    print('From shift size:    {}'.format(fsize(from_shift_size)))
+    print('From size:          {}'.format(fsize(from_size)))
     print('To size:            {}'.format(fsize(to_size)))
     print('Patch/to ratio:     {} % (lower is better)'.format(patch_to_ratio))
     print('Number of segments: {}'.format(len(segments)))
-    print('From shift size:    {}'.format(fsize(from_shift_size)))
     print('Compression:        {}'.format(compression))
     print()
 
-    for i, (from_offset, normal_info) in enumerate(segments):
-        _patch_info_in_place_segment(fsize, i + 1, from_offset, *normal_info)
+    for i, normal_info in enumerate(segments):
+        _patch_info_in_place_segment(fsize, i + 1, *normal_info)
 
 
 def _do_patch_info(args):

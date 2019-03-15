@@ -157,10 +157,13 @@ def read_header_in_place(fpatch):
         raise Error("Expected patch type 1, but got {}.".format(patch_type))
 
     compression = convert_compression(compression)
-    to_size = unpack_size(fpatch)[0]
+    memory_size = unpack_size(fpatch)[0]
+    segment_size = unpack_size(fpatch)[0]
     shift_size = unpack_size(fpatch)[0]
+    from_size = unpack_size(fpatch)[0]
+    to_size = unpack_size(fpatch)[0]
 
-    return compression, to_size, shift_size
+    return compression, memory_size, segment_size, shift_size, from_size, to_size
 
 
 def apply_patch_normal_inner(ffrom, patch_reader, fto, to_size):
@@ -227,16 +230,28 @@ def apply_patch_in_place(ffrom, fpatch, fto):
 
     """
 
-    compression, to_size, _ = read_header_in_place(fpatch)
+    (compression,
+     _,
+     segment_size,
+     shift_size,
+     _,
+     to_size) = read_header_in_place(fpatch)
 
     if to_size == 0:
         return
 
     patch_reader = PatchReader(fpatch, compression)
 
-    while fto.tell() < to_size:
-        ffrom.seek(unpack_size(patch_reader)[0], os.SEEK_SET)
-        segment_to_size = read_header_normal(patch_reader)[1]
+    for to_pos in range(0, to_size, segment_size):
+        from_offset = max(0, to_pos - shift_size + segment_size)
+        ffrom.seek(from_offset, os.SEEK_SET)
+        left = (to_size - to_pos)
+
+        if left < segment_size:
+            segment_to_size = left
+        else:
+            segment_to_size = segment_size
+
         apply_patch_normal_inner(ffrom, patch_reader, fto, segment_to_size)
 
     if not patch_reader.eof:
