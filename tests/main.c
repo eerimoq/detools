@@ -148,11 +148,12 @@ static void assert_apply_patch(const char *from_p,
                                         actual_to_p);
 
     if (res != 0) {
-        printf("FAIL: apply of '%s' to '%s' to '%s' failed with '%s'\n",
+        printf("FAIL: apply of '%s' to '%s' to '%s' failed with '%s' (%d)\n",
                patch_p,
                from_p,
                to_p,
-               detools_error_as_string(-res));
+               detools_error_as_string(-res),
+               res);
         exit(1);
     }
 
@@ -222,17 +223,17 @@ static void test_apply_patch_micropython_none_compression(void)
 
 static void test_apply_patch_foo_crle_compression(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-crle.patch",
-                             -DETOOLS_NOT_IMPLEMENTED);
+    assert_apply_patch("tests/files/foo.old",
+                       "tests/files/foo-crle.patch",
+                       "tests/files/foo.new");
 }
 
 static void test_apply_patch_micropython_crle_compression(void)
 {
-    assert_apply_patch_error(
+    assert_apply_patch(
         "tests/files/micropython-esp8266-20180511-v1.9.4.bin",
         "tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-crle.patch",
-        -DETOOLS_NOT_IMPLEMENTED);
+        "tests/files/micropython-esp8266-20190125-v1.10.bin");
 }
 
 static void test_apply_patch_micropython_in_place(void)

@@ -61,6 +61,90 @@
  * Utility functions.
  */
 
+static bool apply_patch_chunk_available(struct detools_apply_patch_t *self_p)
+{
+    return (self_p->chunk.offset < self_p->chunk.size);
+}
+
+static int apply_patch_chunk_read(struct detools_apply_patch_t *self_p,
+                                  uint8_t *buf_p,
+                                  size_t *size_p)
+{
+    size_t i;
+
+    if (!apply_patch_chunk_available(self_p)) {
+        return (1);
+    }
+
+    *size_p = MIN(*size_p, self_p->chunk.size - self_p->chunk.offset);
+
+    for (i = 0; i < *size_p; i++) {
+        buf_p[i] = self_p->chunk.buf_p[self_p->chunk.offset];
+        self_p->chunk.offset++;
+    }
+
+    return (0);
+}
+
+static int apply_patch_chunk_get(struct detools_apply_patch_t *self_p,
+                                 uint8_t *data_p)
+{
+    size_t size;
+
+    size = 1;
+
+    return (apply_patch_chunk_read(self_p, data_p, &size));
+}
+
+static void unpack_unsigned_size_init(struct detools_unpack_size_t *self_p)
+{
+    self_p->state = SIZE_STATE_FIRST;
+    self_p->value = 0;
+    self_p->offset = 0;
+}
+
+static int unpack_unsigned_size(struct detools_unpack_size_t *self_p,
+                                struct detools_apply_patch_t *apply_patch_p,
+                                int *size_p)
+{
+    int res;
+    uint8_t byte;
+
+    do {
+        switch (self_p->state) {
+
+        case SIZE_STATE_FIRST:
+            res = apply_patch_chunk_get(apply_patch_p, &byte);
+
+            if (res != 0) {
+                return (res);
+            }
+
+            self_p->value = (byte & 0x7f);
+            self_p->offset = 7;
+            self_p->state = SIZE_STATE_CONSECUTIVE;
+            break;
+
+        case SIZE_STATE_CONSECUTIVE:
+            res = apply_patch_chunk_get(apply_patch_p, &byte);
+
+            if (res != 0) {
+                return (res);
+            }
+            self_p->value |= ((byte & 0x7f) << self_p->offset);
+            self_p->offset += 7;
+            break;
+
+        default:
+            return (-DETOOLS_INTERNAL_ERROR);
+        }
+    } while ((byte & 0x80) != 0);
+
+    *size_p = self_p->value;
+
+    return (0);
+}
+
 static int unpack_header_size(struct detools_apply_patch_t *self_p, int *size_p)
 {
     uint8_t byte;
@@ -358,31 +442,29 @@ static int patch_reader_lzma_init(struct detools_apply_patch_patch_reader_t *sel
 
 static int patch_reader_crle_decompress_idle(
     struct detools_apply_patch_patch_reader_t *self_p,
-    size_t *size_p)
+    struct detools_apply_patch_patch_reader_crle_t *crle_p)
 {
     int res;
     uint8_t kind;
-    struct detools_apply_patch_patch_reader_crle_t *crle_p;
 
-    crle_p = &self_p->compression.crle;
+    res = apply_patch_chunk_get(self_p->apply_patch_p, &kind);
 
-    if (self_p->apply_patch_p->chunk.offset == self_p->apply_patch_p->chunk.size) {
-        return (1);
+    if (res != 0) {
+        return (res);
     }
 
-    res = 0;
-    *size_p = 0;
-    kind = self_p->apply_patch_p->chunk.buf_p[self_p->apply_patch_p->chunk.offset];
-    self_p->apply_patch_p->chunk.offset++;
+    res = 2;
 
     switch (kind) {
 
     case 0:
         crle_p->state = DETOOLS_CRLE_STATE_SCATTERED_SIZE;
+        unpack_unsigned_size_init(&crle_p->kind.scattered.size);
         break;
 
     case 1:
         crle_p->state = DETOOLS_CRLE_STATE_REPEATED_REPETITIONS;
+        unpack_unsigned_size_init(&crle_p->kind.repeated.size);
         break;
 
     default:
@@ -395,48 +477,111 @@ static int patch_reader_crle_decompress_idle(
 
 static int patch_reader_crle_decompress_scattered_size(
     struct detools_apply_patch_patch_reader_t *self_p,
-    size_t *size_p)
+    struct detools_apply_patch_patch_reader_crle_t *crle_p)
 {
-    (void)self_p;
+    int res;
+    int size;
 
-    *size_p = 0;
+    res = unpack_unsigned_size(&crle_p->kind.scattered.size,
+                               self_p->apply_patch_p,
+                               &size);
 
-    return (-DETOOLS_NOT_IMPLEMENTED);
+    if (res != 0) {
+        return (res);
+    }
+
+    crle_p->state = DETOOLS_CRLE_STATE_SCATTERED_DATA;
+    crle_p->kind.scattered.number_of_bytes_left = (size_t)size;
+
+    return (2);
 }
 
 static int patch_reader_crle_decompress_scattered_data(
     struct detools_apply_patch_patch_reader_t *self_p,
+    struct detools_apply_patch_patch_reader_crle_t *crle_p,
     uint8_t *buf_p,
     size_t *size_p)
 {
-    (void)self_p;
-    (void)buf_p;
-    (void)size_p;
+    int res;
 
-    return (-DETOOLS_NOT_IMPLEMENTED);
+    *size_p = MIN(*size_p, crle_p->kind.scattered.number_of_bytes_left);
+
+    res = apply_patch_chunk_read(self_p->apply_patch_p, buf_p, size_p);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    crle_p->kind.scattered.number_of_bytes_left -= *size_p;
+
+    if (crle_p->kind.scattered.number_of_bytes_left == 0) {
+        crle_p->state = DETOOLS_CRLE_STATE_IDLE;
+    }
+
+    return (0);
 }
 
 static int patch_reader_crle_decompress_repeated_repetitions(
     struct detools_apply_patch_patch_reader_t *self_p,
-    size_t *size_p)
+    struct detools_apply_patch_patch_reader_crle_t *crle_p)
 {
-    (void)self_p;
+    int res;
+    int repetitions;
 
-    *size_p = 0;
+    res = unpack_unsigned_size(&crle_p->kind.repeated.size,
+                               self_p->apply_patch_p,
+                               &repetitions);
 
-    return (-DETOOLS_NOT_IMPLEMENTED);
+    if (res != 0) {
+        return (res);
+    }
+
+    crle_p->state = DETOOLS_CRLE_STATE_REPEATED_DATA;
+    crle_p->kind.repeated.number_of_bytes_left = (size_t)repetitions;
+
+    return (2);
 }
 
 static int patch_reader_crle_decompress_repeated_data(
     struct detools_apply_patch_patch_reader_t *self_p,
+    struct detools_apply_patch_patch_reader_crle_t *crle_p)
+{
+    int res;
+
+    res = apply_patch_chunk_get(self_p->apply_patch_p,
+                                &crle_p->kind.repeated.value);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    crle_p->state = DETOOLS_CRLE_STATE_REPEATED_DATA_READ;
+
+    return (2);
+}
+
+static int patch_reader_crle_decompress_repeated_data_read(
+    struct detools_apply_patch_patch_reader_crle_t *crle_p,
     uint8_t *buf_p,
     size_t *size_p)
 {
-    (void)self_p;
-    (void)buf_p;
-    (void)size_p;
+    size_t size;
+    size_t i;
 
-    return (-DETOOLS_NOT_IMPLEMENTED);
+    size = MIN(*size_p, crle_p->kind.repeated.number_of_bytes_left);
+
+    for (i = 0; i < size; i++) {
+        buf_p[i] = crle_p->kind.repeated.value;
+    }
+
+    *size_p = size;
+    crle_p->kind.repeated.number_of_bytes_left -= size;
+
+    if (crle_p->kind.repeated.number_of_bytes_left == 0) {
+        crle_p->state = DETOOLS_CRLE_STATE_IDLE;
+    }
+
+    return (0);
 }
 
 static int patch_reader_crle_decompress(
@@ -449,32 +594,44 @@ static int patch_reader_crle_decompress(
 
     crle_p = &self_p->compression.crle;
 
-    switch (crle_p->state) {
+    do {
+        switch (crle_p->state) {
 
-    case DETOOLS_CRLE_STATE_IDLE:
-        res = patch_reader_crle_decompress_idle(self_p, size_p);
-        break;
+        case DETOOLS_CRLE_STATE_IDLE:
+            res = patch_reader_crle_decompress_idle(self_p, crle_p);
+            break;
 
-    case DETOOLS_CRLE_STATE_SCATTERED_SIZE:
-        res = patch_reader_crle_decompress_scattered_size(self_p, size_p);
-        break;
+        case DETOOLS_CRLE_STATE_SCATTERED_SIZE:
+            res = patch_reader_crle_decompress_scattered_size(self_p, crle_p);
+            break;
 
-    case DETOOLS_CRLE_STATE_SCATTERED_DATA:
-        res = patch_reader_crle_decompress_scattered_data(self_p, buf_p, size_p);
-        break;
+        case DETOOLS_CRLE_STATE_SCATTERED_DATA:
+            res = patch_reader_crle_decompress_scattered_data(self_p,
+                                                              crle_p,
+                                                              buf_p,
+                                                              size_p);
+            break;
 
-    case DETOOLS_CRLE_STATE_REPEATED_REPETITIONS:
-        res = patch_reader_crle_decompress_repeated_repetitions(self_p, size_p);
-        break;
+        case DETOOLS_CRLE_STATE_REPEATED_REPETITIONS:
+            res = patch_reader_crle_decompress_repeated_repetitions(self_p,
+                                                                    crle_p);
+            break;
 
-    case DETOOLS_CRLE_STATE_REPEATED_DATA:
-        res = patch_reader_crle_decompress_repeated_data(self_p, buf_p, size_p);
-        break;
+        case DETOOLS_CRLE_STATE_REPEATED_DATA:
+            res = patch_reader_crle_decompress_repeated_data(self_p, crle_p);
+            break;
 
-    default:
-        res = -DETOOLS_INTERNAL_ERROR;
-        break;
-    }
+        case DETOOLS_CRLE_STATE_REPEATED_DATA_READ:
+            res = patch_reader_crle_decompress_repeated_data_read(crle_p,
+                                                                  buf_p,
+                                                                  size_p);
+            break;
+
+        default:
+            res = -DETOOLS_INTERNAL_ERROR;
+            break;
+        }
+    } while (res == 2);
 
     return (res);
 }
@@ -493,12 +650,11 @@ static int patch_reader_crle_init(struct detools_apply_patch_patch_reader_t *sel
     struct detools_apply_patch_patch_reader_crle_t *crle_p;
 
     crle_p = &self_p->compression.crle;
-
     crle_p->state = DETOOLS_CRLE_STATE_IDLE;
     self_p->destroy = patch_reader_crle_destroy;
     self_p->decompress = patch_reader_crle_decompress;
 
-    return (-DETOOLS_NOT_IMPLEMENTED);
+    return (0);
 }
 
 #endif
@@ -555,7 +711,8 @@ static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
 /**
  * Try to decompress given number of bytes.
  *
- * @return zero(0) on success, one(1) if more input is needed, or
+ * @return zero(0) if at least one byte was decompressed, one(1) if
+ *         zero bytes were decompressed and more input is needed, or
  *         negative error code.
  */
 static int patch_reader_decompress(
@@ -728,6 +885,12 @@ static int process_normal_data(struct detools_apply_patch_t *self_p,
     uint8_t from[128];
 
     to_size = MIN(sizeof(to), self_p->chunk_size);
+
+    if (to_size == 0) {
+        self_p->state = next_state;
+
+        return (0);
+    }
 
     res = patch_reader_decompress(&self_p->patch_reader,
                                   &to[0],
@@ -910,7 +1073,7 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
     self_p->chunk.size = size;
     self_p->chunk.offset = 0;
 
-    while ((self_p->chunk.offset < self_p->chunk.size) && (res >= 0)) {
+    while (apply_patch_chunk_available(self_p) && (res >= 0)) {
         res = apply_patch_process_once(self_p);
     }
 

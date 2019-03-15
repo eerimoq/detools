@@ -132,16 +132,25 @@ struct detools_apply_patch_patch_reader_lzma_t {
 #define DETOOLS_CRLE_STATE_SCATTERED_DATA                    2
 #define DETOOLS_CRLE_STATE_REPEATED_REPETITIONS              3
 #define DETOOLS_CRLE_STATE_REPEATED_DATA                     4
+#define DETOOLS_CRLE_STATE_REPEATED_DATA_READ                5
+
+struct detools_unpack_size_t {
+    int state;
+    int value;
+    int offset;
+};
 
 struct detools_apply_patch_patch_reader_crle_t {
     int state;
     union {
         struct {
             size_t number_of_bytes_left;
+            struct detools_unpack_size_t size;
         } scattered;
         struct {
             uint8_t value;
             size_t number_of_bytes_left;
+            struct detools_unpack_size_t size;
         } repeated;
     } kind;
 };
