@@ -225,31 +225,99 @@ def apply_patch_normal(ffrom, fpatch, fto):
         raise Error('End of patch not found.')
 
 
-def apply_patch_in_place(ffrom, fpatch, fto):
+def apply_patch_in_place_segment(fmem,
+                                 patch_reader,
+                                 to_offset,
+                                 to_size,
+                                 from_offset):
+    """Apply given in-place segment patch.
+
+    """
+
+    to_pos = 0
+
+    while to_pos < to_size:
+        # Diff data.
+        size = unpack_size(patch_reader)[0]
+
+        if to_pos + size > to_size:
+            raise Error("Patch diff data too long.")
+
+        offset = 0
+
+        while offset < size:
+            chunk_size = min(size - offset, 4096)
+            offset += chunk_size
+            patch_data = patch_reader.decompress(chunk_size)
+            fmem.seek(from_offset, os.SEEK_SET)
+            from_data = fmem.read(chunk_size)
+            from_offset += chunk_size
+            fmem.seek(to_offset + to_pos, os.SEEK_SET)
+            fmem.write(bytearray(
+                (pb + fb) & 0xff for pb, fb in zip(patch_data, from_data)
+            ))
+            to_pos += chunk_size
+
+        # Extra data.
+        size = unpack_size(patch_reader)[0]
+
+        if to_pos + size > to_size:
+            raise Error("Patch extra data too long.")
+
+        fmem.seek(to_offset + to_pos, os.SEEK_SET)
+        fmem.write(patch_reader.decompress(size))
+        to_pos += size
+
+        # Adjustment.
+        from_offset += unpack_size(patch_reader)[0]
+
+
+def shift_mem(fmem, memory_size, shift_size, from_size):
+    """Shift given memory.
+
+    """
+
+    fmem.seek(0, os.SEEK_END)
+    size = fmem.tell()
+
+    if size < memory_size:
+        fmem.write((memory_size - size) * b'\xff')
+
+    fmem.seek(0, os.SEEK_SET)
+    from_data = fmem.read(from_size)
+    fmem.seek(shift_size, os.SEEK_SET)
+    fmem.write(from_data[:memory_size - shift_size])
+
+
+def apply_patch_in_place(fmem, fpatch):
     """Apply given in-place patch.
 
     """
 
     (compression,
-     _,
+     memory_size,
      segment_size,
      shift_size,
-     _,
+     from_size,
      to_size) = read_header_in_place(fpatch)
 
-    if to_size == 0:
-        return
+    if to_size > 0:
+        patch_reader = PatchReader(fpatch, compression)
+        shift_mem(fmem, memory_size, shift_size, from_size)
 
-    patch_reader = PatchReader(fpatch, compression)
+        for i, to_pos in enumerate(range(0, to_size, segment_size)):
+            from_offset = max(segment_size * (i + 1), shift_size)
+            segment_to_size = min(segment_size, to_size - to_pos)
+            apply_patch_in_place_segment(fmem,
+                                         patch_reader,
+                                         to_pos,
+                                         segment_to_size,
+                                         from_offset)
 
-    for to_pos in range(0, to_size, segment_size):
-        from_offset = max(0, to_pos - shift_size + segment_size)
-        ffrom.seek(from_offset, os.SEEK_SET)
-        segment_to_size = min(segment_size, to_size - to_pos)
-        apply_patch_normal_inner(ffrom, patch_reader, fto, segment_to_size)
+        if not patch_reader.eof:
+            raise Error('End of patch not found.')
 
-    if not patch_reader.eof:
-        raise Error('End of patch not found.')
+    fmem.truncate(to_size)
 
 
 def apply_patch(ffrom, fpatch, fto):
@@ -258,15 +326,4 @@ def apply_patch(ffrom, fpatch, fto):
 
     """
 
-    patch_type = peek_header_type(fpatch)
-
-    if patch_type == PATCH_TYPE_NORMAL:
-        apply_patch_normal(ffrom, fpatch, fto)
-    elif patch_type == PATCH_TYPE_IN_PLACE:
-        apply_patch_in_place(ffrom, fpatch, fto)
-    else:
-        raise Error(
-            "Expected patch type {} or {}, but got {}.".format(
-                PATCH_TYPE_NORMAL,
-                PATCH_TYPE_IN_PLACE,
-                patch_type))
+    apply_patch_normal(ffrom, fpatch, fto)

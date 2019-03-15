@@ -7,6 +7,7 @@ from humanfriendly import parse_size
 
 from .create import create_patch
 from .apply import apply_patch
+from .apply import apply_patch_in_place
 from .info import patch_info
 from .errors import Error
 from .version import __version__
@@ -38,6 +39,12 @@ def _do_apply_patch(args):
         with open(args.patchfile, 'rb') as fpatch:
             with open(args.tofile, 'wb') as fto:
                 apply_patch(ffrom, fpatch, fto)
+
+
+def _do_apply_patch_in_place(args):
+    with open(args.memfile, 'r+b') as fmem:
+        with open(args.patchfile, 'rb') as fpatch:
+            apply_patch_in_place(fmem, fpatch)
 
 
 def _format_size(value):
@@ -253,6 +260,13 @@ def _main():
     subparser.add_argument('patchfile', help='Patch file.')
     subparser.add_argument('tofile', help='Created to file.')
     subparser.set_defaults(func=_do_apply_patch)
+
+    # In-place apply patch subparser.
+    subparser = subparsers.add_parser('apply_patch_in_place',
+                                      description='Apply given in-place patch.')
+    subparser.add_argument('memfile', help='Memory file.')
+    subparser.add_argument('patchfile', help='Patch file.')
+    subparser.set_defaults(func=_do_apply_patch_in_place)
 
     # Patch info subparser.
     subparser = subparsers.add_parser('patch_info',

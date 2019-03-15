@@ -96,14 +96,15 @@ static int apply_patch_chunk_get(struct detools_apply_patch_t *self_p,
     return (apply_patch_chunk_read(self_p, data_p, &size));
 }
 
-static void unpack_unsigned_size_init(struct detools_unpack_size_t *self_p)
+static void unpack_unsigned_size_init(
+    struct detools_unpack_unsigned_size_t *self_p)
 {
     self_p->state = SIZE_STATE_FIRST;
     self_p->value = 0;
     self_p->offset = 0;
 }
 
-static int unpack_unsigned_size(struct detools_unpack_size_t *self_p,
+static int unpack_unsigned_size(struct detools_unpack_unsigned_size_t *self_p,
                                 struct detools_apply_patch_t *apply_patch_p,
                                 int *size_p)
 {
@@ -914,10 +915,6 @@ static int process_normal_data(struct detools_apply_patch_t *self_p,
 
     self_p->to_pos += to_size;
     self_p->chunk_size -= to_size;
-
-    if (self_p->chunk_size == 0) {
-        self_p->state = next_state;
-    }
 
     res = self_p->to_write(self_p->arg_p, &to[0], to_size);
 

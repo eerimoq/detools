@@ -33,14 +33,31 @@ class DetoolsTest(unittest.TestCase):
 
         self.assertEqual(actual, expected)
 
-    def assert_apply_patch(self, from_filename, to_filename, patch_filename):
-        fnew = BytesIO()
+    def assert_apply_patch(self,
+                           from_filename,
+                           to_filename,
+                           patch_filename,
+                           patch_type):
+        if patch_type == 'normal':
+            fnew = BytesIO()
 
-        with open(from_filename, 'rb') as fold:
+            with open(from_filename, 'rb') as fold:
+                with open(patch_filename, 'rb') as fpatch:
+                    detools.apply_patch(fold, fpatch, fnew)
+
+            actual = fnew.getvalue()
+        elif patch_type == 'in-place':
+            with open(from_filename, 'rb') as fold:
+                fmem = BytesIO(fold.read())
+                print('mem len before', len(fmem.getvalue()))
+
             with open(patch_filename, 'rb') as fpatch:
-                detools.apply_patch(fold, fpatch, fnew)
+                detools.apply_patch_in_place(fmem, fpatch)
 
-        actual = fnew.getvalue()
+            actual = fmem.getvalue()
+            print('mem len after', len(actual))
+        else:
+            raise Exception(patch_type)
 
         with open(to_filename, 'rb') as fnew:
             expected = fnew.read()
@@ -56,7 +73,11 @@ class DetoolsTest(unittest.TestCase):
                                  to_filename,
                                  patch_filename,
                                  **kwargs)
-        self.assert_apply_patch(from_filename, to_filename, patch_filename)
+
+        self.assert_apply_patch(from_filename,
+                                to_filename,
+                                patch_filename,
+                                kwargs.get('patch_type', 'normal'))
 
     def test_create_and_apply_patch_foo(self):
         self.assert_create_and_apply_patch('tests/files/foo.old',
@@ -112,12 +133,13 @@ class DetoolsTest(unittest.TestCase):
             segment_size=65536)
 
     def test_create_and_apply_patch_foo_in_place_3000_1500(self):
-        self.assert_create_and_apply_patch('tests/files/foo.old',
-                                           'tests/files/foo.new',
-                                           'tests/files/foo-in-place-3000-1500.patch',
-                                           patch_type='in-place',
-                                           memory_size=3000,
-                                           segment_size=1500)
+        self.assert_create_and_apply_patch(
+            'tests/files/foo.old',
+            'tests/files/foo.new',
+            'tests/files/foo-in-place-3000-1500.patch',
+            patch_type='in-place',
+            memory_size=3000,
+            segment_size=1500)
 
     def test_create_and_apply_patch_foo_in_place_3k_1_5k(self):
         self.assert_create_and_apply_patch('tests/files/foo.old',
@@ -324,7 +346,7 @@ class DetoolsTest(unittest.TestCase):
 
                 self.assertEqual(
                     str(cm.exception),
-                    "Expected patch type 0 or 1, but got 7.")
+                    "Expected patch type 0, but got 7.")
 
     def test_create_patch_foo_bad_patch_type(self):
         fpatch = BytesIO()
@@ -568,23 +590,23 @@ class DetoolsTest(unittest.TestCase):
                          read_file('tests/files/foo-in-place-3000-1500.patch'))
 
     def test_command_line_apply_patch_foo_in_place(self):
-        foo_new = 'foo.new'
+        foo_mem = 'foo.mem'
         argv = [
             'detools',
             '--debug',
-            'apply_patch',
-            'tests/files/foo.old',
-            'tests/files/foo-in-place-3000-1500.patch',
-            foo_new
+            'apply_patch_in_place',
+            foo_mem,
+            'tests/files/foo-in-place-3000-1500.patch'
         ]
 
-        if os.path.exists(foo_new):
-            os.remove(foo_new)
+        with open(foo_mem, 'wb') as fmem:
+            with open('tests/files/foo.old', 'rb') as fold:
+                fmem.write(fold.read())
 
         with patch('sys.argv', argv):
             detools._main()
 
-        self.assertEqual(read_file(foo_new),
+        self.assertEqual(read_file(foo_mem),
                          read_file('tests/files/foo.new'))
 
     def test_command_line_patch_info_foo_in_place(self):
@@ -731,23 +753,23 @@ class DetoolsTest(unittest.TestCase):
                          read_file('tests/files/foo-in-place-3k-1.5k.patch'))
 
     def test_command_line_apply_patch_foo_in_place_size_units(self):
-        foo_new = 'foo.new'
+        foo_mem = 'foo.mem'
         argv = [
             'detools',
             '--debug',
-            'apply_patch',
-            'tests/files/foo.old',
-            'tests/files/foo-in-place-3k-1.5k.patch',
-            foo_new
+            'apply_patch_in_place',
+            foo_mem,
+            'tests/files/foo-in-place-3k-1.5k.patch'
         ]
 
-        if os.path.exists(foo_new):
-            os.remove(foo_new)
+        with open(foo_mem, 'wb') as fmem:
+            with open('tests/files/foo.old', 'rb') as fold:
+                fmem.write(fold.read())
 
         with patch('sys.argv', argv):
             detools._main()
 
-        self.assertEqual(read_file(foo_new),
+        self.assertEqual(read_file(foo_mem),
                          read_file('tests/files/foo.new'))
 
     def test_command_line_patch_info_foo_in_place_size_units(self):

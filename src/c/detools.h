@@ -109,6 +109,33 @@ typedef int (*detools_write_t)(void *arg_p, const uint8_t *buf_p, size_t size);
  */
 typedef int (*detools_seek_t)(void *arg_p, int offset);
 
+/**
+ * Memory read callback.
+ *
+ * @return zero(0) or negative error code.
+ */
+typedef int (*detools_mem_read_t)(void *arg_p,
+                                  void *dst_p,
+                                  uintptr_t src,
+                                  size_t size);
+
+/**
+ * Memory write callback.
+ *
+ * @return zero(0) or negative error code.
+ */
+typedef int (*detools_mem_write_t)(void *arg_p,
+                                   uintptr_t dst,
+                                   void *src_p,
+                                   size_t size);
+
+/**
+ * Memory erase callback.
+ *
+ * @return zero(0) or negative error code.
+ */
+typedef int (*detools_mem_erase_t)(void *arg_p, uintptr_t addr, size_t size);
+
 struct detools_apply_patch_patch_reader_none_t {
     size_t patch_size;
     size_t patch_offset;
@@ -134,7 +161,7 @@ struct detools_apply_patch_patch_reader_lzma_t {
 #define DETOOLS_CRLE_STATE_REPEATED_DATA                     4
 #define DETOOLS_CRLE_STATE_REPEATED_DATA_READ                5
 
-struct detools_unpack_size_t {
+struct detools_unpack_unsigned_size_t {
     int state;
     int value;
     int offset;
@@ -145,12 +172,12 @@ struct detools_apply_patch_patch_reader_crle_t {
     union {
         struct {
             size_t number_of_bytes_left;
-            struct detools_unpack_size_t size;
+            struct detools_unpack_unsigned_size_t size;
         } scattered;
         struct {
             uint8_t value;
             size_t number_of_bytes_left;
-            struct detools_unpack_size_t size;
+            struct detools_unpack_unsigned_size_t size;
         } repeated;
     } kind;
 };
@@ -188,6 +215,28 @@ struct detools_apply_patch_t {
     detools_seek_t from_seek;
     size_t patch_size;
     detools_write_t to_write;
+    void *arg_p;
+    int patch_type;
+    int state;
+    size_t to_pos;
+    size_t to_size;
+    size_t chunk_size;
+    struct detools_apply_patch_patch_reader_t patch_reader;
+    struct {
+        const uint8_t *buf_p;
+        size_t size;
+        size_t offset;
+    } chunk;
+};
+
+/**
+ * The in-place apply patch data structure.
+ */
+struct detools_apply_patch_in_place_t {
+    detools_mem_read_t mem_read;
+    detools_mem_write_t mem_write;
+    detools_mem_erase_t mem_erase;
+    size_t patch_size;
     void *arg_p;
     int patch_type;
     int state;
@@ -246,6 +295,54 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
  *         error code.
  */
 int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p);
+
+/**
+ * Initialize given in-place apply patch object.
+ *
+ * @param[out] self_p In-place apply patch object to initialize.
+ * @param[in] mem_read Callback to read data.
+ * @param[in] mem_write Callback to write data.
+ * @param[in] mem_erase Callback to erase data.
+ * @param[in] patch_size Patch size in bytes.
+ * @param[in] arg_p Argument passed to the callbacks.
+ *
+ * @return zero(0) or negative error code.
+ */
+int detools_apply_patch_in_place_init(
+    struct detools_apply_patch_in_place_t *self_p,
+    detools_mem_read_t mem_read,
+    detools_mem_write_t mem_write,
+    detools_mem_erase_t mem_erase,
+    size_t patch_size,
+    void *arg_p);
+
+/**
+ * Call this function repeatedly until all patch data has been
+ * processed or an error occurres. Call detools_apply_patch_finalize()
+ * to finalize the patching if no error occurred.
+ *
+ * @param[in,out] self_p Initialized apply patch object.
+ * @param[in] patch_p Next chunk of the patch.
+ * @param[in] size Patch buffer size.
+ *
+ * @return zero(0) or negative error code.
+ */
+int detools_apply_patch_in_place_process(
+    struct detools_apply_patch_in_place_t *self_p,
+    const uint8_t *patch_p,
+    size_t size);
+
+/**
+ * Call once after all data has been processed to finalize the
+ * patching.
+ *
+ * @param[in,out] self_p Initialized apply patch object.
+ *
+ * @return zero(0) if the patch was applied successfully, or negative
+ *         error code.
+ */
+int detools_apply_patch_in_place_finalize(
+    struct detools_apply_patch_in_place_t *self_p);
 
 #if DETOOLS_CONFIG_FILE_IO == 1
 
