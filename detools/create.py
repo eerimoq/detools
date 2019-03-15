@@ -49,19 +49,12 @@ def _create_compressor(compression):
     return compressor
 
 
-def _create_patch_normal(ffrom, fto, fpatch, compression, skip_header=False):
+def _create_patch_normal_data(ffrom, fto, fpatch, compression):
     to_size = get_fsize(fto)
-
-    # Header.
-    if not skip_header:
-        fpatch.write(pack_header(PATCH_TYPE_NORMAL,
-                                 compression_string_to_number(compression)))
-        fpatch.write(bsdiff.pack_size(to_size))
 
     if to_size == 0:
         return
 
-    # Data.
     from_data = fread(ffrom)
     suffix_array = sais.sais(from_data)
     chunks = bsdiff.create_patch(suffix_array, from_data, fread(fto))
@@ -71,6 +64,16 @@ def _create_patch_normal(ffrom, fto, fpatch, compression, skip_header=False):
         fpatch.write(compressor.compress(chunk))
 
     fpatch.write(compressor.flush())
+
+
+def _create_patch_normal(ffrom, fto, fpatch, compression):
+    # Header.
+    fpatch.write(pack_header(PATCH_TYPE_NORMAL,
+                             compression_string_to_number(compression)))
+    fpatch.write(bsdiff.pack_size(get_fsize(fto)))
+
+    # Data.
+    _create_patch_normal_data(ffrom, fto, fpatch, compression)
 
 
 def _calc_shift(memory_size, segment_size, minimum_shift_size, from_size):
@@ -125,11 +128,11 @@ def _create_patch_in_place(ffrom,
         to_offset = (segment * segment_size)
         from_offset = max(to_offset + segment_size - shift_size, 0)
         fsegment = BytesIO()
-        _create_patch_normal(BytesIO(from_data[from_offset:]),
-                             BytesIO(to_data[to_offset:to_offset + segment_size]),
-                             fsegment,
-                             'none',
-                             skip_header=True)
+        _create_patch_normal_data(
+            BytesIO(from_data[from_offset:]),
+            BytesIO(to_data[to_offset:to_offset + segment_size]),
+            fsegment,
+            'none')
         fsegments.write(fsegment.getvalue())
 
     # Create the patch.
