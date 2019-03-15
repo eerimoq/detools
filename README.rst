@@ -24,7 +24,7 @@ differences:
 
 Planned functionality:
 
-- CRLE compression support in C.
+- in-place patch type support in C.
 
 Ideas:
 
