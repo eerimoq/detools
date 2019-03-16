@@ -57,7 +57,11 @@ def _format_ratio(numerator, denominator):
 
 def _patch_info_in_place_segment(fsize,
                                  segment_index,
-                                 to_size,
+                                 from_offset_begin,
+                                 from_offset_end,
+                                 to_offset_begin,
+                                 to_offset_end,
+                                 _to_size,
                                  diff_sizes,
                                  extra_sizes,
                                  _,
@@ -71,7 +75,10 @@ def _patch_info_in_place_segment(fsize,
     print('------------------- Segment {} -------------------'.format(
         segment_index))
     print()
-    print('To size:            {}'.format(fsize(to_size)))
+    print('From range:         {} - {}'.format(fsize(from_offset_begin),
+                                               fsize(from_offset_end)))
+    print('To range:           {} - {}'.format(fsize(to_offset_begin),
+                                               fsize(to_offset_end)))
     print('Diff/extra ratio:   {} % (higher is better)'.format(diff_extra_ratio))
     print('Size/data ratio:    {} % (lower is better)'.format(size_data_ratio))
     print()
@@ -159,7 +166,17 @@ def _patch_info_in_place(fsize,
     print()
 
     for i, normal_info in enumerate(segments):
-        _patch_info_in_place_segment(fsize, i + 1, *normal_info)
+        from_offset_begin = max(segment_size * (i + 1) - from_shift_size, 0)
+        from_offset_end = min(from_size, memory_size - from_shift_size)
+        to_offset_begin = (segment_size * i)
+        to_offset_end = min(to_offset_begin + segment_size, to_size)
+        _patch_info_in_place_segment(fsize,
+                                     i + 1,
+                                     from_offset_begin,
+                                     from_offset_end,
+                                     to_offset_begin,
+                                     to_offset_end,
+                                     *normal_info)
 
 
 def _do_patch_info(args):
