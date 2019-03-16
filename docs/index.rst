@@ -205,3 +205,5 @@ Functions and classes
 .. autofunction:: detools.create_patch
 
 .. autofunction:: detools.apply_patch
+
+.. autofunction:: detools.apply_patch_in_place
