@@ -1,7 +1,7 @@
 import os
 from .errors import Error
 from .apply import unpack_size
-from .apply import peek_header_type
+from .apply import unpack_header
 from .apply import read_header_normal
 from .apply import read_header_in_place
 from .apply import PatchReader
@@ -15,6 +15,17 @@ def get_patch_size(fpatch):
     fpatch.seek(0, os.SEEK_SET)
 
     return patch_size
+
+
+def peek_header_type(fpatch):
+    position = fpatch.tell()
+    header = fpatch.read(1)
+    fpatch.seek(position, os.SEEK_SET)
+
+    if len(header) != 1:
+        raise Error('Failed to read the patch header.')
+
+    return unpack_header(header)[0]
 
 
 def patch_info_normal_inner(patch_reader, to_size):

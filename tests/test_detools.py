@@ -49,13 +49,11 @@ class DetoolsTest(unittest.TestCase):
         elif patch_type == 'in-place':
             with open(from_filename, 'rb') as fold:
                 fmem = BytesIO(fold.read())
-                print('mem len before', len(fmem.getvalue()))
 
             with open(patch_filename, 'rb') as fpatch:
                 detools.apply_patch_in_place(fmem, fpatch)
 
             actual = fmem.getvalue()
-            print('mem len after', len(actual))
         else:
             raise Exception(patch_type)
 
