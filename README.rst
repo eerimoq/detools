@@ -5,7 +5,7 @@
 About
 =====
 
-`Binary delta encoding`_ in Python 3 and C.
+Binary `delta encoding`_ in Python 3 and C.
 
 Based on http://www.daemonology.net/bsdiff/, with the following
 differences:
@@ -183,4 +183,4 @@ Contributing
 
 .. _Incremental apply patch: https://github.com/eerimoq/detools/tree/master/src/c
 
-.. _Binary delta encoding: https://en.wikipedia.org/wiki/Delta_encoding
+.. _delta encoding: https://en.wikipedia.org/wiki/Delta_encoding
