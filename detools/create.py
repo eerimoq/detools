@@ -101,13 +101,19 @@ def _create_patch_in_place(ffrom,
                            segment_size,
                            minimum_shift_size):
     if (memory_size % segment_size) != 0:
-        raise Error('Memory size must be a multiple of segment size.')
+        raise Error(
+            'Memory size {} is not a multiple of segment size {}.'.format(
+                memory_size,
+                segment_size))
 
     if minimum_shift_size is None:
         minimum_shift_size = 2 * segment_size
 
     if (minimum_shift_size % segment_size) != 0:
-        raise Error('Minimum shift size must be a multiple of segment size.')
+        raise Error(
+            'Minimum shift size {} is not a multiple of segment size {}.'.format(
+                minimum_shift_size,
+                segment_size))
 
     from_data = ffrom.read()
     from_size = len(from_data)

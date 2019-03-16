@@ -402,6 +402,41 @@ class DetoolsTest(unittest.TestCase):
                 self.assertEqual(str(cm.exception),
                                  "Failed to read consecutive size byte.")
 
+    def test_create_patch_in_place_bad_memory_and_segment_size_ratio(self):
+        fpatch = BytesIO()
+
+        with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo.new', 'rb') as fnew:
+                with self.assertRaises(detools.Error) as cm:
+                    detools.create_patch(fold,
+                                         fnew,
+                                         fpatch,
+                                         patch_type='in-place',
+                                         memory_size=3000,
+                                         segment_size=501)
+
+                self.assertEqual(
+                    str(cm.exception),
+                    "Memory size 3000 is not a multiple of segment size 501.")
+
+    def test_create_patch_in_place_bad_minimum_shift_and_segment_size_ratio(self):
+        fpatch = BytesIO()
+
+        with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo.new', 'rb') as fnew:
+                with self.assertRaises(detools.Error) as cm:
+                    detools.create_patch(fold,
+                                         fnew,
+                                         fpatch,
+                                         patch_type='in-place',
+                                         memory_size=3000,
+                                         segment_size=500,
+                                         minimum_shift_size=999)
+
+                self.assertEqual(
+                    str(cm.exception),
+                    "Minimum shift size 999 is not a multiple of segment size 500.")
+
     def test_command_line_create_patch_foo(self):
         foo_patch = 'foo.patch'
         argv = [
