@@ -8,6 +8,7 @@ from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import format_bad_compression_string
 from .common import format_bad_compression_number
+from .common import file_size
 
 
 class PatchReader(object):
@@ -16,9 +17,9 @@ class PatchReader(object):
         if compression == 'lzma':
             self._decompressor = LZMADecompressor()
         elif compression == 'crle':
-            self._decompressor = CrleDecompressor(patch_length(fpatch))
+            self._decompressor = CrleDecompressor(patch_data_length(fpatch))
         elif compression == 'none':
-            self._decompressor = NoneDecompressor(patch_length(fpatch))
+            self._decompressor = NoneDecompressor(patch_data_length(fpatch))
         else:
             raise Error(format_bad_compression_string(compression))
 
@@ -58,13 +59,8 @@ class PatchReader(object):
         return self._decompressor.eof
 
 
-def patch_length(fpatch):
-    position = fpatch.tell()
-    fpatch.seek(0, os.SEEK_END)
-    length = fpatch.tell()
-    fpatch.seek(position, os.SEEK_SET)
-
-    return length - position
+def patch_data_length(fpatch):
+    return file_size(fpatch) - fpatch.tell()
 
 
 def unpack_size(fin):

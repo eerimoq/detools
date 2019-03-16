@@ -1,4 +1,6 @@
+import os
 from .errors import Error
+
 
 PATCH_TYPE_NORMAL    = 0
 PATCH_TYPE_IN_PLACE  = 1
@@ -43,3 +45,18 @@ def compression_string_to_number(compression):
 
 def div_ceil(a, b):
     return (a + b - 1) // b
+
+
+def file_size(f):
+    position = f.tell()
+    f.seek(0, os.SEEK_END)
+    size = f.tell()
+    f.seek(position, os.SEEK_SET)
+
+    return size
+
+
+def file_read(f):
+    f.seek(0, os.SEEK_SET)
+
+    return f.read()

@@ -10,6 +10,8 @@ from .common import PATCH_TYPE_IN_PLACE
 from .common import format_bad_compression_string
 from .common import compression_string_to_number
 from .common import div_ceil
+from .common import file_size
+from .common import file_read
 
 try:
     from . import csais as sais
@@ -20,20 +22,8 @@ except ImportError:
     from . import bsdiff as bsdiff
 
 
-def get_fsize(f):
-    f.seek(0, os.SEEK_END)
-
-    return f.tell()
-
-
 def pack_header(patch_type, compression):
     return bitstruct.pack('p1u3u4', patch_type, compression)
-
-
-def fread(f):
-    f.seek(0, os.SEEK_SET)
-
-    return f.read()
 
 
 def create_compressor(compression):
@@ -50,14 +40,14 @@ def create_compressor(compression):
 
 
 def create_patch_normal_data(ffrom, fto, fpatch, compression):
-    to_size = get_fsize(fto)
+    to_size = file_size(fto)
 
     if to_size == 0:
         return
 
-    from_data = fread(ffrom)
+    from_data = file_read(ffrom)
     suffix_array = sais.sais(from_data)
-    chunks = bsdiff.create_patch(suffix_array, from_data, fread(fto))
+    chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
     compressor = create_compressor(compression)
 
     for chunk in chunks:
@@ -69,7 +59,7 @@ def create_patch_normal_data(ffrom, fto, fpatch, compression):
 def create_patch_normal(ffrom, fto, fpatch, compression):
     fpatch.write(pack_header(PATCH_TYPE_NORMAL,
                              compression_string_to_number(compression)))
-    fpatch.write(bsdiff.pack_size(get_fsize(fto)))
+    fpatch.write(bsdiff.pack_size(file_size(fto)))
     create_patch_normal_data(ffrom, fto, fpatch, compression)
 
 
