@@ -61,11 +61,14 @@ def _patch_info_in_place_segment(fsize,
                                  from_offset_end,
                                  to_offset_begin,
                                  to_offset_end,
-                                 _to_size,
+                                 to_size,
                                  diff_sizes,
                                  extra_sizes,
-                                 _,
+                                 adjustment_sizes,
                                  number_of_size_bytes):
+    del to_size
+    del adjustment_sizes
+
     number_of_diff_bytes = sum(diff_sizes)
     number_of_extra_bytes = sum(extra_sizes)
     number_of_data_bytes = (number_of_diff_bytes + number_of_extra_bytes)
@@ -100,8 +103,10 @@ def _patch_info_normal(fsize,
                        to_size,
                        diff_sizes,
                        extra_sizes,
-                       _,
+                       adjustment_sizes,
                        number_of_size_bytes):
+    del adjustment_sizes
+
     number_of_diff_bytes = sum(diff_sizes)
     number_of_extra_bytes = sum(extra_sizes)
     number_of_data_bytes = (number_of_diff_bytes + number_of_extra_bytes)
