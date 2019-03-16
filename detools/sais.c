@@ -70,7 +70,9 @@ static void get_buckets(const int *c_p,
                         int end)
 {
     int i;
-    int sum = 0;
+    int sum;
+
+    sum = 0;
 
     if (end) {
         for (i = 0; i < k; ++i) {
@@ -94,7 +96,7 @@ static void lms_sort_1(const void *t_p,
                        int k,
                        int cs)
 {
-    int *b;
+    int *b2_p;
     int i;
     int j;
     int c0;
@@ -107,22 +109,22 @@ static void lms_sort_1(const void *t_p,
 
     get_buckets(c_p, b_p, k, 0); /* find starts of buckets */
     j = n - 1;
-    b = sa_p + b_p[c1 = chr(j)];
+    b2_p = sa_p + b_p[c1 = chr(j)];
     --j;
-    *b++ = (chr(j) < c1) ? ~j : j;
+    *b2_p++ = (chr(j) < c1) ? ~j : j;
 
     for (i = 0; i < n; ++i) {
         if (0 < (j = sa_p[i])) {
             assert(chr(j) >= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = (int)(b - sa_p);
-                b = sa_p + b_p[c1 = c0];
+                b_p[c1] = (int)(b2_p - sa_p);
+                b2_p = sa_p + b_p[c1 = c0];
             }
 
             assert(i < (b - sa_p));
             --j;
-            *b++ = (chr(j) < c1) ? ~j : j;
+            *b2_p++ = (chr(j) < c1) ? ~j : j;
             sa_p[i] = 0;
         } else if (j < 0) {
             sa_p[i] = ~j;
@@ -136,18 +138,18 @@ static void lms_sort_1(const void *t_p,
 
     get_buckets(c_p, b_p, k, 1); /* find ends of buckets */
 
-    for (i = n - 1, b = sa_p + b_p[c1 = 0]; 0 <= i; --i) {
+    for (i = n - 1, b2_p = sa_p + b_p[c1 = 0]; 0 <= i; --i) {
         if (0 < (j = sa_p[i])) {
             assert(chr(j) <= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = (int)(b - sa_p);
-                b = sa_p + b_p[c1 = c0];
+                b_p[c1] = (int)(b2_p - sa_p);
+                b2_p = sa_p + b_p[c1 = c0];
             }
 
             assert((b - sa_p) <= i);
             --j;
-            *--b = (chr(j) > c1) ? ~(j + 1) : j;
+            *--b2_p = (chr(j) > c1) ? ~(j + 1) : j;
             sa_p[i] = 0;
         }
     }
@@ -203,7 +205,7 @@ static int lms_postproc_1(const void *t_p,
         c1 = c0;
     } while ((0 <= --i) && ((c0 = chr(i)) >= c1));
 
-    for (; 0 <= i;) {
+    while (0 <= i) {
         do {
             c1 = c0;
         } while ((0 <= --i) && ((c0 = chr(i)) <= c1));
@@ -250,7 +252,7 @@ static void lms_sort_2(const void *t_p,
                        int k,
                        int cs)
 {
-    int *b;
+    int *b2_p;
     int i;
     int j;
     int t;
@@ -263,11 +265,11 @@ static void lms_sort_2(const void *t_p,
     /* compute SAl */
     get_buckets(c_p, b_p, k, 0); /* find starts of buckets */
     j = n - 1;
-    b = sa_p + b_p[c1 = chr(j)];
+    b2_p = sa_p + b_p[c1 = chr(j)];
     --j;
     t = (chr(j) < c1);
     j += n;
-    *b++ = (t & 1) ? ~j : j;
+    *b2_p++ = (t & 1) ? ~j : j;
 
     for (i = 0, d = 0; i < n; ++i) {
         if (0 < (j = sa_p[i])) {
@@ -279,8 +281,8 @@ static void lms_sort_2(const void *t_p,
             assert(chr(j) >= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = (int)(b - sa_p);
-                b = sa_p + b_p[c1 = c0];
+                b_p[c1] = (int)(b2_p - sa_p);
+                b2_p = sa_p + b_p[c1 = c0];
             }
 
             assert(i < (b - sa_p));
@@ -292,7 +294,7 @@ static void lms_sort_2(const void *t_p,
                 d_p[t] = d;
             }
 
-            *b++ = (t & 1) ? ~j : j;
+            *b2_p++ = (t & 1) ? ~j : j;
             sa_p[i] = 0;
         } else if (j < 0) {
             sa_p[i] = ~j;
@@ -315,7 +317,7 @@ static void lms_sort_2(const void *t_p,
     /* compute SAs */
     get_buckets(c_p, b_p, k, 1); /* find ends of buckets */
 
-    for (i = n - 1, d += 1, b = sa_p + b_p[c1 = 0]; 0 <= i; --i) {
+    for (i = n - 1, d += 1, b2_p = sa_p + b_p[c1 = 0]; 0 <= i; --i) {
         if (0 < (j = sa_p[i])) {
             if (n <= j) {
                 d += 1;
@@ -325,8 +327,8 @@ static void lms_sort_2(const void *t_p,
             assert(chr(j) <= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = (int)(b - sa_p);
-                b = sa_p + b_p[c1 = c0];
+                b_p[c1] = (int)(b2_p - sa_p);
+                b2_p = sa_p + b_p[c1 = c0];
             }
 
             assert((b - sa_p) <= i);
@@ -339,7 +341,7 @@ static void lms_sort_2(const void *t_p,
                 d_p[t] = d;
             }
 
-            *--b = (t & 1) ? ~(j + 1) : j;
+            *--b2_p = (t & 1) ? ~(j + 1) : j;
             sa_p[i] = 0;
         }
     }
@@ -576,7 +578,7 @@ static int sais_main(const void *t_p,
         c1 = c0;
     } while ((0 <= --i) && ((c0 = chr(i)) >= c1));
 
-    for (; 0 <= i;) {
+    while (0 <= i) {
         do {
             c1 = c0;
         } while ((0 <= --i) && ((c0 = chr(i)) <= c1));
@@ -688,7 +690,7 @@ static int sais_main(const void *t_p,
             c1 = c0;
         } while ((0 <= --i) && ((c0 = chr(i)) >= c1));
 
-        for (; 0 <= i;) {
+        while (0 <= i) {
             do {
                 c1 = c0;
             } while ((0 <= --i) && ((c0 = chr(i)) <= c1));
@@ -792,7 +794,7 @@ static int sais(const uint8_t *t_p, int *sa_p, int n)
 /**
  * def sais(data) -> suffix array
  */
-static PyObject* m_sais(PyObject* self_p, PyObject* arg_p)
+static PyObject *m_sais(PyObject *self_p, PyObject* arg_p)
 {
     int res;
     char *buf_p;
