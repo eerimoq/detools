@@ -1,10 +1,9 @@
-import os
 import lzma
 from io import BytesIO
 import bitstruct
 from .errors import Error
-from .crle import CrleCompressor
-from .none import NoneCompressor
+from .compression.crle import CrleCompressor
+from .compression.none import NoneCompressor
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import format_bad_compression_string

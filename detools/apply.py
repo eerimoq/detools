@@ -2,8 +2,8 @@ import os
 from lzma import LZMADecompressor
 import bitstruct
 from .errors import Error
-from .crle import CrleDecompressor
-from .none import NoneDecompressor
+from .compression.crle import CrleDecompressor
+from .compression.none import NoneDecompressor
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import format_bad_compression_string

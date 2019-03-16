@@ -7,7 +7,7 @@ general.
 """
 
 import struct
-from .errors import Error
+from ..errors import Error
 
 
 MINIMUM_REPEATED_SIZE = 6

@@ -2,7 +2,7 @@
 
 """
 
-from .errors import Error
+from ..errors import Error
 
 
 class NoneCompressor(object):
