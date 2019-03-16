@@ -36,7 +36,7 @@ def fread(f):
     return f.read()
 
 
-def _create_compressor(compression):
+def create_compressor(compression):
     if compression == 'lzma':
         compressor = lzma.LZMACompressor(format=lzma.FORMAT_ALONE)
     elif compression == 'none':
@@ -49,7 +49,7 @@ def _create_compressor(compression):
     return compressor
 
 
-def _create_patch_normal_data(ffrom, fto, fpatch, compression):
+def create_patch_normal_data(ffrom, fto, fpatch, compression):
     to_size = get_fsize(fto)
 
     if to_size == 0:
@@ -58,7 +58,7 @@ def _create_patch_normal_data(ffrom, fto, fpatch, compression):
     from_data = fread(ffrom)
     suffix_array = sais.sais(from_data)
     chunks = bsdiff.create_patch(suffix_array, from_data, fread(fto))
-    compressor = _create_compressor(compression)
+    compressor = create_compressor(compression)
 
     for chunk in chunks:
         fpatch.write(compressor.compress(chunk))
@@ -66,17 +66,14 @@ def _create_patch_normal_data(ffrom, fto, fpatch, compression):
     fpatch.write(compressor.flush())
 
 
-def _create_patch_normal(ffrom, fto, fpatch, compression):
-    # Header.
+def create_patch_normal(ffrom, fto, fpatch, compression):
     fpatch.write(pack_header(PATCH_TYPE_NORMAL,
                              compression_string_to_number(compression)))
     fpatch.write(bsdiff.pack_size(get_fsize(fto)))
-
-    # Data.
-    _create_patch_normal_data(ffrom, fto, fpatch, compression)
+    create_patch_normal_data(ffrom, fto, fpatch, compression)
 
 
-def _calc_shift(memory_size, segment_size, minimum_shift_size, from_size):
+def calc_shift(memory_size, segment_size, minimum_shift_size, from_size):
     """Shift from data as many segments as possible.
 
     """
@@ -93,13 +90,13 @@ def _calc_shift(memory_size, segment_size, minimum_shift_size, from_size):
     return shift_size
 
 
-def _create_patch_in_place(ffrom,
-                           fto,
-                           fpatch,
-                           compression,
-                           memory_size,
-                           segment_size,
-                           minimum_shift_size):
+def create_patch_in_place(ffrom,
+                          fto,
+                          fpatch,
+                          compression,
+                          memory_size,
+                          segment_size,
+                          minimum_shift_size):
     if (memory_size % segment_size) != 0:
         raise Error(
             'Memory size {} is not a multiple of segment size {}.'.format(
@@ -119,10 +116,10 @@ def _create_patch_in_place(ffrom,
     from_size = len(from_data)
     to_data = fto.read()
     to_size = len(to_data)
-    shift_size = _calc_shift(memory_size,
-                             segment_size,
-                             minimum_shift_size,
-                             len(from_data))
+    shift_size = calc_shift(memory_size,
+                            segment_size,
+                            minimum_shift_size,
+                            len(from_data))
     shifted_size = (memory_size - shift_size)
     from_data = from_data[:shifted_size]
     number_of_to_segments = div_ceil(to_size, segment_size)
@@ -134,7 +131,7 @@ def _create_patch_in_place(ffrom,
         to_offset = (segment * segment_size)
         from_offset = max(to_offset + segment_size - shift_size, 0)
         fsegment = BytesIO()
-        _create_patch_normal_data(
+        create_patch_normal_data(
             BytesIO(from_data[from_offset:]),
             BytesIO(to_data[to_offset:to_offset + segment_size]),
             fsegment,
@@ -153,7 +150,7 @@ def _create_patch_in_place(ffrom,
     if to_size == 0:
         return
 
-    compressor = _create_compressor(compression)
+    compressor = create_compressor(compression)
     fpatch.write(compressor.compress(fsegments.getvalue()))
     fpatch.write(compressor.flush())
 
@@ -171,14 +168,14 @@ def create_patch(ffrom,
     """
 
     if patch_type == 'normal':
-        _create_patch_normal(ffrom, fto, fpatch, compression)
+        create_patch_normal(ffrom, fto, fpatch, compression)
     elif patch_type == 'in-place':
-        _create_patch_in_place(ffrom,
-                               fto,
-                               fpatch,
-                               compression,
-                               memory_size,
-                               segment_size,
-                               minimum_shift_size)
+        create_patch_in_place(ffrom,
+                              fto,
+                              fpatch,
+                              compression,
+                              memory_size,
+                              segment_size,
+                              minimum_shift_size)
     else:
         raise Error("Bad patch type '{}'.".format(patch_type))

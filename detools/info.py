@@ -1,5 +1,6 @@
 import os
 from .errors import Error
+from .apply import patch_length
 from .apply import unpack_size
 from .apply import unpack_header
 from .apply import read_header_normal
@@ -7,14 +8,6 @@ from .apply import read_header_in_place
 from .apply import PatchReader
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
-
-
-def get_patch_size(fpatch):
-    fpatch.seek(0, os.SEEK_END)
-    patch_size = fpatch.tell()
-    fpatch.seek(0, os.SEEK_SET)
-
-    return patch_size
 
 
 def peek_header_type(fpatch):
@@ -71,7 +64,7 @@ def patch_info_normal_inner(patch_reader, to_size):
 
 
 def patch_info_normal(fpatch):
-    patch_size = get_patch_size(fpatch)
+    patch_size = patch_length(fpatch)
     compression, to_size = read_header_normal(fpatch)
 
     if to_size == 0:
@@ -87,7 +80,7 @@ def patch_info_normal(fpatch):
 
 
 def patch_info_in_place(fpatch):
-    patch_size = get_patch_size(fpatch)
+    patch_size = patch_length(fpatch)
     (compression,
      memory_size,
      segment_size,

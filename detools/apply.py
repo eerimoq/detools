@@ -10,15 +10,6 @@ from .common import format_bad_compression_string
 from .common import format_bad_compression_number
 
 
-def patch_length(fpatch):
-    position = fpatch.tell()
-    fpatch.seek(0, os.SEEK_END)
-    length = fpatch.tell()
-    fpatch.seek(position, os.SEEK_SET)
-
-    return length - position
-
-
 class PatchReader(object):
 
     def __init__(self, fpatch, compression):
@@ -65,6 +56,15 @@ class PatchReader(object):
     @property
     def eof(self):
         return self._decompressor.eof
+
+
+def patch_length(fpatch):
+    position = fpatch.tell()
+    fpatch.seek(0, os.SEEK_END)
+    length = fpatch.tell()
+    fpatch.seek(position, os.SEEK_SET)
+
+    return length - position
 
 
 def unpack_size(fin):
@@ -155,8 +155,8 @@ def read_header_in_place(fpatch):
     return compression, memory_size, segment_size, shift_size, from_size, to_size
 
 
-def shift_in_place_memory(fmem, memory_size, shift_size, from_size):
-    """Shift given in-place memory.
+def shift_memory(fmem, memory_size, shift_size, from_size):
+    """Shift given memory.
 
     """
 
@@ -283,7 +283,7 @@ def apply_patch_in_place(fmem, fpatch):
 
     if to_size > 0:
         patch_reader = PatchReader(fpatch, compression)
-        shift_in_place_memory(fmem, memory_size, shift_size, from_size)
+        shift_memory(fmem, memory_size, shift_size, from_size)
 
         for i, to_pos in enumerate(range(0, to_size, segment_size)):
             from_offset = max(segment_size * (i + 1), shift_size)
