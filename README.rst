@@ -88,6 +88,14 @@ Create the same patch as above, but without compression.
    $ ls -l foo-no-compression.patch
    -rw-rw-r-- 1 erik erik 2791 Mar  1 19:18 foo-no-compression.patch
 
+Create an in-place patch ``foo-in-place.patch``.
+
+.. code-block:: text
+
+   $ detools create_patch --type in-place --memory-size 3000 --segment-size 500 tests/files/foo.old tests/files/foo.new foo-in-place.patch
+   $ ls -l foo-in-place.patch
+   -rw-rw-r-- 1 erik erik 662 Mar 16 08:49 foo-in-place.patch
+
 The apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -99,6 +107,18 @@ Apply the patch ``foo.patch`` to ``tests/files/foo.old`` to create
    $ detools apply_patch tests/files/foo.old foo.patch foo.new
    $ ls -l foo.new
    -rw-rw-r-- 1 erik erik 2780 Mar  1 19:18 foo.new
+
+The in-place apply patch subcommand
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Apply the in-place patch ``foo-in-place.patch`` to ``foo.mem``.
+
+.. code-block:: text
+
+   $ cp tests/files/foo.old foo.mem
+   $ detools apply_patch_in_place foo.mem foo-in-place.patch
+   $ ls -l foo.mem
+   -rwxrwxr-x 1 erik erik 2780 Mar 16 08:51 foo.mem
 
 The patch info subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^
