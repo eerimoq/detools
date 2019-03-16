@@ -245,13 +245,7 @@ def apply_patch_in_place(ffrom, fpatch, fto):
     for to_pos in range(0, to_size, segment_size):
         from_offset = max(0, to_pos - shift_size + segment_size)
         ffrom.seek(from_offset, os.SEEK_SET)
-        left = (to_size - to_pos)
-
-        if left < segment_size:
-            segment_to_size = left
-        else:
-            segment_to_size = segment_size
-
+        segment_to_size = min(segment_size, to_size - to_pos)
         apply_patch_normal_inner(ffrom, patch_reader, fto, segment_to_size)
 
     if not patch_reader.eof:

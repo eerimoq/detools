@@ -89,13 +89,7 @@ def patch_info_in_place(fpatch):
         patch_reader = PatchReader(fpatch, compression)
 
         for to_pos in range(0, to_size, segment_size):
-            left = (to_size - to_pos)
-
-            if left < segment_size:
-                segment_to_size = left
-            else:
-                segment_to_size = segment_size
-
+            segment_to_size = min(segment_size, to_size - to_pos)
             info = patch_info_normal_inner(patch_reader, segment_to_size)
             segments.append(info)
 
