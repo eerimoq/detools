@@ -84,7 +84,8 @@ Create the same patch as above, but without compression.
 
 .. code-block:: text
 
-   $ detools create_patch --compression none tests/files/foo.old tests/files/foo.new foo-no-compression.patch
+   $ detools create_patch --compression none \
+         tests/files/foo.old tests/files/foo.new foo-no-compression.patch
    $ ls -l foo-no-compression.patch
    -rw-rw-r-- 1 erik erik 2791 Mar  1 19:18 foo-no-compression.patch
 
@@ -92,7 +93,8 @@ Create an in-place patch ``foo-in-place.patch``.
 
 .. code-block:: text
 
-   $ detools create_patch --type in-place --memory-size 3000 --segment-size 500 tests/files/foo.old tests/files/foo.new foo-in-place.patch
+   $ detools create_patch --type in-place --memory-size 3000 --segment-size 500 \
+         tests/files/foo.old tests/files/foo.new foo-in-place.patch
    $ ls -l foo-in-place.patch
    -rw-rw-r-- 1 erik erik 662 Mar 16 08:49 foo-in-place.patch
 
