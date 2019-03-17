@@ -221,6 +221,12 @@ def apply_patch(ffrom, fpatch, fto):
 
     All arguments are file-like objects.
 
+    >>> ffrom = open('foo.mem', 'rb')
+    >>> fpatch = open('foo.patch', 'rb')
+    >>> fto = open('foo.new', 'wb')
+    >>> apply_patch(ffrom, fpatch, fto)
+    2780
+
     """
 
     compression, to_size = read_header_normal(fpatch)
@@ -276,6 +282,11 @@ def apply_patch_in_place(fmem, fpatch):
 
     Both arguments are file-like objects.
 
+    >>> fmem = open('foo.mem', 'r+b')
+    >>> fpatch = open('foo.patch', 'rb')
+    >>> apply_patch_in_place(fmem, fpatch)
+    2780
+
     """
 
     (compression,
@@ -310,6 +321,9 @@ def apply_patch_filenames(fromfile, patchfile, tofile):
     """Same as :func:`~detools.apply_patch()`, but with filenames instead
     of file-like objects.
 
+    >>> apply_patch_filenames('foo.old', 'foo.patch', 'foo.new')
+    2780
+
     """
 
     with open(fromfile, 'rb') as ffrom:
@@ -321,6 +335,9 @@ def apply_patch_filenames(fromfile, patchfile, tofile):
 def apply_patch_in_place_filenames(memfile, patchfile):
     """Same as :func:`~detools.apply_patch_in_place()`, but with filenames
     instead of file-like objects.
+
+    >>> apply_patch_in_place_filenames('foo.mem', 'foo-in-place.patch')
+    2780
 
     """
 

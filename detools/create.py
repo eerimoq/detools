@@ -162,6 +162,11 @@ def create_patch(ffrom,
     `memory_size`, `segment_size` and `minimum_shift_size` are used
     when creating an in-place patch.
 
+    >>> ffrom = open('foo.old', 'rb')
+    >>> fto = open('foo.new', 'rb')
+    >>> fpatch = open('foo.patch', 'wb')
+    >>> create_patch(ffrom, fto, fpatch)
+
     """
 
     if patch_type == 'normal':
@@ -188,6 +193,8 @@ def create_patch_filenames(fromfile,
                            minimum_shift_size=None):
     """Same as :func:`~detools.create_patch()`, but with filenames instead
     of file-like objects.
+
+    >>> create_patch_filenames('foo.old', 'foo.new', 'foo.patch')
 
     """
 
