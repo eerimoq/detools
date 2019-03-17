@@ -291,8 +291,8 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
  *
  * @param[in,out] self_p Initialized apply patch object.
  *
- * @return zero(0) if the patch was applied successfully, or negative
- *         error code.
+ * @return Size of to-data in bytes if the patch was applied
+ *         successfully, or negative error code.
  */
 int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p);
 
