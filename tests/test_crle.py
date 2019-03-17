@@ -83,6 +83,30 @@ class DetoolsCrleTest(unittest.TestCase):
             str(cm.exception),
             'Expected kind scattered(0) or repeated(1), but got 2.')
 
+    def test_decompress_at_eof(self):
+        compressed = b'\x00\x01A'
+        decompressor = CrleDecompressor(len(compressed))
+
+        self.assertEqual(decompressor.decompress(compressed, 1), b'A')
+        self.assertEqual(decompressor.eof, True)
+
+        with self.assertRaises(detools.Error) as cm:
+            decompressor.decompress(b'6', 1)
+
+        self.assertEqual(str(cm.exception), 'Already at end of stream.')
+
+        with self.assertRaises(detools.Error) as cm:
+            decompressor.decompress(b'', 1)
+
+        self.assertEqual(str(cm.exception), 'Already at end of stream.')
+
+    def test_decompress_ignore_extra_data(self):
+        compressed = b'\x00\x01A'
+        decompressor = CrleDecompressor(len(compressed))
+
+        self.assertEqual(decompressor.decompress(compressed + b'B', 1), b'A')
+        self.assertEqual(decompressor.eof, True)
+
 
 if __name__ == '__main__':
     unittest.main()
