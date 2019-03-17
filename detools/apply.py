@@ -216,8 +216,8 @@ def apply_patch_in_place_segment(fmem,
 
 
 def apply_patch(ffrom, fpatch, fto):
-    """Apply given normal patch ``fpatch`` to ``ffrom`` to create
-    ``fto``. Returns the size of the created to-data.
+    """Apply given normal patch `fpatch` to `ffrom` to create
+    `fto`. Returns the size of the created to-data.
 
     """
 
@@ -269,8 +269,8 @@ def apply_patch(ffrom, fpatch, fto):
 
 
 def apply_patch_in_place(fmem, fpatch):
-    """Apply given in-place patch ``fpatch`` to ``fmem``. Returns the size
-    of the created to-data.
+    """Apply given in-place patch `fpatch` to `fmem`. Returns the size of
+    the created to-data.
 
     """
 
