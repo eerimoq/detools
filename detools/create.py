@@ -175,3 +175,29 @@ def create_patch(ffrom,
                               minimum_shift_size)
     else:
         raise Error("Bad patch type '{}'.".format(patch_type))
+
+
+def create_patch_filenames(fromfile,
+                           tofile,
+                           patchfile,
+                           compression='lzma',
+                           patch_type='normal',
+                           memory_size=None,
+                           segment_size=None,
+                           minimum_shift_size=None):
+    """Same as :func:`~detools.create_patch()`, but with filenames instead
+    of streams.
+
+    """
+
+    with open(fromfile, 'rb') as ffrom:
+        with open(tofile, 'rb') as fto:
+            with open(patchfile, 'wb') as fpatch:
+                create_patch(ffrom,
+                             fto,
+                             fpatch,
+                             compression,
+                             patch_type,
+                             memory_size,
+                             segment_size,
+                             minimum_shift_size)

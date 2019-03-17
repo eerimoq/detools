@@ -6,6 +6,7 @@ from humanfriendly import format_size
 from humanfriendly import parse_size
 
 from .create import create_patch
+from .create import create_patch_filenames
 from .apply import apply_patch
 from .apply import apply_patch_in_place
 from .apply import apply_patch_filenames
@@ -23,17 +24,14 @@ def _do_create_patch(args):
         if args.segment_size is None:
             raise Error('--segment-size is required for in-place patch.')
 
-    with open(args.fromfile, 'rb') as ffrom:
-        with open(args.tofile, 'rb') as fto:
-            with open(args.patchfile, 'wb') as fpatch:
-                create_patch(ffrom,
-                             fto,
-                             fpatch,
-                             args.compression,
-                             patch_type=args.type,
-                             memory_size=args.memory_size,
-                             segment_size=args.segment_size,
-                             minimum_shift_size=args.minimum_shift_size)
+    create_patch_filenames(args.fromfile,
+                           args.tofile,
+                           args.patchfile,
+                           args.compression,
+                           patch_type=args.type,
+                           memory_size=args.memory_size,
+                           segment_size=args.segment_size,
+                           minimum_shift_size=args.minimum_shift_size)
 
 
 def _do_apply_patch(args):
