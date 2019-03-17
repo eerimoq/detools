@@ -303,9 +303,8 @@ def apply_patch_in_place(fmem, fpatch):
 
 
 def apply_patch_filenames(fromfile, patchfile, tofile):
-    """Apply given normal patch `patchfile` to `fromfile` to create
-    `tofile`. All arguments are file names. Returns the size of the
-    created to-data.
+    """Same as :func:`~detools.apply_patch()`, but with filenames instead
+    of streams.
 
     """
 
@@ -316,8 +315,8 @@ def apply_patch_filenames(fromfile, patchfile, tofile):
 
 
 def apply_patch_in_place_filenames(memfile, patchfile):
-    """Apply given in-place patch `patchfile` to `memfile`. All arguments
-    are file names. Returns the size of the created to-data.
+    """Same as :func:`~detools.apply_patch_in_place()`, but with filenames
+    instead of streams.
 
     """
 
