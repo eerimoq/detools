@@ -13,9 +13,23 @@ for details.
 Command line utility
 ====================
 
-Build and run the apply patch command line utility.
+Build the command line utility.
 
 .. code-block:: text
 
    $ make
-   $ ./detools-apply-patch ../../tests/files/foo.old ../../tests/files/foo.patch foo.new
+
+Apply a normal patch.
+
+.. code-block:: text
+
+   $ ./detools apply_patch \
+         ../../tests/files/foo.old ../../tests/files/foo.patch foo.new
+
+Apply an in-place patch.
+
+.. code-block:: text
+
+   $ cp ../../tests/files/foo.old foo.mem
+   $ ./detools apply_patch_in_place \
+         foo.mem ../../tests/files/foo-in-place-3000-500.patch

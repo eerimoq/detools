@@ -1375,6 +1375,15 @@ int detools_apply_patch_filenames(const char *from_p,
     return (res);
 }
 
+int detools_apply_patch_in_place_filenames(const char *memory_p,
+                                           const char *patch_p)
+{
+    (void)memory_p;
+    (void)patch_p;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
 #endif
 
 const char *detools_error_as_string(int error)

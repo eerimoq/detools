@@ -30,22 +30,57 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include "detools.h"
+
+static void print_usage_and_exit(const char *name_p)
+{
+    printf("Usage: %s {apply_patch, apply_patch_in_place}\n", name_p);
+    exit(1);
+}
+
+static void print_apply_patch_usage_and_exit(const char *name_p)
+{
+    printf("Usage: %s apply_patch <from-file> <patch-file> <to-file>\n",
+           name_p);
+    exit(1);
+}
+
+static void print_apply_patch_in_place_usage_and_exit(const char *name_p)
+{
+    printf("Usage: %s apply_patch_in_place <memory-file> <patch-file>\n",
+           name_p);
+    exit(1);
+}
 
 int main(int argc, const char *argv[])
 {
     int res;
 
-    if (argc != 4) {
-        printf("Usage: %s <from-file> <patch-file> <to-file>\n", argv[0]);
-
-        return (1);
+    if (argc < 2) {
+        print_usage_and_exit(argv[0]);
     }
 
-    res = -detools_apply_patch_filenames(argv[1], argv[2], argv[3]);
+    if (strcmp("apply_patch", argv[1]) == 0) {
+        if (argc != 5) {
+            print_apply_patch_usage_and_exit(argv[0]);
+        }
+
+        res = -detools_apply_patch_filenames(argv[2], argv[3], argv[4]);
+    } else if (strcmp("apply_patch_in_place", argv[1]) == 0) {
+        if (argc != 4) {
+            print_apply_patch_in_place_usage_and_exit(argv[0]);
+        }
+
+        res = -detools_apply_patch_in_place_filenames(argv[2], argv[3]);
+    } else {
+        print_usage_and_exit(argv[0]);
+    }
 
     if (res != 0) {
-        printf("error: %s (error code %d)\n", detools_error_as_string(res), res);
+        printf("error: %s (error code %d)\n",
+               detools_error_as_string(res),
+               res);
     }
 
     return (res);

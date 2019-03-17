@@ -15,4 +15,4 @@ CFLAGS := \
 	-std=c99
 
 all:
-	$(CC) $(CFLAGS) detools.c main.c -llzma -o detools-apply-patch
+	$(CC) $(CFLAGS) detools.c main.c -llzma -o detools

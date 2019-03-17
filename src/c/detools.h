@@ -360,6 +360,17 @@ int detools_apply_patch_filenames(const char *from_p,
                                   const char *patch_p,
                                   const char *to_p);
 
+/**
+ * Apply given patch file to given memory file.
+ *
+ * @param[in] memory_p Memory file name.
+ * @param[in] patch_p Patch file name.
+ *
+ * @return zero(0) or negative error code.
+ */
+int detools_apply_patch_in_place_filenames(const char *memory_p,
+                                           const char *patch_p);
+
 #endif
 
 /**
