@@ -71,10 +71,10 @@ Below is an example of how to incrementally apply an in-place patch.
            res = serial_read(&buf[0], sizeof(buf));
 
            if (res > 0) {
+               left -= res;
                res = detools_apply_patch_in_place_process(&apply_patch,
                                                           &buf[0],
                                                           res);
-               left -= res;
            }
        }
 
