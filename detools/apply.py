@@ -156,11 +156,13 @@ def shift_memory(fmem, memory_size, shift_size, from_size):
 
     """
 
-    fmem.seek(0, os.SEEK_END)
-    size = fmem.tell()
+    size = file_size(fmem)
 
     if size < memory_size:
-        fmem.write((memory_size - size) * b'\xff')
+        raise Error(
+            'Expected memory size of at least {} bytes, but got {}.'.format(
+                memory_size,
+                size))
 
     fmem.seek(0, os.SEEK_SET)
     from_data = fmem.read(from_size)
@@ -311,8 +313,6 @@ def apply_patch_in_place(fmem, fpatch):
 
         if not patch_reader.eof:
             raise Error('End of patch not found.')
-
-    fmem.truncate(to_size)
 
     return to_size
 

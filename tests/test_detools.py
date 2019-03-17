@@ -35,7 +35,9 @@ class DetoolsTest(unittest.TestCase):
                            from_filename,
                            to_filename,
                            patch_filename,
-                           patch_type):
+                           **kwargs):
+        patch_type = kwargs.get('patch_type', 'normal')
+
         if patch_type == 'normal':
             fnew = BytesIO()
 
@@ -45,13 +47,18 @@ class DetoolsTest(unittest.TestCase):
 
             actual = fnew.getvalue()
         elif patch_type == 'in-place':
+            memory_size = kwargs['memory_size']
+
             with open(from_filename, 'rb') as fold:
-                fmem = BytesIO(fold.read())
+                data = fold.read()
+
+            data += (memory_size - len(data)) * b'\xff'
+            fmem = BytesIO(data)
 
             with open(patch_filename, 'rb') as fpatch:
                 to_size = detools.apply_patch_in_place(fmem, fpatch)
 
-            actual = fmem.getvalue()
+            actual = fmem.getvalue()[:to_size]
         else:
             raise Exception(patch_type)
 
@@ -70,11 +77,10 @@ class DetoolsTest(unittest.TestCase):
                                  to_filename,
                                  patch_filename,
                                  **kwargs)
-
         self.assert_apply_patch(from_filename,
                                 to_filename,
                                 patch_filename,
-                                kwargs.get('patch_type', 'normal'))
+                                **kwargs)
 
     def test_create_and_apply_patch_foo(self):
         self.assert_create_and_apply_patch('tests/files/foo.old',
@@ -447,6 +453,33 @@ class DetoolsTest(unittest.TestCase):
             detools.patch_info_filename('tests/files/foo-bad-patch-type.patch')
 
         self.assertEqual(str(cm.exception), "Bad patch type 7.")
+
+    def test_apply_patch_in_place_small_memory_size(self):
+        with self.assertRaises(detools.Error) as cm:
+            detools.apply_patch_in_place_filenames(
+                'tests/files/foo.old',
+                'tests/files/foo-in-place-3000-1500.patch')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Expected memory size of at least 3000 bytes, but got 2780.")
+
+    def test_apply_patch_in_place_foo_retain_after_3000(self):
+        with open('foo.mem', 'wb') as fmem:
+            with open('tests/files/foo.old', 'rb') as fold:
+                fmem.write(fold.read())
+                fmem.write((3000 - 2780) * b'\xff')
+                fmem.write(b'\x01\x02\x03')
+
+        detools.apply_patch_in_place_filenames(
+            'foo.mem',
+            'tests/files/foo-in-place-3000-1500.patch')
+
+        with open('foo.mem', 'rb') as fmem:
+            data = fmem.read()
+
+        self.assertEqual(len(data), 3003)
+        self.assertEqual(data[-3:], b'\x01\x02\x03')
 
 
 if __name__ == '__main__':

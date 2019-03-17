@@ -210,13 +210,14 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         with open(foo_mem, 'wb') as fmem:
             with open('tests/files/foo.old', 'rb') as fold:
-                fmem.write(fold.read())
+                fmem.write(fold.read() + (3000 - 2780) * b'\xff')
 
         with patch('sys.argv', argv):
             detools._main()
 
-        self.assertEqual(read_file(foo_mem),
-                         read_file('tests/files/foo.new'))
+        self.assertEqual(
+            read_file(foo_mem),
+            read_file('tests/files/foo.new') + (3000 - 2780) * b'\xff')
 
     def test_command_line_patch_info_foo_in_place(self):
         argv = [
@@ -373,13 +374,14 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         with open(foo_mem, 'wb') as fmem:
             with open('tests/files/foo.old', 'rb') as fold:
-                fmem.write(fold.read())
+                fmem.write(fold.read() + (3072 - 2780) * b'\xff')
 
         with patch('sys.argv', argv):
             detools._main()
 
-        self.assertEqual(read_file(foo_mem),
-                         read_file('tests/files/foo.new'))
+        self.assertEqual(
+            read_file(foo_mem),
+            read_file('tests/files/foo.new') + (3072 - 2780) * b'\xff')
 
     def test_command_line_patch_info_foo_in_place_size_units(self):
         argv = [
