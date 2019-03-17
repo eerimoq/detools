@@ -16,7 +16,7 @@ def setup(ext_modules):
     setuptools.setup(
         name='detools',
         version=find_version(),
-        description='Binary delta encoding utility.',
+        description='Binary delta encoding tools.',
         long_description=open('README.rst', 'r').read(),
         author='Erik Moqvist',
         author_email='erik.moqvist@gmail.com',
