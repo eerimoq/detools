@@ -1106,6 +1106,44 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
     return (res);
 }
 
+int detools_apply_patch_in_place_init(
+    struct detools_apply_patch_in_place_t *self_p,
+    detools_mem_read_t mem_read,
+    detools_mem_write_t mem_write,
+    detools_mem_erase_t mem_erase,
+    size_t patch_size,
+    void *arg_p)
+{
+    self_p->mem_read = mem_read;
+    self_p->mem_write = mem_write;
+    self_p->mem_erase = mem_erase;
+    self_p->patch_size = patch_size;
+    self_p->arg_p = arg_p;
+    self_p->patch_type = PATCH_TYPE_NONE;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+int detools_apply_patch_in_place_process(
+    struct detools_apply_patch_in_place_t *self_p,
+    const uint8_t *patch_p,
+    size_t size)
+{
+    (void)self_p;
+    (void)patch_p;
+    (void)size;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+int detools_apply_patch_in_place_finalize(
+    struct detools_apply_patch_in_place_t *self_p)
+{
+    (void)self_p;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
 /*
  * Callback functionality.
  */
