@@ -155,9 +155,9 @@ def create_patch(ffrom,
     """Create a patch from `ffrom` to `fto` and write it to `fpatch`. All
     three arguments are file-like objects.
 
-    `compression` must be one of ``'crle'``, ``'lzma'`` and ``'none'``.
+    `compression` must be ``'crle'``, ``'lzma'`` or ``'none'``.
 
-    `patch_type` must be one of ``'normal'`` and ``'in-place'``.
+    `patch_type` must be ``'normal'`` or ``'in-place'``.
 
     `memory_size`, `segment_size` and `minimum_shift_size` are used
     when creating an in-place patch.
