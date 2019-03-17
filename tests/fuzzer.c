@@ -65,7 +65,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data_p, size_t size)
     create_patch("fuzzer.old", "fuzzer.new", "fuzzer.patch", data_p[1] % 2);
     assert(detools_apply_patch_filenames("fuzzer.old",
                                          "fuzzer.patch",
-                                         "fuzzer-patched.new") == 0);
+                                         "fuzzer-patched.new") == to_size);
     assert(system("cmp fuzzer.new fuzzer-patched.new") == 0);
 
     return (0);

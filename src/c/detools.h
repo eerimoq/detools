@@ -338,8 +338,8 @@ int detools_apply_patch_in_place_process(
  *
  * @param[in,out] self_p Initialized apply patch object.
  *
- * @return zero(0) if the patch was applied successfully, or negative
- *         error code.
+ * @return Size of to-data in bytes if the patch was applied
+ *         successfully, or negative error code.
  */
 int detools_apply_patch_in_place_finalize(
     struct detools_apply_patch_in_place_t *self_p);
@@ -354,7 +354,7 @@ int detools_apply_patch_in_place_finalize(
  * @param[in] patch_p Patch file name.
  * @param[in] to_p Destination file name.
  *
- * @return zero(0) or negative error code.
+ * @return Size of to-data in bytes or negative error code.
  */
 int detools_apply_patch_filenames(const char *from_p,
                                   const char *patch_p,
@@ -366,7 +366,7 @@ int detools_apply_patch_filenames(const char *from_p,
  * @param[in] memory_p Memory file name.
  * @param[in] patch_p Patch file name.
  *
- * @return zero(0) or negative error code.
+ * @return Size of to-data in bytes or negative error code.
  */
 int detools_apply_patch_in_place_filenames(const char *memory_p,
                                            const char *patch_p);
@@ -383,7 +383,7 @@ int detools_apply_patch_in_place_filenames(const char *memory_p,
  * @param[in] to_write Destination write callback.
  * @param[in] arg_p Argument passed to all callbacks.
  *
- * @return zero(0) or negative error code.
+ * @return Size of to-data in bytes or negative error code.
  */
 int detools_apply_patch_callbacks(detools_read_t from_read,
                                   detools_seek_t from_seek,

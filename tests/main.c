@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include "../src/c/detools.h"
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -142,12 +143,17 @@ static void assert_apply_patch(const char *from_p,
     FILE *expected_fto_p;
     int actual_byte;
     int expected_byte;
+    struct stat statbuf;
+    int to_size;
+
+    assert(stat(to_p, &statbuf) == 0);
+    to_size = (int)statbuf.st_size;
 
     res = detools_apply_patch_filenames(from_p,
                                         patch_p,
                                         actual_to_p);
 
-    if (res != 0) {
+    if (res != to_size) {
         printf("FAIL: apply of '%s' to '%s' to '%s' failed with '%s' (%d)\n",
                patch_p,
                from_p,
@@ -472,7 +478,7 @@ static void test_apply_patch_foo_compression_incremental(void)
         patch_offset += patch_size;
     }
 
-    assert(detools_apply_patch_finalize(&apply_patch) == 0);
+    assert(detools_apply_patch_finalize(&apply_patch) == 2780);
     io_assert_to_ok(&io);
 }
 

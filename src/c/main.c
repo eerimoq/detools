@@ -66,18 +66,22 @@ int main(int argc, const char *argv[])
             print_apply_patch_usage_and_exit(argv[0]);
         }
 
-        res = -detools_apply_patch_filenames(argv[2], argv[3], argv[4]);
+        res = detools_apply_patch_filenames(argv[2], argv[3], argv[4]);
     } else if (strcmp("apply_patch_in_place", argv[1]) == 0) {
         if (argc != 4) {
             print_apply_patch_in_place_usage_and_exit(argv[0]);
         }
 
-        res = -detools_apply_patch_in_place_filenames(argv[2], argv[3]);
+        res = detools_apply_patch_in_place_filenames(argv[2], argv[3]);
     } else {
         print_usage_and_exit(argv[0]);
     }
 
-    if (res != 0) {
+    if (res > 0) {
+        res = 0;
+    } else if (res < 0) {
+        res *= -1;
+
         printf("error: %s (error code %d)\n",
                detools_error_as_string(res),
                res);

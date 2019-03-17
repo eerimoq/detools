@@ -1099,6 +1099,10 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
         (void)self_p->patch_reader.destroy(&self_p->patch_reader);
     }
 
+    if (res == 0) {
+        res = (int)self_p->to_size;
+    }
+
     return (res);
 }
 
