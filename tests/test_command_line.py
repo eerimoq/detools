@@ -1,7 +1,6 @@
 import os
 import unittest
 from unittest.mock import patch
-from io import BytesIO
 from io import StringIO
 
 import detools
