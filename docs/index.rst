@@ -208,8 +208,12 @@ Functions and classes
 
 .. autofunction:: detools.apply_patch_in_place
 
+.. autofunction:: detools.patch_info
+
 .. autofunction:: detools.create_patch_filenames
 
 .. autofunction:: detools.apply_patch_filenames
 
 .. autofunction:: detools.apply_patch_in_place_filenames
+
+.. autofunction:: detools.patch_info_filename

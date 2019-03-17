@@ -12,6 +12,7 @@ from .apply import apply_patch_in_place
 from .apply import apply_patch_filenames
 from .apply import apply_patch_in_place_filenames
 from .info import patch_info
+from .info import patch_info_filename
 from .errors import Error
 from .version import __version__
 
@@ -187,8 +188,7 @@ def _patch_info_in_place(fsize,
 
 
 def _do_patch_info(args):
-    with open(args.patchfile, 'rb') as fpatch:
-        patch_type, info = patch_info(fpatch)
+    patch_type, info = patch_info_filename(args.patchfile)
 
     if args.no_human:
         fsize = _format_bytes

@@ -108,6 +108,10 @@ def patch_info_in_place(fpatch):
 
 
 def patch_info(fpatch):
+    """Get patch information from given patch `fpatch`.
+
+    """
+
     patch_type = peek_header_type(fpatch)
 
     if patch_type == PATCH_TYPE_NORMAL:
@@ -115,4 +119,14 @@ def patch_info(fpatch):
     elif patch_type == PATCH_TYPE_IN_PLACE:
         return 'in-place', patch_info_in_place(fpatch)
     else:
-        raise Error('Bad patch type.')
+        raise Error('Bad patch type {}.'.format(patch_type))
+
+
+def patch_info_filename(patchfile):
+    """Same as :func:`~detools.patch_info()`, but with a filename instead
+    of a stream.
+
+    """
+
+    with open(patchfile, 'rb') as fpatch:
+        return patch_info(fpatch)

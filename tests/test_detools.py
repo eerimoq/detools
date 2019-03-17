@@ -436,6 +436,18 @@ class DetoolsTest(unittest.TestCase):
                     str(cm.exception),
                     "Minimum shift size 999 is not a multiple of segment size 500.")
 
+    def test_patch_info_bad_empty_header(self):
+        with self.assertRaises(detools.Error) as cm:
+            detools.patch_info_filename('tests/files/empty.old')
+
+        self.assertEqual(str(cm.exception), "Failed to read the patch header.")
+
+    def test_patch_info_bad_patch_type(self):
+        with self.assertRaises(detools.Error) as cm:
+            detools.patch_info_filename('tests/files/foo-bad-patch-type.patch')
+
+        self.assertEqual(str(cm.exception), "Bad patch type 7.")
+
 
 if __name__ == '__main__':
     unittest.main()
