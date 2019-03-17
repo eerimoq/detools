@@ -219,6 +219,8 @@ def apply_patch(ffrom, fpatch, fto):
     """Apply given normal patch `fpatch` to `ffrom` to create
     `fto`. Returns the size of the created to-data.
 
+    All arguments are file-like objects.
+
     """
 
     compression, to_size = read_header_normal(fpatch)
@@ -272,6 +274,8 @@ def apply_patch_in_place(fmem, fpatch):
     """Apply given in-place patch `fpatch` to `fmem`. Returns the size of
     the created to-data.
 
+    Both arguments are file-like objects.
+
     """
 
     (compression,
@@ -304,7 +308,7 @@ def apply_patch_in_place(fmem, fpatch):
 
 def apply_patch_filenames(fromfile, patchfile, tofile):
     """Same as :func:`~detools.apply_patch()`, but with filenames instead
-    of streams.
+    of file-like objects.
 
     """
 
@@ -316,7 +320,7 @@ def apply_patch_filenames(fromfile, patchfile, tofile):
 
 def apply_patch_in_place_filenames(memfile, patchfile):
     """Same as :func:`~detools.apply_patch_in_place()`, but with filenames
-    instead of streams.
+    instead of file-like objects.
 
     """
 

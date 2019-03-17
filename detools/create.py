@@ -152,7 +152,8 @@ def create_patch(ffrom,
                  memory_size=None,
                  segment_size=None,
                  minimum_shift_size=None):
-    """Create a patch from `ffrom` to `fto` and write it to `fpatch`.
+    """Create a patch from `ffrom` to `fto` and write it to `fpatch`. All
+    three arguments are file-like objects.
 
     `compression` must be one of ``'crle'``, ``'lzma'`` and ``'none'``.
 
@@ -186,7 +187,7 @@ def create_patch_filenames(fromfile,
                            segment_size=None,
                            minimum_shift_size=None):
     """Same as :func:`~detools.create_patch()`, but with filenames instead
-    of streams.
+    of file-like objects.
 
     """
 

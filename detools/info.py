@@ -108,7 +108,7 @@ def patch_info_in_place(fpatch):
 
 
 def patch_info(fpatch):
-    """Get patch information from given patch `fpatch`.
+    """Get patch information from given file-like patch object `fpatch`.
 
     """
 
@@ -124,7 +124,7 @@ def patch_info(fpatch):
 
 def patch_info_filename(patchfile):
     """Same as :func:`~detools.patch_info()`, but with a filename instead
-    of a stream.
+    of a file-like object.
 
     """
 
