@@ -41,7 +41,7 @@ class DetoolsTest(unittest.TestCase):
 
             with open(from_filename, 'rb') as fold:
                 with open(patch_filename, 'rb') as fpatch:
-                    detools.apply_patch(fold, fpatch, fnew)
+                    to_size = detools.apply_patch(fold, fpatch, fnew)
 
             actual = fnew.getvalue()
         elif patch_type == 'in-place':
@@ -49,7 +49,7 @@ class DetoolsTest(unittest.TestCase):
                 fmem = BytesIO(fold.read())
 
             with open(patch_filename, 'rb') as fpatch:
-                detools.apply_patch_in_place(fmem, fpatch)
+                to_size = detools.apply_patch_in_place(fmem, fpatch)
 
             actual = fmem.getvalue()
         else:
@@ -58,6 +58,7 @@ class DetoolsTest(unittest.TestCase):
         with open(to_filename, 'rb') as fnew:
             expected = fnew.read()
 
+        self.assertEqual(to_size, len(expected))
         self.assertEqual(actual, expected)
 
     def assert_create_and_apply_patch(self,

@@ -11,7 +11,7 @@ def read_file(filename):
         return fin.read()
 
 
-class DetoolsTest(unittest.TestCase):
+class DetoolsCommandLineTest(unittest.TestCase):
 
     def test_command_line_create_patch_foo(self):
         foo_patch = 'foo.patch'
