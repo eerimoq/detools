@@ -8,6 +8,8 @@ from humanfriendly import parse_size
 from .create import create_patch
 from .apply import apply_patch
 from .apply import apply_patch_in_place
+from .apply import apply_patch_filenames
+from .apply import apply_patch_in_place_filenames
 from .info import patch_info
 from .errors import Error
 from .version import __version__
@@ -35,16 +37,11 @@ def _do_create_patch(args):
 
 
 def _do_apply_patch(args):
-    with open(args.fromfile, 'rb') as ffrom:
-        with open(args.patchfile, 'rb') as fpatch:
-            with open(args.tofile, 'wb') as fto:
-                apply_patch(ffrom, fpatch, fto)
+    apply_patch_filenames(args.fromfile, args.patchfile, args.tofile)
 
 
 def _do_apply_patch_in_place(args):
-    with open(args.memfile, 'r+b') as fmem:
-        with open(args.patchfile, 'rb') as fpatch:
-            apply_patch_in_place(fmem, fpatch)
+    apply_patch_in_place_filenames(args.memfile, args.patchfile)
 
 
 def _format_size(value):

@@ -300,3 +300,27 @@ def apply_patch_in_place(fmem, fpatch):
     fmem.truncate(to_size)
 
     return to_size
+
+
+def apply_patch_filenames(fromfile, patchfile, tofile):
+    """Apply given normal patch `patchfile` to `fromfile` to create
+    `tofile`. All arguments are file names. Returns the size of the
+    created to-data.
+
+    """
+
+    with open(fromfile, 'rb') as ffrom:
+        with open(patchfile, 'rb') as fpatch:
+            with open(tofile, 'wb') as fto:
+                return apply_patch(ffrom, fpatch, fto)
+
+
+def apply_patch_in_place_filenames(memfile, patchfile):
+    """Apply given in-place patch `patchfile` to `memfile`. All arguments
+    are file names. Returns the size of the created to-data.
+
+    """
+
+    with open(memfile, 'r+b') as fmem:
+        with open(patchfile, 'rb') as fpatch:
+            return apply_patch_in_place(fmem, fpatch)
