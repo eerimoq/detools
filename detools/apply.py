@@ -216,7 +216,7 @@ def apply_patch_in_place_segment(fmem,
 
 
 def apply_patch(ffrom, fpatch, fto):
-    """Apply given normal patch.
+    """Apply given normal patch ``fpatch`` to ``ffrom`` to create ``fto``.
 
     """
 
@@ -266,7 +266,7 @@ def apply_patch(ffrom, fpatch, fto):
 
 
 def apply_patch_in_place(fmem, fpatch):
-    """Apply given in-place patch.
+    """Apply given in-place patch ``fpatch`` to ``fmem``.
 
     """
 
