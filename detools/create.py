@@ -154,6 +154,13 @@ def create_patch(ffrom,
                  minimum_shift_size=None):
     """Create a patch from `ffrom` to `fto` and write it to `fpatch`.
 
+    `compression` must be one of ``'crle'``, ``'lzma'`` and ``'none'``.
+
+    `patch_type` must be one of ``'normal'`` and ``'in-place'``.
+
+    `memory_size`, `segment_size` and `minimum_shift_size` are used
+    when creating an in-place patch.
+
     """
 
     if patch_type == 'normal':
