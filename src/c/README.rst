@@ -57,12 +57,12 @@ Below is an example of how to incrementally apply an in-place patch.
        int res;
 
        /* Initialize the in-place apply patch object. */
-       res = detools_apply_patch_in_place(&apply_patch,
-                                          flash_read,
-                                          flash_write,
-                                          flash_erase,
-                                          patch_size,
-                                          NULL);
+       res = detools_apply_patch_in_place_init(&apply_patch,
+                                               flash_read,
+                                               flash_write,
+                                               flash_erase,
+                                               patch_size,
+                                               NULL);
        left = patch_size;
 
        /* Incrementally process patch data until the whole patch has been
