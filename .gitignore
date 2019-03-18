@@ -74,6 +74,7 @@ target/
 *.gcno
 /main
 /assert-apply-patch.new
+/assert-apply-patch-in-place.mem
 src/c/detools
 src/c/foo.new
 /fuzzer*

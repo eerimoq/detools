@@ -344,6 +344,44 @@ int detools_apply_patch_in_place_process(
 int detools_apply_patch_in_place_finalize(
     struct detools_apply_patch_in_place_t *self_p);
 
+/**
+ * Apply given patch using read, write and seek callbacks.
+ *
+ * @param[in] from_read Source read callback.
+ * @param[in] from_seek Source seek callback.
+ * @param[in] patch_read Patch read callback.
+ * @param[in] patch_size Patch size in bytes.
+ * @param[in] to_write Destination write callback.
+ * @param[in] arg_p Argument passed to all callbacks.
+ *
+ * @return Size of to-data in bytes or negative error code.
+ */
+int detools_apply_patch_callbacks(detools_read_t from_read,
+                                  detools_seek_t from_seek,
+                                  detools_read_t patch_read,
+                                  size_t patch_size,
+                                  detools_write_t to_write,
+                                  void *arg_p);
+
+/**
+ * Apply given in-place patch using read, write and erase callbacks.
+ *
+ * @param[in] mem_read Callback to read data.
+ * @param[in] mem_write Callback to write data.
+ * @param[in] mem_erase Callback to erase data.
+ * @param[in] patch_read Patch read callback.
+ * @param[in] patch_size Patch size in bytes.
+ * @param[in] arg_p Argument passed to the callbacks.
+ *
+ * @return Size of to-data in bytes or negative error code.
+ */
+int detools_apply_patch_in_place_callbacks(detools_mem_read_t mem_read,
+                                           detools_mem_write_t mem_write,
+                                           detools_mem_erase_t mem_erase,
+                                           detools_read_t patch_read,
+                                           size_t patch_size,
+                                           void *arg_p);
+
 #if DETOOLS_CONFIG_FILE_IO == 1
 
 /**
@@ -372,25 +410,6 @@ int detools_apply_patch_in_place_filenames(const char *memory_p,
                                            const char *patch_p);
 
 #endif
-
-/**
- * Apply given patch using read, write and seek callbacks.
- *
- * @param[in] from_read Source read callback.
- * @param[in] from_seek Source seek callback.
- * @param[in] patch_read Patch read callback.
- * @param[in] patch_size Patch size in bytes.
- * @param[in] to_write Destination write callback.
- * @param[in] arg_p Argument passed to all callbacks.
- *
- * @return Size of to-data in bytes or negative error code.
- */
-int detools_apply_patch_callbacks(detools_read_t from_read,
-                                  detools_seek_t from_seek,
-                                  detools_read_t patch_read,
-                                  size_t patch_size,
-                                  detools_write_t to_write,
-                                  void *arg_p);
 
 /**
  * Get the error string for given error code.

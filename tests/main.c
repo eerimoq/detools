@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include "../src/c/detools.h"
+
+int truncate(const char *path, off_t length);
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -167,8 +171,71 @@ static void assert_apply_patch(const char *from_p,
     expected_fto_p = myfopen(to_p, "rb");
 
     do {
-        actual_byte = getc(actual_fto_p);
-        expected_byte = getc(expected_fto_p);
+        actual_byte = fgetc(actual_fto_p);
+        expected_byte = fgetc(expected_fto_p);
+        assert(actual_byte == expected_byte);
+    } while (actual_byte != EOF);
+}
+
+static void assert_apply_patch_in_place(const char *from_p,
+                                        const char *patch_p,
+                                        const char *to_p,
+                                        size_t memory_size)
+{
+    int res;
+    const char *memory_p = "assert-apply-patch-in-place.mem";
+    FILE *fmem_p;
+    FILE *ffrom_p;
+    FILE *fto_p;
+    int actual_byte;
+    int expected_byte;
+    struct stat statbuf;
+    int to_size;
+    int value;
+    size_t i;
+
+    assert(stat(to_p, &statbuf) == 0);
+    to_size = (int)statbuf.st_size;
+
+    fmem_p = myfopen(memory_p, "wb");
+    ffrom_p = myfopen(from_p, "rb");
+
+    for (i = 0; i < memory_size; i++) {
+        value = fgetc(ffrom_p);
+
+        if (value == EOF) {
+            value = -1;
+        }
+
+        assert(fputc(value, fmem_p) != EOF);
+    }
+
+    assert(fgetc(ffrom_p) == EOF);
+    assert(fclose(fmem_p) == 0);
+    assert(fclose(ffrom_p) == 0);
+
+    res = detools_apply_patch_in_place_filenames(memory_p, patch_p);
+
+    if (res != to_size) {
+        printf("FAIL: apply of '%s' to '%s' to '%s' failed with '%s' (%d)\n",
+               patch_p,
+               from_p,
+               to_p,
+               detools_error_as_string(-res),
+               res);
+        //exit(1);
+        return;
+    }
+
+    exit(1);
+
+    assert(truncate(memory_p, to_size) == 0);
+    fmem_p = myfopen(memory_p, "rb");
+    fto_p = myfopen(to_p, "rb");
+
+    do {
+        actual_byte = fgetc(fmem_p);
+        expected_byte = fgetc(fto_p);
         assert(actual_byte == expected_byte);
     } while (actual_byte != EOF);
 }
@@ -253,9 +320,10 @@ static void test_apply_patch_micropython_in_place(void)
 
 static void test_apply_patch_foo_in_place_3000_1500(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-in-place-3000-1500.patch",
-                             -DETOOLS_NOT_IMPLEMENTED);
+    assert_apply_patch_in_place("tests/files/foo.old",
+                                "tests/files/foo-in-place-3000-1500.patch",
+                                "tests/files/foo.new",
+                                3000);
 }
 
 static void test_apply_patch_foo_in_place_3k_1_5k(void)

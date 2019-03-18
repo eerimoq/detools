@@ -1207,6 +1207,66 @@ int detools_apply_patch_callbacks(detools_read_t from_read,
     return (callbacks_process(&apply_patch, patch_read, patch_size, arg_p));
 }
 
+static int in_place_callbacks_process(
+    struct detools_apply_patch_in_place_t *apply_patch_p,
+    detools_read_t patch_read,
+    size_t patch_size,
+    void *arg_p)
+{
+    int res;
+    size_t patch_offset;
+    size_t chunk_size;
+    uint8_t chunk[512];
+
+    res = 0;
+    patch_offset = 0;
+
+    while (patch_offset < patch_size) {
+        chunk_size = MIN(patch_size - patch_offset, 512);
+        res = patch_read(arg_p, &chunk[0], chunk_size);
+
+        if (res != 0) {
+            return (-DETOOLS_IO_FAILED);
+        }
+
+        res = detools_apply_patch_in_place_process(apply_patch_p,
+                                                   &chunk[0],
+                                                   chunk_size);
+
+        if (res != 0) {
+            return (res);
+        }
+
+        patch_offset += chunk_size;
+    }
+
+    return (detools_apply_patch_in_place_finalize(apply_patch_p));
+}
+
+int detools_apply_patch_in_place_callbacks(detools_mem_read_t mem_read,
+                                           detools_mem_write_t mem_write,
+                                           detools_mem_erase_t mem_erase,
+                                           detools_read_t patch_read,
+                                           size_t patch_size,
+                                           void *arg_p)
+{
+    int res;
+    struct detools_apply_patch_in_place_t apply_patch;
+
+    res = detools_apply_patch_in_place_init(&apply_patch,
+                                            mem_read,
+                                            mem_write,
+                                            mem_erase,
+                                            patch_size,
+                                            arg_p);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    return (in_place_callbacks_process(&apply_patch, patch_read, patch_size, arg_p));
+}
+
 /*
  * File io functionality.
  */
@@ -1417,13 +1477,164 @@ int detools_apply_patch_filenames(const char *from_p,
     return (res);
 }
 
+struct in_place_file_io_t {
+    FILE *fmemory_p;
+    FILE *fpatch_p;
+};
+
+static int in_place_file_io_init(struct in_place_file_io_t *self_p,
+                                 const char *memory_p,
+                                 const char *patch_p,
+                                 size_t *patch_size_p)
+{
+    int res;
+    FILE *file_p;
+
+    res = -DETOOLS_FILE_OPEN_FAILED;
+
+    /* Memory. */
+    file_p = fopen(memory_p, "r+b");
+
+    if (file_p == NULL) {
+        return (res);
+    }
+
+    self_p->fmemory_p = file_p;
+
+    /* Patch. */
+    file_p = fopen(patch_p, "rb");
+
+    if (file_p == NULL) {
+        goto err1;
+    }
+
+    self_p->fpatch_p = file_p;
+    res = get_file_size(self_p->fpatch_p, patch_size_p);
+
+    if (res != 0) {
+        goto err2;
+    }
+
+    return (res);
+
+ err2:
+    fclose(self_p->fpatch_p);
+
+ err1:
+    fclose(self_p->fmemory_p);
+
+    return (res);
+}
+
+static int in_place_file_io_mem_read(void *arg_p,
+                                     void *dst_p,
+                                     uintptr_t src,
+                                     size_t size)
+{
+    int res;
+    struct in_place_file_io_t *self_p;
+
+    self_p = (struct in_place_file_io_t *)arg_p;
+    res = 0;
+
+    if (size > 0) {
+        res = fseek(self_p->fmemory_p, (int)src, SEEK_SET);
+
+        if (res != 0) {
+            return (-DETOOLS_FILE_SEEK_FAILED);
+        }
+
+        if (fread(dst_p, size, 1, self_p->fmemory_p) != 1) {
+            res = -DETOOLS_FILE_READ_FAILED;
+        }
+    }
+
+    return (res);
+}
+
+static int in_place_file_io_mem_write(void *arg_p,
+                                      uintptr_t dst,
+                                      void *src_p,
+                                      size_t size)
+{
+    int res;
+    struct in_place_file_io_t *self_p;
+
+    self_p = (struct in_place_file_io_t *)arg_p;
+    res = 0;
+
+    if (size > 0) {
+        res = fseek(self_p->fmemory_p, (int)dst, SEEK_SET);
+
+        if (res != 0) {
+            return (-DETOOLS_FILE_SEEK_FAILED);
+        }
+
+        if (fwrite(src_p, size, 1, self_p->fmemory_p) != 1) {
+            res = -DETOOLS_FILE_WRITE_FAILED;
+        }
+    }
+
+    return (res);
+}
+
+static int in_place_file_io_mem_erase(void *arg_p, uintptr_t addr, size_t size)
+{
+    (void)arg_p;
+    (void)addr;
+    (void)size;
+
+    return (0);
+}
+
+static int in_place_file_io_cleanup(struct in_place_file_io_t *self_p)
+{
+    int res;
+    int res2;
+
+    res = fclose(self_p->fmemory_p);
+    res2 = fclose(self_p->fpatch_p);
+
+    if ((res != 0) || (res2 != 0)) {
+        res = -DETOOLS_FILE_CLOSE_FAILED;
+    }
+
+    return (res);
+}
+
 int detools_apply_patch_in_place_filenames(const char *memory_p,
                                            const char *patch_p)
 {
-    (void)memory_p;
-    (void)patch_p;
+    int res;
+    struct in_place_file_io_t file_io;
+    size_t patch_size;
 
-    return (-DETOOLS_NOT_IMPLEMENTED);
+    res = in_place_file_io_init(&file_io,
+                                memory_p,
+                                patch_p,
+                                &patch_size);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    res = detools_apply_patch_in_place_callbacks(in_place_file_io_mem_read,
+                                                 in_place_file_io_mem_write,
+                                                 in_place_file_io_mem_erase,
+                                                 file_io_patch_read,
+                                                 patch_size,
+                                                 &file_io);
+
+    if (res != 0) {
+        goto err1;
+    }
+
+    return (in_place_file_io_cleanup(&file_io));
+
+ err1:
+    (void)in_place_file_io_cleanup(&file_io);
+
+    return (res);
 }
 
 #endif
