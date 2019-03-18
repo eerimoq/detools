@@ -79,12 +79,10 @@ Below is an example of how to incrementally apply an in-place patch.
        }
 
        /* Finalize patching and verify written data. */
-       if (res == 0) {
-           res = detools_apply_patch_in_place_finalize(&apply_patch);
+       res = detools_apply_patch_in_place_finalize(&apply_patch);
 
-           if (res >= 0) {
-               res = verify_written_data(res, to_crc);
-           }
+       if (res >= 0) {
+           res = verify_written_data(res, to_crc);
        }
 
        return (res);
