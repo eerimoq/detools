@@ -513,7 +513,7 @@ static void test_apply_patch_file_open_error(void)
                                          "") == -DETOOLS_FILE_OPEN_FAILED);
 }
 
-static void test_apply_patch_foo_compression_incremental(void)
+static void test_apply_patch_foo_incremental(void)
 {
     struct detools_apply_patch_t apply_patch;
     struct io_t io;
@@ -548,6 +548,45 @@ static void test_apply_patch_foo_compression_incremental(void)
 
     assert(detools_apply_patch_finalize(&apply_patch) == 2780);
     io_assert_to_ok(&io);
+}
+
+static void test_apply_patch_foo_incremental_init_finalize(void)
+{
+    struct detools_apply_patch_t apply_patch;
+    struct io_t io;
+
+    io_init(&io, "tests/files/foo.old", "tests/files/foo.new");
+
+    assert(detools_apply_patch_init(&apply_patch,
+                                    io_read,
+                                    io_seek,
+                                    2780,
+                                    io_write,
+                                    &io) == 0);
+    assert(detools_apply_patch_finalize(&apply_patch) == -DETOOLS_SHORT_HEADER);
+}
+
+static void test_apply_patch_foo_incremental_process_once(void)
+{
+    struct detools_apply_patch_t apply_patch;
+    struct io_t io;
+    const uint8_t *patch_p;
+    size_t patch_size;
+
+    io_init(&io, "tests/files/foo.old", "tests/files/foo.new");
+    patch_p = patch_init("tests/files/foo.patch", &patch_size);
+
+    assert(detools_apply_patch_init(&apply_patch,
+                                    io_read,
+                                    io_seek,
+                                    patch_size,
+                                    io_write,
+                                    &io) == 0);
+    assert(detools_apply_patch_process(&apply_patch,
+                                       &patch_p[0],
+                                       64) == 0);
+    assert(detools_apply_patch_finalize(&apply_patch)
+           == -DETOOLS_NOT_ENOUGH_PATCH_DATA);
 }
 
 static void test_error_as_string(void)
@@ -629,7 +668,9 @@ int main()
     test_apply_patch_short_to_size();
     test_apply_patch_file_open_error();
 
-    test_apply_patch_foo_compression_incremental();
+    test_apply_patch_foo_incremental();
+    test_apply_patch_foo_incremental_init_finalize();
+    test_apply_patch_foo_incremental_process_once();
 
     test_error_as_string();
 

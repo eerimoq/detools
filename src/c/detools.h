@@ -76,6 +76,7 @@
 #define DETOOLS_FILE_SEEK_FAILED               16
 #define DETOOLS_FILE_TELL_FAILED               17
 #define DETOOLS_SHORT_HEADER                   18
+#define DETOOLS_NOT_ENOUGH_PATCH_DATA          19
 
 /**
  * Read callback.
@@ -287,7 +288,8 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
 
 /**
  * Call once after all data has been processed to finalize the
- * patching.
+ * patching. The value returned from this function should be ignored
+ * if an error occurred in detools_apply_patch_process().
  *
  * @param[in,out] self_p Initialized apply patch object.
  *
@@ -335,7 +337,8 @@ int detools_apply_patch_in_place_process(
 
 /**
  * Call once after all data has been processed to finalize the
- * patching.
+ * patching. The value returned from this function should be ignored
+ * if an error occurred in detools_apply_patch_in_place_process().
  *
  * @param[in,out] self_p Initialized apply patch object.
  *

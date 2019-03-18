@@ -1055,6 +1055,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
     self_p->to_write = to_write;
     self_p->arg_p = arg_p;
     self_p->patch_type = PATCH_TYPE_NONE;
+    self_p->patch_reader.destroy = NULL;
 
     return (0);
 }
@@ -1085,18 +1086,27 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
 {
     int res;
 
+    self_p->chunk.size = 0;
+    self_p->chunk.offset = 0;
+
     do {
         res = apply_patch_process_once(self_p);
     } while (res == 0);
+
+    if (res == 1) {
+        res = -DETOOLS_NOT_ENOUGH_PATCH_DATA;
+    }
 
     if (res == -DETOOLS_ALREADY_DONE) {
         res = 0;
     }
 
-    if (res == 0) {
-        res = self_p->patch_reader.destroy(&self_p->patch_reader);
-    } else {
-        (void)self_p->patch_reader.destroy(&self_p->patch_reader);
+    if (self_p->patch_reader.destroy != NULL) {
+        if (res == 0) {
+            res = self_p->patch_reader.destroy(&self_p->patch_reader);
+        } else {
+            (void)self_p->patch_reader.destroy(&self_p->patch_reader);
+        }
     }
 
     if (res == 0) {
@@ -1120,6 +1130,7 @@ int detools_apply_patch_in_place_init(
     self_p->patch_size = patch_size;
     self_p->arg_p = arg_p;
     self_p->patch_type = PATCH_TYPE_NONE;
+    self_p->patch_reader.destroy = NULL;
 
     return (-DETOOLS_NOT_IMPLEMENTED);
 }
@@ -1139,7 +1150,8 @@ int detools_apply_patch_in_place_process(
 int detools_apply_patch_in_place_finalize(
     struct detools_apply_patch_in_place_t *self_p)
 {
-    (void)self_p;
+    self_p->chunk.size = 0;
+    self_p->chunk.offset = 0;
 
     return (-DETOOLS_NOT_IMPLEMENTED);
 }
@@ -1161,26 +1173,27 @@ static int callbacks_process(struct detools_apply_patch_t *apply_patch_p,
     res = 0;
     patch_offset = 0;
 
-    while (patch_offset < patch_size) {
+    while ((patch_offset < patch_size) && (res == 0)) {
         chunk_size = MIN(patch_size - patch_offset, 512);
         res = patch_read(arg_p, &chunk[0], chunk_size);
 
-        if (res != 0) {
-            return (-DETOOLS_IO_FAILED);
+        if (res == 0) {
+            res = detools_apply_patch_process(apply_patch_p,
+                                              &chunk[0],
+                                              chunk_size);
+            patch_offset += chunk_size;
+        } else {
+            res = -DETOOLS_IO_FAILED;
         }
-
-        res = detools_apply_patch_process(apply_patch_p,
-                                          &chunk[0],
-                                          chunk_size);
-
-        if (res != 0) {
-            return (res);
-        }
-
-        patch_offset += chunk_size;
     }
 
-    return (detools_apply_patch_finalize(apply_patch_p));
+    if (res == 0) {
+        res = detools_apply_patch_finalize(apply_patch_p);
+    } else {
+        (void)detools_apply_patch_finalize(apply_patch_p);
+    }
+
+    return (res);
 }
 
 int detools_apply_patch_callbacks(detools_read_t from_read,
@@ -1221,26 +1234,27 @@ static int in_place_callbacks_process(
     res = 0;
     patch_offset = 0;
 
-    while (patch_offset < patch_size) {
+    while ((patch_offset < patch_size) && (res == 0)) {
         chunk_size = MIN(patch_size - patch_offset, 512);
         res = patch_read(arg_p, &chunk[0], chunk_size);
 
-        if (res != 0) {
-            return (-DETOOLS_IO_FAILED);
+        if (res == 0) {
+            res = detools_apply_patch_in_place_process(apply_patch_p,
+                                                       &chunk[0],
+                                                       chunk_size);
+            patch_offset += chunk_size;
+        } else {
+            res = -DETOOLS_IO_FAILED;
         }
-
-        res = detools_apply_patch_in_place_process(apply_patch_p,
-                                                   &chunk[0],
-                                                   chunk_size);
-
-        if (res != 0) {
-            return (res);
-        }
-
-        patch_offset += chunk_size;
     }
 
-    return (detools_apply_patch_in_place_finalize(apply_patch_p));
+    if (res == 0) {
+        res = detools_apply_patch_in_place_finalize(apply_patch_p);
+    } else {
+        (void)detools_apply_patch_in_place_finalize(apply_patch_p);
+    }
+
+    return (res);
 }
 
 int detools_apply_patch_in_place_callbacks(detools_mem_read_t mem_read,
@@ -1264,7 +1278,10 @@ int detools_apply_patch_in_place_callbacks(detools_mem_read_t mem_read,
         return (res);
     }
 
-    return (in_place_callbacks_process(&apply_patch, patch_read, patch_size, arg_p));
+    return (in_place_callbacks_process(&apply_patch,
+                                       patch_read,
+                                       patch_size,
+                                       arg_p));
 }
 
 /*
