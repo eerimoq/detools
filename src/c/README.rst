@@ -63,6 +63,11 @@ Below is an example of how to incrementally apply an in-place patch.
                                                flash_erase,
                                                patch_size,
                                                NULL);
+
+       if (res != 0) {
+           return (res);
+       }
+
        left = patch_size;
 
        /* Incrementally process patch data until the whole patch has been
