@@ -273,7 +273,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
 /**
  * Call this function repeatedly until all patch data has been
  * processed or an error occurres. Call detools_apply_patch_finalize()
- * to finalize the patching if no error occurred.
+ * to finalize the patching, even if an error occurred.
  *
  * @param[in,out] self_p Initialized apply patch object.
  * @param[in] patch_p Next chunk of the patch.
@@ -318,8 +318,9 @@ int detools_apply_patch_in_place_init(
 
 /**
  * Call this function repeatedly until all patch data has been
- * processed or an error occurres. Call detools_apply_patch_finalize()
- * to finalize the patching if no error occurred.
+ * processed or an error occurres. Call
+ * detools_apply_patch_in_place_finalize() to finalize the patching,
+ * even if an error occurred.
  *
  * @param[in,out] self_p Initialized apply patch object.
  * @param[in] patch_p Next chunk of the patch.
