@@ -48,7 +48,7 @@ Below is an example of how to incrementally apply an in-place patch.
    static int serial_read(uint8_t *buf_p, size_t size);
    static int verify_written_data(int to_size, uint32_t to_crc);
 
-   /* The update function. Return zero(0) on success. */
+   /* The update function. Returns zero(0) on success. */
    static int update(size_t patch_size, uint32_t to_crc)
    {
        struct detools_apply_patch_in_place_t apply_patch;
