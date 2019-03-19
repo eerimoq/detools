@@ -208,6 +208,12 @@ struct detools_apply_patch_patch_reader_t {
                       size_t *size_p);
 };
 
+struct detools_apply_patch_chunk_t {
+    const uint8_t *buf_p;
+    size_t size;
+    size_t offset;
+};
+
 /**
  * The apply patch data structure.
  */
@@ -223,11 +229,7 @@ struct detools_apply_patch_t {
     size_t to_size;
     size_t chunk_size;
     struct detools_apply_patch_patch_reader_t patch_reader;
-    struct {
-        const uint8_t *buf_p;
-        size_t size;
-        size_t offset;
-    } chunk;
+    struct detools_apply_patch_chunk_t chunk;
 };
 
 /**
@@ -245,11 +247,7 @@ struct detools_apply_patch_in_place_t {
     size_t to_size;
     size_t chunk_size;
     struct detools_apply_patch_patch_reader_t patch_reader;
-    struct {
-        const uint8_t *buf_p;
-        size_t size;
-        size_t offset;
-    } chunk;
+    struct detools_apply_patch_chunk_t chunk;
 };
 
 /**

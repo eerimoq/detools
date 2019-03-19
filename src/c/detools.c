@@ -61,39 +61,58 @@
  * Utility functions.
  */
 
-static bool apply_patch_chunk_available(struct detools_apply_patch_t *self_p)
+static size_t chunk_left(struct detools_apply_patch_chunk_t *self_p)
 {
-    return (self_p->chunk.offset < self_p->chunk.size);
+    return (self_p->size - self_p->offset);
 }
 
-static int apply_patch_chunk_read(struct detools_apply_patch_t *self_p,
-                                  uint8_t *buf_p,
-                                  size_t *size_p)
+static bool chunk_available(struct detools_apply_patch_chunk_t *self_p)
 {
-    size_t i;
+    return (chunk_left(self_p) > 0);
+}
 
-    if (!apply_patch_chunk_available(self_p)) {
+static uint8_t chunk_get_no_check(struct detools_apply_patch_chunk_t *self_p)
+{
+    uint8_t data;
+
+    data = self_p->buf_p[self_p->offset];
+    self_p->offset++;
+
+    return (data);
+}
+
+static int chunk_get(struct detools_apply_patch_chunk_t *self_p,
+                     uint8_t *data_p)
+{
+    if (!chunk_available(self_p)) {
         return (1);
     }
 
-    *size_p = MIN(*size_p, self_p->chunk.size - self_p->chunk.offset);
-
-    for (i = 0; i < *size_p; i++) {
-        buf_p[i] = self_p->chunk.buf_p[self_p->chunk.offset];
-        self_p->chunk.offset++;
-    }
+    *data_p = chunk_get_no_check(self_p);
 
     return (0);
 }
 
-static int apply_patch_chunk_get(struct detools_apply_patch_t *self_p,
-                                 uint8_t *data_p)
+static void chunk_read_all_no_check(struct detools_apply_patch_chunk_t *self_p,
+                                    uint8_t *buf_p,
+                                    size_t size)
 {
-    size_t size;
+    memcpy(buf_p, &self_p->buf_p[self_p->offset], size);
+    self_p->offset += size;
+}
 
-    size = 1;
+static int chunk_read(struct detools_apply_patch_chunk_t *self_p,
+                      uint8_t *buf_p,
+                      size_t *size_p)
+{
+    if (!chunk_available(self_p)) {
+        return (1);
+    }
 
-    return (apply_patch_chunk_read(self_p, data_p, &size));
+    *size_p = MIN(*size_p, chunk_left(self_p));
+    chunk_read_all_no_check(self_p, buf_p, *size_p);
+
+    return (0);
 }
 
 static void unpack_unsigned_size_init(
@@ -115,7 +134,7 @@ static int unpack_unsigned_size(struct detools_unpack_unsigned_size_t *self_p,
         switch (self_p->state) {
 
         case SIZE_STATE_FIRST:
-            res = apply_patch_chunk_get(apply_patch_p, &byte);
+            res = chunk_get(&apply_patch_p->chunk, &byte);
 
             if (res != 0) {
                 return (res);
@@ -127,11 +146,12 @@ static int unpack_unsigned_size(struct detools_unpack_unsigned_size_t *self_p,
             break;
 
         case SIZE_STATE_CONSECUTIVE:
-            res = apply_patch_chunk_get(apply_patch_p, &byte);
+            res = chunk_get(&apply_patch_p->chunk, &byte);
 
             if (res != 0) {
                 return (res);
             }
+
             self_p->value |= ((byte & 0x7f) << self_p->offset);
             self_p->offset += 7;
             break;
@@ -150,23 +170,24 @@ static int unpack_header_size(struct detools_apply_patch_t *self_p, int *size_p)
 {
     uint8_t byte;
     int offset;
+    int res;
 
-    if (self_p->chunk.offset == self_p->chunk.size) {
+    res = chunk_get(&self_p->chunk, &byte);
+
+    if (res != 0) {
         return (-DETOOLS_SHORT_HEADER);
     }
 
-    byte = self_p->chunk.buf_p[self_p->chunk.offset];
-    self_p->chunk.offset++;
     *size_p = (byte & 0x3f);
     offset = 6;
 
     while ((byte & 0x80) != 0) {
-        if (self_p->chunk.offset == self_p->chunk.size) {
+        res = chunk_get(&self_p->chunk, &byte);
+
+        if (res != 0) {
             return (-DETOOLS_SHORT_HEADER);
         }
 
-        byte = self_p->chunk.buf_p[self_p->chunk.offset];
-        self_p->chunk.offset++;
         *size_p |= ((byte & 0x7f) << offset);
         offset += 7;
     }
@@ -185,7 +206,7 @@ static int patch_reader_none_decompress(
     uint8_t *buf_p,
     size_t *size_p)
 {
-    size_t left;
+    int res;
     struct detools_apply_patch_patch_reader_none_t *none_p;
 
     none_p = &self_p->compression.none;
@@ -194,17 +215,14 @@ static int patch_reader_none_decompress(
         return (-DETOOLS_CORRUPT_PATCH);
     }
 
-    left = (self_p->apply_patch_p->chunk.size - self_p->apply_patch_p->chunk.offset);
+    res = chunk_read(&self_p->apply_patch_p->chunk,
+                     buf_p,
+                     size_p);
 
-    if (left == 0) {
-        return (1);
+    if (res != 0) {
+        return (res);
     }
 
-    *size_p = MIN(*size_p, left);
-    memcpy(buf_p,
-           &self_p->apply_patch_p->chunk.buf_p[self_p->apply_patch_p->chunk.offset],
-           *size_p);
-    self_p->apply_patch_p->chunk.offset += *size_p;
     none_p->patch_offset += *size_p;
 
     return (0);
@@ -274,7 +292,7 @@ static int prepare_input_buffer(struct detools_apply_patch_patch_reader_t *self_
     size_t left;
 
     lzma_p = &self_p->compression.lzma;
-    left = (self_p->apply_patch_p->chunk.size - self_p->apply_patch_p->chunk.offset);
+    left = chunk_left(&self_p->apply_patch_p->chunk);
 
     if (left == 0) {
         return (1);
@@ -292,12 +310,11 @@ static int prepare_input_buffer(struct detools_apply_patch_patch_reader_t *self_
     }
 
     lzma_p->input_p = next_p;
-    memcpy(&lzma_p->input_p[lzma_p->stream.avail_in],
-           &self_p->apply_patch_p->chunk.buf_p[self_p->apply_patch_p->chunk.offset],
-           left);
+    chunk_read_all_no_check(&self_p->apply_patch_p->chunk,
+                            &lzma_p->input_p[lzma_p->stream.avail_in],
+                            left);
     lzma_p->stream.next_in = next_p;
     lzma_p->stream.avail_in += left;
-    self_p->apply_patch_p->chunk.offset += left;
 
     return (0);
 }
@@ -448,7 +465,7 @@ static int patch_reader_crle_decompress_idle(
     int res;
     uint8_t kind;
 
-    res = apply_patch_chunk_get(self_p->apply_patch_p, &kind);
+    res = chunk_get(&self_p->apply_patch_p->chunk, &kind);
 
     if (res != 0) {
         return (res);
@@ -507,7 +524,7 @@ static int patch_reader_crle_decompress_scattered_data(
 
     *size_p = MIN(*size_p, crle_p->kind.scattered.number_of_bytes_left);
 
-    res = apply_patch_chunk_read(self_p->apply_patch_p, buf_p, size_p);
+    res = chunk_read(&self_p->apply_patch_p->chunk, buf_p, size_p);
 
     if (res != 0) {
         return (res);
@@ -549,8 +566,8 @@ static int patch_reader_crle_decompress_repeated_data(
 {
     int res;
 
-    res = apply_patch_chunk_get(self_p->apply_patch_p,
-                                &crle_p->kind.repeated.value);
+    res = chunk_get(&self_p->apply_patch_p->chunk,
+                    &crle_p->kind.repeated.value);
 
     if (res != 0) {
         return (res);
@@ -827,14 +844,14 @@ static int apply_patch_none(struct detools_apply_patch_t *self_p)
     int res;
     int patch_type;
     int compression;
+    uint8_t byte;
 
-    if (self_p->chunk.offset == self_p->chunk.size) {
+    if (chunk_get(&self_p->chunk, &byte) != 0) {
         return (-DETOOLS_SHORT_HEADER);
     }
 
-    patch_type = ((self_p->chunk.buf_p[self_p->chunk.offset] >> 4) & 0x7);
-    compression = (self_p->chunk.buf_p[self_p->chunk.offset] & 0xf);
-    self_p->chunk.offset++;
+    patch_type = ((byte >> 4) & 0x7);
+    compression = (byte & 0xf);
 
     switch (patch_type) {
 
@@ -1009,13 +1026,6 @@ static int apply_patch_normal(struct detools_apply_patch_t *self_p)
     return (res);
 }
 
-static int apply_patch_in_place(struct detools_apply_patch_t *self_p)
-{
-    (void)self_p;
-
-    return (-DETOOLS_NOT_IMPLEMENTED);
-}
-
 static int apply_patch_process_once(struct detools_apply_patch_t *self_p)
 {
     int res;
@@ -1028,10 +1038,6 @@ static int apply_patch_process_once(struct detools_apply_patch_t *self_p)
 
     case PATCH_TYPE_NORMAL:
         res = apply_patch_normal(self_p);
-        break;
-
-    case PATCH_TYPE_IN_PLACE:
-        res = apply_patch_in_place(self_p);
         break;
 
     default:
@@ -1071,7 +1077,7 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
     self_p->chunk.size = size;
     self_p->chunk.offset = 0;
 
-    while (apply_patch_chunk_available(self_p) && (res >= 0)) {
+    while (chunk_available(&self_p->chunk) && (res >= 0)) {
         res = apply_patch_process_once(self_p);
     }
 
@@ -1132,7 +1138,7 @@ int detools_apply_patch_in_place_init(
     self_p->patch_type = PATCH_TYPE_NONE;
     self_p->patch_reader.destroy = NULL;
 
-    return (-DETOOLS_NOT_IMPLEMENTED);
+    return (0);
 }
 
 int detools_apply_patch_in_place_process(
@@ -1140,11 +1146,22 @@ int detools_apply_patch_in_place_process(
     const uint8_t *patch_p,
     size_t size)
 {
-    (void)self_p;
-    (void)patch_p;
-    (void)size;
+    int res;
 
-    return (-DETOOLS_NOT_IMPLEMENTED);
+    res = 0;
+    self_p->chunk.buf_p = patch_p;
+    self_p->chunk.size = size;
+    self_p->chunk.offset = 0;
+
+    while (chunk_available(&self_p->chunk) && (res >= 0)) {
+        res = -DETOOLS_NOT_IMPLEMENTED;//apply_patch_in_place_process_once(self_p);
+    }
+
+    if (res == 1) {
+        res = 0;
+    }
+
+    return (res);
 }
 
 int detools_apply_patch_in_place_finalize(
