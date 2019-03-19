@@ -1048,6 +1048,34 @@ static int apply_patch_process_once(struct detools_apply_patch_t *self_p)
     return (res);
 }
 
+static int apply_patch_common_finalize(
+    int res,
+    struct detools_apply_patch_patch_reader_t *patch_reader_p,
+    size_t to_size)
+{
+    if (res == 1) {
+        res = -DETOOLS_NOT_ENOUGH_PATCH_DATA;
+    }
+
+    if (res == -DETOOLS_ALREADY_DONE) {
+        res = 0;
+    }
+
+    if (patch_reader_p->destroy != NULL) {
+        if (res == 0) {
+            res = patch_reader_p->destroy(patch_reader_p);
+        } else {
+            (void)patch_reader_p->destroy(patch_reader_p);
+        }
+    }
+
+    if (res == 0) {
+        res = (int)to_size;
+    }
+
+    return (res);
+}
+
 int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
                              detools_read_t from_read,
                              detools_seek_t from_seek,
@@ -1099,24 +1127,29 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
         res = apply_patch_process_once(self_p);
     } while (res == 0);
 
-    if (res == 1) {
-        res = -DETOOLS_NOT_ENOUGH_PATCH_DATA;
-    }
+    return (apply_patch_common_finalize(res,
+                                        &self_p->patch_reader,
+                                        self_p->to_size));
+}
 
-    if (res == -DETOOLS_ALREADY_DONE) {
-        res = 0;
-    }
+static int apply_patch_in_place_process_once(
+    struct detools_apply_patch_in_place_t *self_p)
+{
+    int res;
 
-    if (self_p->patch_reader.destroy != NULL) {
-        if (res == 0) {
-            res = self_p->patch_reader.destroy(&self_p->patch_reader);
-        } else {
-            (void)self_p->patch_reader.destroy(&self_p->patch_reader);
-        }
-    }
+    switch (self_p->patch_type) {
 
-    if (res == 0) {
-        res = (int)self_p->to_size;
+    case PATCH_TYPE_NONE:
+        res = -DETOOLS_NOT_IMPLEMENTED;
+        break;
+
+    case PATCH_TYPE_IN_PLACE:
+        res = -DETOOLS_NOT_IMPLEMENTED;
+        break;
+
+    default:
+        res = -DETOOLS_INTERNAL_ERROR;
+        break;
     }
 
     return (res);
@@ -1154,7 +1187,7 @@ int detools_apply_patch_in_place_process(
     self_p->chunk.offset = 0;
 
     while (chunk_available(&self_p->chunk) && (res >= 0)) {
-        res = -DETOOLS_NOT_IMPLEMENTED;//apply_patch_in_place_process_once(self_p);
+        res = apply_patch_in_place_process_once(self_p);
     }
 
     if (res == 1) {
@@ -1167,10 +1200,18 @@ int detools_apply_patch_in_place_process(
 int detools_apply_patch_in_place_finalize(
     struct detools_apply_patch_in_place_t *self_p)
 {
+    int res;
+
     self_p->chunk.size = 0;
     self_p->chunk.offset = 0;
 
-    return (-DETOOLS_NOT_IMPLEMENTED);
+    do {
+        res = apply_patch_in_place_process_once(self_p);
+    } while (res == 0);
+
+    return (apply_patch_common_finalize(res,
+                                        &self_p->patch_reader,
+                                        self_p->to_size));
 }
 
 /*
