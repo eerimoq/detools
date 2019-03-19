@@ -34,7 +34,6 @@
 #include "detools.h"
 
 /* Patch types. */
-#define PATCH_TYPE_NONE                                    -1
 #define PATCH_TYPE_NORMAL                                   0
 #define PATCH_TYPE_IN_PLACE                                 1
 
