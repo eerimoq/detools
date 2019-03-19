@@ -44,12 +44,13 @@
 #define COMPRESSION_CRLE                                    2
 
 /* Apply patch states. */
-#define STATE_DIFF_SIZE                                     0
-#define STATE_DIFF_DATA                                     1
-#define STATE_EXTRA_SIZE                                    2
-#define STATE_EXTRA_DATA                                    3
-#define STATE_ADJUSTMENT                                    4
-#define STATE_DONE                                          5
+#define STATE_INIT                                          0
+#define STATE_DIFF_SIZE                                     1
+#define STATE_DIFF_DATA                                     2
+#define STATE_EXTRA_SIZE                                    3
+#define STATE_EXTRA_DATA                                    4
+#define STATE_ADJUSTMENT                                    5
+#define STATE_DONE                                          6
 
 /* Size states. */
 #define SIZE_STATE_FIRST                                    0
@@ -801,11 +802,25 @@ static int patch_reader_unpack_size(
     return (res);
 }
 
-static int apply_patch_none_init_normal(struct detools_apply_patch_t *self_p,
-                                        int compression)
+static int process_init(struct detools_apply_patch_t *self_p)
 {
+    int patch_type;
+    int compression;
+    uint8_t byte;
     int res;
     int to_size;
+
+    if (chunk_get(&self_p->chunk, &byte) != 0) {
+        return (-DETOOLS_SHORT_HEADER);
+    }
+
+    patch_type = ((byte >> 4) & 0x7);
+    compression = (byte & 0xf);
+
+    if (patch_type != PATCH_TYPE_NORMAL) {
+        return (-DETOOLS_BAD_PATCH_TYPE);
+    }
+
 
     res = unpack_header_size(self_p, &to_size);
 
@@ -826,7 +841,6 @@ static int apply_patch_none_init_normal(struct detools_apply_patch_t *self_p,
         return (-DETOOLS_CORRUPT_PATCH);
     }
 
-    self_p->patch_type = PATCH_TYPE_NORMAL;
     self_p->to_pos = 0;
     self_p->to_size = (size_t)to_size;
 
@@ -839,40 +853,8 @@ static int apply_patch_none_init_normal(struct detools_apply_patch_t *self_p,
     return (res);
 }
 
-static int apply_patch_none(struct detools_apply_patch_t *self_p)
-{
-    int res;
-    int patch_type;
-    int compression;
-    uint8_t byte;
-
-    if (chunk_get(&self_p->chunk, &byte) != 0) {
-        return (-DETOOLS_SHORT_HEADER);
-    }
-
-    patch_type = ((byte >> 4) & 0x7);
-    compression = (byte & 0xf);
-
-    switch (patch_type) {
-
-    case PATCH_TYPE_NORMAL:
-        res = apply_patch_none_init_normal(self_p, compression);
-        break;
-
-    case PATCH_TYPE_IN_PLACE:
-        res = -DETOOLS_NOT_IMPLEMENTED;
-        break;
-
-    default:
-        res = -DETOOLS_BAD_PATCH_TYPE;
-        break;
-    }
-
-    return (res);
-}
-
-static int process_normal_size(struct detools_apply_patch_t *self_p,
-                               int next_state)
+static int process_size(struct detools_apply_patch_t *self_p,
+                        int next_state)
 {
     int res;
     int size;
@@ -893,8 +875,8 @@ static int process_normal_size(struct detools_apply_patch_t *self_p,
     return (res);
 }
 
-static int process_normal_data(struct detools_apply_patch_t *self_p,
-                               int next_state)
+static int process_data(struct detools_apply_patch_t *self_p,
+                        int next_state)
 {
     int res;
     size_t i;
@@ -942,27 +924,27 @@ static int process_normal_data(struct detools_apply_patch_t *self_p,
     return (res);
 }
 
-static int process_normal_diff_size(struct detools_apply_patch_t *self_p)
+static int process_diff_size(struct detools_apply_patch_t *self_p)
 {
-    return (process_normal_size(self_p, STATE_DIFF_DATA));
+    return (process_size(self_p, STATE_DIFF_DATA));
 }
 
-static int process_normal_diff_data(struct detools_apply_patch_t *self_p)
+static int process_diff_data(struct detools_apply_patch_t *self_p)
 {
-    return (process_normal_data(self_p, STATE_EXTRA_SIZE));
+    return (process_data(self_p, STATE_EXTRA_SIZE));
 }
 
-static int process_normal_extra_size(struct detools_apply_patch_t *self_p)
+static int process_extra_size(struct detools_apply_patch_t *self_p)
 {
-    return (process_normal_size(self_p, STATE_EXTRA_DATA));
+    return (process_size(self_p, STATE_EXTRA_DATA));
 }
 
-static int process_normal_extra_data(struct detools_apply_patch_t *self_p)
+static int process_extra_data(struct detools_apply_patch_t *self_p)
 {
-    return (process_normal_data(self_p, STATE_ADJUSTMENT));
+    return (process_data(self_p, STATE_ADJUSTMENT));
 }
 
-static int process_normal_adjustment(struct detools_apply_patch_t *self_p)
+static int process_adjustment(struct detools_apply_patch_t *self_p)
 {
     int res;
     int offset;
@@ -988,56 +970,38 @@ static int process_normal_adjustment(struct detools_apply_patch_t *self_p)
     return (res);
 }
 
-static int apply_patch_normal(struct detools_apply_patch_t *self_p)
+static int apply_patch_process_once(struct detools_apply_patch_t *self_p)
 {
     int res;
 
     switch (self_p->state) {
 
+    case STATE_INIT:
+        res = process_init(self_p);
+        break;
+
     case STATE_DIFF_SIZE:
-        res = process_normal_diff_size(self_p);
+        res = process_diff_size(self_p);
         break;
 
     case STATE_DIFF_DATA:
-        res = process_normal_diff_data(self_p);
+        res = process_diff_data(self_p);
         break;
 
     case STATE_EXTRA_SIZE:
-        res = process_normal_extra_size(self_p);
+        res = process_extra_size(self_p);
         break;
 
     case STATE_EXTRA_DATA:
-        res = process_normal_extra_data(self_p);
+        res = process_extra_data(self_p);
         break;
 
     case STATE_ADJUSTMENT:
-        res = process_normal_adjustment(self_p);
+        res = process_adjustment(self_p);
         break;
 
     case STATE_DONE:
         res = -DETOOLS_ALREADY_DONE;
-        break;
-
-    default:
-        res = -DETOOLS_INTERNAL_ERROR;
-        break;
-    }
-
-    return (res);
-}
-
-static int apply_patch_process_once(struct detools_apply_patch_t *self_p)
-{
-    int res;
-
-    switch (self_p->patch_type) {
-
-    case PATCH_TYPE_NONE:
-        res = apply_patch_none(self_p);
-        break;
-
-    case PATCH_TYPE_NORMAL:
-        res = apply_patch_normal(self_p);
         break;
 
     default:
@@ -1088,7 +1052,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
     self_p->patch_size = patch_size;
     self_p->to_write = to_write;
     self_p->arg_p = arg_p;
-    self_p->patch_type = PATCH_TYPE_NONE;
+    self_p->state = STATE_INIT;
     self_p->patch_reader.destroy = NULL;
 
     return (0);
@@ -1135,22 +1099,11 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
 static int apply_patch_in_place_process_once(
     struct detools_apply_patch_in_place_t *self_p)
 {
+    (void)self_p;
+
     int res;
 
-    switch (self_p->patch_type) {
-
-    case PATCH_TYPE_NONE:
-        res = -DETOOLS_NOT_IMPLEMENTED;
-        break;
-
-    case PATCH_TYPE_IN_PLACE:
-        res = -DETOOLS_NOT_IMPLEMENTED;
-        break;
-
-    default:
-        res = -DETOOLS_INTERNAL_ERROR;
-        break;
-    }
+    res = -DETOOLS_NOT_IMPLEMENTED;
 
     return (res);
 }
@@ -1168,7 +1121,7 @@ int detools_apply_patch_in_place_init(
     self_p->mem_erase = mem_erase;
     self_p->patch_size = patch_size;
     self_p->arg_p = arg_p;
-    self_p->patch_type = PATCH_TYPE_NONE;
+    self_p->state = STATE_INIT;
     self_p->patch_reader.destroy = NULL;
 
     return (0);

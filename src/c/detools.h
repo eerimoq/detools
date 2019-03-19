@@ -223,7 +223,6 @@ struct detools_apply_patch_t {
     size_t patch_size;
     detools_write_t to_write;
     void *arg_p;
-    int patch_type;
     int state;
     size_t to_pos;
     size_t to_size;
@@ -241,7 +240,6 @@ struct detools_apply_patch_in_place_t {
     detools_mem_erase_t mem_erase;
     size_t patch_size;
     void *arg_p;
-    int patch_type;
     int state;
     size_t to_pos;
     size_t to_size;
