@@ -15,6 +15,7 @@ from .info import patch_info
 from .info import patch_info_filename
 from .errors import Error
 from .version import __version__
+from .common import DATA_FORMATS as _DATA_FORMATS
 
 
 def _do_create_patch(args):
@@ -32,7 +33,18 @@ def _do_create_patch(args):
                            patch_type=args.type,
                            memory_size=args.memory_size,
                            segment_size=args.segment_size,
-                           minimum_shift_size=args.minimum_shift_size)
+                           minimum_shift_size=args.minimum_shift_size,
+                           data_format=args.data_format,
+                           from_data_offset=args.from_data_offset,
+                           from_data_begin=args.from_data_begin,
+                           from_data_end=args.from_data_end,
+                           from_code_begin=args.from_code_begin,
+                           from_code_end=args.from_code_end,
+                           to_data_offset=args.to_data_offset,
+                           to_data_begin=args.to_data_begin,
+                           to_data_end=args.to_data_end,
+                           to_code_begin=args.to_code_begin,
+                           to_code_end=args.to_code_end)
 
 
 def _do_apply_patch(args):
@@ -64,6 +76,8 @@ def _patch_info_in_place_segment(fsize,
                                  from_offset_end,
                                  to_offset_begin,
                                  to_offset_end,
+                                 dfpatch_size,
+                                 data_format,
                                  to_size,
                                  diff_sizes,
                                  extra_sizes,
@@ -87,6 +101,11 @@ def _patch_info_in_place_segment(fsize,
                                                fsize(to_offset_end)))
     print('Diff/extra ratio:   {} % (higher is better)'.format(diff_extra_ratio))
     print('Size/data ratio:    {} % (lower is better)'.format(size_data_ratio))
+    print('Data format size:   {}'.format(fsize(dfpatch_size)))
+
+    if dfpatch_size > 0:
+        print('Data format:        {}'.format(data_format))
+
     print()
     print('Number of diffs:    {}'.format(len(diff_sizes)))
     print('Total diff size:    {}'.format(fsize(sum(diff_sizes))))
@@ -100,9 +119,13 @@ def _patch_info_in_place_segment(fsize,
     print()
 
 
-def _patch_info_normal(fsize,
+def _patch_info_normal(detailed,
+                       fsize,
                        patch_size,
                        compression,
+                       dfpatch_size,
+                       data_format,
+                       dfpatch_info,
                        to_size,
                        diff_sizes,
                        extra_sizes,
@@ -138,6 +161,11 @@ def _patch_info_normal(fsize,
     print('Diff/extra ratio:   {} % (higher is better)'.format(diff_extra_ratio))
     print('Size/data ratio:    {} % (lower is better)'.format(size_data_ratio))
     print('Compression:        {}'.format(compression))
+    print('Data format size:   {}'.format(fsize(dfpatch_size)))
+
+    if dfpatch_size > 0:
+        print('Data format:        {}'.format(data_format))
+
     print()
     print('Number of diffs:    {}'.format(len(diff_sizes)))
     print('Total diff size:    {}'.format(fsize(sum(diff_sizes))))
@@ -148,6 +176,12 @@ def _patch_info_normal(fsize,
     print('Total extra size:   {}'.format(fsize(sum(extra_sizes))))
     print('Average extra size: {}'.format(mean_extra_size))
     print('Median extra size:  {}'.format(median_extra_size))
+
+    if detailed and dfpatch_size > 0:
+        print()
+        print('Data format details:')
+        print()
+        print(dfpatch_info)
 
 
 def _patch_info_in_place(fsize,
@@ -173,7 +207,7 @@ def _patch_info_in_place(fsize,
     print('Compression:        {}'.format(compression))
     print()
 
-    for i, normal_info in enumerate(segments):
+    for i, (dfpatch_size, data_format, normal_info) in enumerate(segments):
         from_offset_begin = max(segment_size * (i + 1) - from_shift_size, 0)
         from_offset_end = min(from_size, memory_size - from_shift_size)
         to_offset_begin = (segment_size * i)
@@ -184,19 +218,21 @@ def _patch_info_in_place(fsize,
                                      from_offset_end,
                                      to_offset_begin,
                                      to_offset_end,
+                                     dfpatch_size,
+                                     data_format,
                                      *normal_info)
 
 
 def _do_patch_info(args):
-    patch_type, info = patch_info_filename(args.patchfile)
-
     if args.no_human:
         fsize = _format_bytes
     else:
         fsize = _format_size
 
+    patch_type, info = patch_info_filename(args.patchfile, fsize)
+
     if patch_type == 'normal':
-        _patch_info_normal(fsize, *info)
+        _patch_info_normal(args.detailed, fsize, *info)
     elif patch_type == 'in-place':
         _patch_info_in_place(fsize, *info)
     else:
@@ -205,6 +241,10 @@ def _do_patch_info(args):
 
 def to_binary_size(value):
     return parse_size(value, binary=True)
+
+
+def auto_int(value):
+    return int(value, 0)
 
 
 def _main():
@@ -243,6 +283,60 @@ def _main():
         '--minimum-shift-size',
         type=to_binary_size,
         help='Minimum shift size (default: 2 * segment size).')
+    subparser.add_argument(
+        '--data-format',
+        choices=sorted(_DATA_FORMATS),
+        help='Data format to often create smaller patches.')
+    subparser.add_argument(
+        '--from-data-offset',
+        type=auto_int,
+        default=0,
+        help='From file data section offset.')
+    subparser.add_argument(
+        '--from-data-begin',
+        type=auto_int,
+        default=0,
+        help='From file data address begin.')
+    subparser.add_argument(
+        '--from-data-end',
+        type=auto_int,
+        default=0,
+        help='From file data address end.')
+    subparser.add_argument(
+        '--from-code-begin',
+        type=auto_int,
+        default=0,
+        help='From file code address begin.')
+    subparser.add_argument(
+        '--from-code-end',
+        type=auto_int,
+        default=0,
+        help='From file code address end.')
+    subparser.add_argument(
+        '--to-data-offset',
+        type=auto_int,
+        default=0,
+        help='To file data section offset.')
+    subparser.add_argument(
+        '--to-data-begin',
+        type=auto_int,
+        default=0,
+        help='To file data address begin.')
+    subparser.add_argument(
+        '--to-data-end',
+        type=auto_int,
+        default=0,
+        help='To file data address end.')
+    subparser.add_argument(
+        '--to-code-begin',
+        type=auto_int,
+        default=0,
+        help='To file code address begin.')
+    subparser.add_argument(
+        '--to-code-end',
+        type=auto_int,
+        default=0,
+        help='To file code address end.')
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
     subparser.add_argument('patchfile', help='Created patch file.')
@@ -269,6 +363,9 @@ def _main():
     subparser.add_argument('--no-human',
                            action='store_true',
                            help='Print sizes without units.')
+    subparser.add_argument('--detailed',
+                           action='store_true',
+                           help='Print detailed information.')
     subparser.add_argument('patchfile', help='Patch file.')
     subparser.set_defaults(func=_do_patch_info)
 

@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import patch
 from io import BytesIO
 
 import detools
@@ -65,6 +64,8 @@ class DetoolsTest(unittest.TestCase):
         with open(to_filename, 'rb') as fnew:
             expected = fnew.read()
 
+        # open('actual-to.bin', 'wb').write(actual)
+
         self.assertEqual(to_size, len(expected))
         self.assertEqual(actual, expected)
 
@@ -97,6 +98,112 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
             'tests/files/micropython-esp8266-20190125-v1.10.bin',
             'tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10.patch')
+
+    def test_create_and_apply_patch_programmer(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/programmer-0.8.0.bin',
+            'tests/files/programmer-0.9.0.bin',
+            'tests/files/programmer-0.8.0--0.9.0.patch')
+
+    def test_create_and_apply_patch_programmer_arm_cortex_m4(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/programmer-0.8.0.bin',
+            'tests/files/programmer-0.9.0.bin',
+            'tests/files/programmer-0.8.0--0.9.0-arm-cortex-m4.patch',
+            data_format='arm-cortex-m4')
+
+    def test_create_and_apply_patch_pybv11_v_1_10(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/pybv11/v1.10/firmware1.bin',
+            'tests/files/pybv11/1f5d945af-dirty/firmware1.bin',
+            'tests/files/pybv11/v1.10--1f5d945af-dirty.patch')
+
+    def test_create_and_apply_patch_pybv11_v_1_10_arm_cortex_m4(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/pybv11/v1.10/firmware1.bin',
+            'tests/files/pybv11/1f5d945af-dirty/firmware1.bin',
+            'tests/files/pybv11/v1.10--1f5d945af-dirty-arm-cortex-m4.patch',
+            data_format='arm-cortex-m4')
+
+    def test_create_and_apply_patch_pybv11_1f5d945af(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/pybv11/1f5d945af/firmware1.bin',
+            'tests/files/pybv11/1f5d945af-dirty/firmware1.bin',
+            'tests/files/pybv11/1f5d945af--1f5d945af-dirty.patch')
+
+    def test_create_and_apply_patch_pybv11_1f5d945af_arm_cortex_m4(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/pybv11/1f5d945af/firmware1.bin',
+            'tests/files/pybv11/1f5d945af-dirty/firmware1.bin',
+            'tests/files/pybv11/1f5d945af--1f5d945af-dirty-arm-cortex-m4.patch',
+            data_format='arm-cortex-m4')
+
+    def test_create_and_apply_patch_pybv11_data_and_code_sections(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/pybv11/1f5d945af/firmware1.bin',
+            'tests/files/pybv11/1f5d945af-dirty/firmware1.bin',
+            'tests/files/pybv11/1f5d945af--'
+            '1f5d945af-dirty-arm-cortex-m4-data-sections.patch',
+            data_format='arm-cortex-m4',
+            from_data_offset=0x36f7c,
+            from_data_begin=0x8056f7c,
+            from_data_end=0x806e1f0,
+            from_code_begin=0x8020000,
+            from_code_end=0x8056f7c,
+            to_data_offset=0x36f54,
+            to_data_begin=0x8056f54,
+            to_data_end=0x806e1d4,
+            to_code_begin=0x8020000,
+            to_code_end=0x8056f54)
+
+    def test_create_and_apply_patch_shell(self):
+        self.assert_create_and_apply_patch('tests/files/shell.old',
+                                           'tests/files/shell.new',
+                                           'tests/files/shell.patch')
+
+    def test_create_and_apply_patch_shell_crle_compression(self):
+        self.assert_create_and_apply_patch('tests/files/shell.old',
+                                           'tests/files/shell.new',
+                                           'tests/files/shell-crle.patch',
+                                           compression='crle')
+
+    def test_create_and_apply_patch_shell_arm_cortex_m4(self):
+        self.assert_create_and_apply_patch('tests/files/shell.old',
+                                           'tests/files/shell.new',
+                                           'tests/files/shell-arm-cortex-m4.patch',
+                                           data_format='arm-cortex-m4')
+
+    def test_create_and_apply_patch_shell_arm_cortex_m4_crle_compression(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/shell.old',
+            'tests/files/shell.new',
+            'tests/files/shell-arm-cortex-m4-crle.patch',
+            data_format='arm-cortex-m4',
+            compression='crle')
+
+    def test_create_and_apply_patch_synthesizer_1_2(self):
+        self.assert_create_and_apply_patch('tests/files/synthesizer-1.bin',
+                                           'tests/files/synthesizer-2.bin',
+                                           'tests/files/synthesizer-1--2.patch')
+
+    def test_create_and_apply_patch_synthesizer_1_2_arm_cortex_m4(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/synthesizer-1.bin',
+            'tests/files/synthesizer-2.bin',
+            'tests/files/synthesizer-1--2-arm-cortex-m4.patch',
+            data_format='arm-cortex-m4')
+
+    def test_create_and_apply_patch_synthesizer_1_3(self):
+        self.assert_create_and_apply_patch('tests/files/synthesizer-1.bin',
+                                           'tests/files/synthesizer-3.bin',
+                                           'tests/files/synthesizer-1--3.patch')
+
+    def test_create_and_apply_patch_synthesizer_1_3_arm_cortex_m4(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/synthesizer-1.bin',
+            'tests/files/synthesizer-3.bin',
+            'tests/files/synthesizer-1--3-arm-cortex-m4.patch',
+            data_format='arm-cortex-m4')
 
     def test_create_and_apply_patch_foo_none_compression(self):
         self.assert_create_and_apply_patch('tests/files/foo.old',

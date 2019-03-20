@@ -656,7 +656,6 @@ int main()
     test_apply_patch_empty_none_compression();
     test_apply_patch_empty_crle_compression();
 
-    test_apply_patch_empty();
     test_apply_patch_foo_short();
     test_apply_patch_foo_short_none_compression();
     test_apply_patch_foo_long();

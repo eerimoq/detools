@@ -44,12 +44,13 @@
 
 /* Apply patch states. */
 #define STATE_INIT                                          0
-#define STATE_DIFF_SIZE                                     1
-#define STATE_DIFF_DATA                                     2
-#define STATE_EXTRA_SIZE                                    3
-#define STATE_EXTRA_DATA                                    4
-#define STATE_ADJUSTMENT                                    5
-#define STATE_DONE                                          6
+#define STATE_DFPATCH_SIZE                                  1
+#define STATE_DIFF_SIZE                                     2
+#define STATE_DIFF_DATA                                     3
+#define STATE_EXTRA_SIZE                                    4
+#define STATE_EXTRA_DATA                                    5
+#define STATE_ADJUSTMENT                                    6
+#define STATE_DONE                                          7
 
 /* Size states. */
 #define SIZE_STATE_FIRST                                    0
@@ -844,12 +845,32 @@ static int process_init(struct detools_apply_patch_t *self_p)
     self_p->to_size = (size_t)to_size;
 
     if (to_size > 0) {
-        self_p->state = STATE_DIFF_SIZE;
+        self_p->state = STATE_DFPATCH_SIZE;
     } else {
         self_p->state = STATE_DONE;
     }
 
     return (res);
+}
+
+static int process_dfpatch_size(struct detools_apply_patch_t *self_p)
+{
+    int res;
+    int size;
+
+    res = patch_reader_unpack_size(&self_p->patch_reader, &size);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    if (size > 0) {
+        return (-DETOOLS_NOT_IMPLEMENTED);
+    }
+
+    self_p->state = STATE_DIFF_SIZE;
+
+    return (0);
 }
 
 static int process_size(struct detools_apply_patch_t *self_p,
@@ -977,6 +998,10 @@ static int apply_patch_process_once(struct detools_apply_patch_t *self_p)
 
     case STATE_INIT:
         res = process_init(self_p);
+        break;
+
+    case STATE_DFPATCH_SIZE:
+        res = process_dfpatch_size(self_p);
         break;
 
     case STATE_DIFF_SIZE:
@@ -1720,6 +1745,9 @@ const char *detools_error_as_string(int error)
 
     case DETOOLS_FILE_TELL_FAILED:
         return "File tell failed.";
+
+    case DETOOLS_NOT_ENOUGH_PATCH_DATA:
+        return "Not enough patch data.";
 
     default:
         return "Unknown error.";

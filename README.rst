@@ -22,6 +22,11 @@ differences:
 - `Incremental apply patch`_ implemented in C, suitable for memory
   constrained embedded devices.
 
+- Optional data format aware algorithm for potentially smaller
+  patches. There is a risk this functionality uses patent
+  https://patents.google.com/patent/EP1988455B1/en. Anyway, this
+  patent expires in August 2019 as I understand it.
+
 Planned functionality:
 
 - in-place patch type support in C.
@@ -61,6 +66,55 @@ All sizes are in bytes.
 +---------------------+----------+---------+--------+------------+--------+------------+--------+
 | foo old -> new      |     2780 |    1934 | 69.5 % |        126 |  4.5 % |        189 |  6.8 % |
 +---------------------+----------+---------+--------+------------+--------+------------+--------+
+| upy 1f5d945af (1)   |   319988 |  183976 | 57.5 % |       8208 |  2.6 % |         \- |     \- |
++---------------------+----------+---------+--------+------------+--------+------------+--------+
+| upy 1f5d945af (2)   |   319988 |  183976 | 57.5 % |       5588 |  1.7 % |         \- |     \- |
++---------------------+----------+---------+--------+------------+--------+------------+--------+
+| upy 1f5d945af (3)   |   319988 |  183976 | 57.5 % |       3476 |  1.1 % |         \- |     \- |
++---------------------+----------+---------+--------+------------+--------+------------+--------+
+
+Two builds of MicroPython for PYBv1.1. The from-file is build from
+commit 1f5d945af, while the to-file is built from the same commit, but
+with line 209 in ``vm.c`` deleted.
+
+(1): Default arguments.
+
+.. code-block:: text
+
+   detools create_patch \
+       tests/files/pybv11/1f5d945af/firmware1.bin \
+       tests/files/pybv11/1f5d945af-dirty/firmware1.bin \
+       tests/files/pybv11/1f5d945af--1f5d945af-dirty.patch
+
+(2): ARM Cortex-M4 aware algorithm.
+
+.. code-block:: text
+
+   detools create_patch \
+       --data-format arm-cortex-m4 \
+       tests/files/pybv11/1f5d945af/firmware1.bin \
+       tests/files/pybv11/1f5d945af-dirty/firmware1.bin \
+       tests/files/pybv11/1f5d945af--1f5d945af-dirty-arm-cortex-m4.patch
+
+(3): ARM Cortex-M4 aware algorithm with data and code sections.
+
+.. code-block:: text
+
+   detools create_patch \
+       --data-format arm-cortex-m4 \
+       --from-data-offset 0x36f7c \
+       --from-data-begin 0x8056f7c \
+       --from-data-end 0x806e1f0 \
+       --from-code-begin 0x8020000 \
+       --from-code-end 0x8056f7c \
+       --to-data-offset 0x36f54 \
+       --to-data-begin 0x8056f54 \
+       --to-data-end 0x806e1d4 \
+       --to-code-begin 0x8020000 \
+       --to-code-end 0x8056f54 \
+       tests/files/pybv11/1f5d945af/firmware1.bin \
+       tests/files/pybv11/1f5d945af-dirty/firmware1.bin \
+       tests/files/pybv11/1f5d945af--1f5d945af-dirty-arm-cortex-m4-data-sections.patch
 
 Example usage
 =============

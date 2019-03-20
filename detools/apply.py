@@ -9,6 +9,8 @@ from .common import PATCH_TYPE_IN_PLACE
 from .common import format_bad_compression_string
 from .common import format_bad_compression_number
 from .common import file_size
+from .common import unpack_size
+from .data_format import create_readers
 
 
 class PatchReader(object):
@@ -63,31 +65,6 @@ def patch_data_length(fpatch):
     return file_size(fpatch) - fpatch.tell()
 
 
-def unpack_size(fin):
-    try:
-        byte = fin.read(1)[0]
-    except IndexError:
-        raise Error('Failed to read first size byte.')
-
-    is_signed = (byte & 0x40)
-    value = (byte & 0x3f)
-    offset = 6
-
-    while byte & 0x80:
-        try:
-            byte = fin.read(1)[0]
-        except IndexError:
-            raise Error('Failed to read consecutive size byte.')
-
-        value |= ((byte & 0x7f) << offset)
-        offset += 7
-
-    if is_signed:
-        value *= -1
-
-    return value, ((offset - 6) / 7 + 1)
-
-
 def unpack_header(data):
     return bitstruct.unpack('p1u3u4', data)
 
@@ -115,7 +92,7 @@ def read_header_normal(fpatch):
     if len(header) != 1:
         raise Error('Failed to read the patch header.')
 
-    patch_type, compression = unpack_header(header)
+    patch_type, compression  = unpack_header(header)
 
     if patch_type != PATCH_TYPE_NORMAL:
         raise Error("Expected patch type 0, but got {}.".format(patch_type))
@@ -179,6 +156,11 @@ def apply_patch_in_place_segment(fmem,
 
     """
 
+    dfpatch_size = unpack_size(patch_reader)[0]
+
+    if dfpatch_size > 0:
+        raise NotImplementedError()
+
     to_pos = 0
 
     while to_pos < to_size:
@@ -237,6 +219,18 @@ def apply_patch(ffrom, fpatch, fto):
         return to_size
 
     patch_reader = PatchReader(fpatch, compression)
+    dfpatch_size = unpack_size(patch_reader)[0]
+
+    if dfpatch_size > 0:
+        data_format = unpack_size(patch_reader)[0]
+        patch = patch_reader.decompress(dfpatch_size)
+        dfdiff, ffrom = create_readers(data_format, ffrom, patch, to_size)
+
+        # with open('data-format-from-apply.bin', 'wb') as fout:
+        #     fout.write(file_read(ffrom))
+
+        ffrom.seek(0)
+
     to_pos = 0
 
     while to_pos < to_size:
@@ -253,9 +247,20 @@ def apply_patch(ffrom, fpatch, fto):
             offset += chunk_size
             patch_data = patch_reader.decompress(chunk_size)
             from_data = ffrom.read(chunk_size)
-            fto.write(bytearray(
-                (pb + fb) & 0xff for pb, fb in zip(patch_data, from_data)
-            ))
+
+            if dfpatch_size > 0:
+                dfdiff_data = dfdiff.read(chunk_size)
+                data = bytearray(
+                    (pb + fb + db) & 0xff for pb, fb, db in zip(patch_data,
+                                                                from_data,
+                                                                dfdiff_data)
+                )
+            else:
+                data = bytearray(
+                    (pb + fb) & 0xff for pb, fb in zip(patch_data, from_data)
+                )
+
+            fto.write(data)
 
         to_pos += size
 
@@ -265,7 +270,15 @@ def apply_patch(ffrom, fpatch, fto):
         if to_pos + size > to_size:
             raise Error("Patch extra data too long.")
 
-        fto.write(patch_reader.decompress(size))
+        data = patch_reader.decompress(size)
+
+        if dfpatch_size > 0:
+            dfdiff_data = dfdiff.read(size)
+            data = bytearray(
+                (dd + db) & 0xff for dd, db in zip(data, dfdiff_data)
+            )
+
+        fto.write(data)
         to_pos += size
 
         # Adjustment.

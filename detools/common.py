@@ -11,6 +11,12 @@ COMPRESSIONS = {
     'crle': 2
 }
 
+DATA_FORMAT_ARM_CORTEX_M4 = 0
+
+DATA_FORMATS = {
+    'arm-cortex-m4': 0
+}
+
 
 def format_or(items):
     items = [str(item) for item in items]
@@ -36,11 +42,33 @@ def format_bad_compression_number(compression):
         compression)
 
 
+def format_bad_data_format(data_format):
+    return 'Expected data format {}, but got {}.'.format(
+        format_or(sorted(DATA_FORMATS)),
+        data_format)
+
+
+def format_bad_data_format_number(data_format):
+    items = sorted([(n, '{}({})'.format(s, n)) for s, n in DATA_FORMATS.items()])
+
+    return "Expected data format {}, but got {}.".format(
+        format_or([v for _, v in items]),
+        data_format)
+
+
 def compression_string_to_number(compression):
     try:
         return COMPRESSIONS[compression]
     except KeyError:
         raise Error(format_bad_compression_string(compression))
+
+
+def data_format_number_to_string(data_format):
+    for string, number in DATA_FORMATS.items():
+        if data_format == number:
+            return string
+
+    raise Error(format_bad_data_format_number(data_format))
 
 
 def div_ceil(a, b):
@@ -60,3 +88,28 @@ def file_read(f):
     f.seek(0, os.SEEK_SET)
 
     return f.read()
+
+
+def unpack_size(fin):
+    try:
+        byte = fin.read(1)[0]
+    except IndexError:
+        raise Error('Failed to read first size byte.')
+
+    is_signed = (byte & 0x40)
+    value = (byte & 0x3f)
+    offset = 6
+
+    while byte & 0x80:
+        try:
+            byte = fin.read(1)[0]
+        except IndexError:
+            raise Error('Failed to read consecutive size byte.')
+
+        value |= ((byte & 0x7f) << offset)
+        offset += 7
+
+    if is_signed:
+        value *= -1
+
+    return value, ((offset - 6) / 7 + 1)

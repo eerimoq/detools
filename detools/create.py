@@ -6,11 +6,13 @@ from .compression.crle import CrleCompressor
 from .compression.none import NoneCompressor
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
+from .common import DATA_FORMATS
 from .common import format_bad_compression_string
 from .common import compression_string_to_number
 from .common import div_ceil
 from .common import file_size
 from .common import file_read
+from .data_format import encode as data_format_encode
 
 try:
     from . import csais as sais
@@ -38,16 +40,60 @@ def create_compressor(compression):
     return compressor
 
 
-def create_patch_normal_data(ffrom, fto, fpatch, compression):
+def create_patch_normal_data(ffrom,
+                             fto,
+                             fpatch,
+                             compression,
+                             data_format,
+                             from_data_address,
+                             from_data_offset,
+                             from_data_size,
+                             from_code_address,
+                             from_code_size,
+                             to_data_address,
+                             to_data_offset,
+                             to_data_size,
+                             to_code_address,
+                             to_code_size):
     to_size = file_size(fto)
 
     if to_size == 0:
         return
 
+    compressor = create_compressor(compression)
+
+    if data_format is None:
+        dfpatch = bsdiff.pack_size(0)
+    else:
+        ffrom, fto, patch = data_format_encode(
+            ffrom,
+            fto,
+            data_format,
+            from_data_address,
+            from_data_offset,
+            from_data_size,
+            from_code_address,
+            from_code_size,
+            to_data_address,
+            to_data_offset,
+            to_data_size,
+            to_code_address,
+            to_code_size)
+
+        # with open('data-format-from.bin', 'wb') as fout:
+        #     fout.write(file_read(ffrom))
+        #
+        # with open('data-format-to.bin', 'wb') as fout:
+        #     fout.write(file_read(fto))
+
+        dfpatch = bsdiff.pack_size(len(patch))
+        dfpatch += bsdiff.pack_size(DATA_FORMATS[data_format])
+        dfpatch += patch
+
+    fpatch.write(compressor.compress(dfpatch))
     from_data = file_read(ffrom)
     suffix_array = sais.sais(from_data)
     chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
-    compressor = create_compressor(compression)
 
     for chunk in chunks:
         fpatch.write(compressor.compress(chunk))
@@ -55,11 +101,39 @@ def create_patch_normal_data(ffrom, fto, fpatch, compression):
     fpatch.write(compressor.flush())
 
 
-def create_patch_normal(ffrom, fto, fpatch, compression):
+def create_patch_normal(ffrom,
+                        fto,
+                        fpatch,
+                        compression,
+                        data_format,
+                        from_data_address,
+                        from_data_offset,
+                        from_data_size,
+                        from_code_address,
+                        from_code_size,
+                        to_data_address,
+                        to_data_offset,
+                        to_data_size,
+                        to_code_address,
+                        to_code_size):
     fpatch.write(pack_header(PATCH_TYPE_NORMAL,
                              compression_string_to_number(compression)))
     fpatch.write(bsdiff.pack_size(file_size(fto)))
-    create_patch_normal_data(ffrom, fto, fpatch, compression)
+    create_patch_normal_data(ffrom,
+                             fto,
+                             fpatch,
+                             compression,
+                             data_format,
+                             from_data_address,
+                             from_data_offset,
+                             from_data_size,
+                             from_code_address,
+                             from_code_size,
+                             to_data_address,
+                             to_data_offset,
+                             to_data_size,
+                             to_code_address,
+                             to_code_size)
 
 
 def calc_shift(memory_size, segment_size, minimum_shift_size, from_size):
@@ -85,7 +159,8 @@ def create_patch_in_place(ffrom,
                           compression,
                           memory_size,
                           segment_size,
-                          minimum_shift_size):
+                          minimum_shift_size,
+                          data_format):
     if (memory_size % segment_size) != 0:
         raise Error(
             'Memory size {} is not a multiple of segment size {}.'.format(
@@ -124,7 +199,18 @@ def create_patch_in_place(ffrom,
             BytesIO(from_data[from_offset:]),
             BytesIO(to_data[to_offset:to_offset + segment_size]),
             fsegment,
-            'none')
+            'none',
+            data_format,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0)
         fsegments.write(fsegment.getvalue())
 
     # Create the patch.
@@ -151,7 +237,18 @@ def create_patch(ffrom,
                  patch_type='normal',
                  memory_size=None,
                  segment_size=None,
-                 minimum_shift_size=None):
+                 minimum_shift_size=None,
+                 data_format=None,
+                 from_data_offset=0,
+                 from_data_begin=0,
+                 from_data_end=0,
+                 from_code_begin=0,
+                 from_code_end=0,
+                 to_data_offset=0,
+                 to_data_begin=0,
+                 to_data_end=0,
+                 to_code_begin=0,
+                 to_code_end=0):
     """Create a patch from `ffrom` to `fto` and write it to `fpatch`. All
     three arguments are file-like objects.
 
@@ -170,7 +267,21 @@ def create_patch(ffrom,
     """
 
     if patch_type == 'normal':
-        create_patch_normal(ffrom, fto, fpatch, compression)
+        create_patch_normal(ffrom,
+                            fto,
+                            fpatch,
+                            compression,
+                            data_format,
+                            from_data_offset,
+                            from_data_begin,
+                            from_data_end,
+                            from_code_begin,
+                            from_code_end,
+                            to_data_offset,
+                            to_data_begin,
+                            to_data_end,
+                            to_code_begin,
+                            to_code_end)
     elif patch_type == 'in-place':
         create_patch_in_place(ffrom,
                               fto,
@@ -178,7 +289,8 @@ def create_patch(ffrom,
                               compression,
                               memory_size,
                               segment_size,
-                              minimum_shift_size)
+                              minimum_shift_size,
+                              data_format)
     else:
         raise Error("Bad patch type '{}'.".format(patch_type))
 
@@ -190,7 +302,18 @@ def create_patch_filenames(fromfile,
                            patch_type='normal',
                            memory_size=None,
                            segment_size=None,
-                           minimum_shift_size=None):
+                           minimum_shift_size=None,
+                           data_format=None,
+                           from_data_offset=0,
+                           from_data_begin=0,
+                           from_data_end=0,
+                           from_code_begin=0,
+                           from_code_end=0,
+                           to_data_offset=0,
+                           to_data_begin=0,
+                           to_data_end=0,
+                           to_code_begin=0,
+                           to_code_end=0):
     """Same as :func:`~detools.create_patch()`, but with filenames instead
     of file-like objects.
 
@@ -208,4 +331,15 @@ def create_patch_filenames(fromfile,
                              patch_type,
                              memory_size,
                              segment_size,
-                             minimum_shift_size)
+                             minimum_shift_size,
+                             data_format,
+                             from_data_offset,
+                             from_data_begin,
+                             from_data_end,
+                             from_code_begin,
+                             from_code_end,
+                             to_data_offset,
+                             to_data_begin,
+                             to_data_end,
+                             to_code_begin,
+                             to_code_end)

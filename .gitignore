@@ -78,3 +78,7 @@ target/
 src/c/detools
 src/c/foo.new
 /fuzzer*
+data-format-from.bin
+data-format-to.bin
+data-format-from-apply.bin
+pybv11-data-format-with-data-sections.patch

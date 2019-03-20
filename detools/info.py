@@ -1,6 +1,5 @@
 import os
 from .errors import Error
-from .apply import unpack_size
 from .apply import unpack_header
 from .apply import read_header_normal
 from .apply import read_header_in_place
@@ -8,6 +7,9 @@ from .apply import PatchReader
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import file_size
+from .common import unpack_size
+from .common import data_format_number_to_string
+from .data_format import info as data_format_info
 
 
 def peek_header_type(fpatch):
@@ -63,20 +65,36 @@ def patch_info_normal_inner(patch_reader, to_size):
             number_of_size_bytes)
 
 
-def patch_info_normal(fpatch):
+def patch_info_normal(fpatch, fsize):
     patch_size = file_size(fpatch)
     compression, to_size = read_header_normal(fpatch)
+    dfpatch_size = 0
+    data_format = None
+    dfpatch_info = None
 
     if to_size == 0:
         info = (0, [], [], [], 0)
     else:
         patch_reader = PatchReader(fpatch, compression)
+        dfpatch_size = unpack_size(patch_reader)[0]
+
+        if dfpatch_size > 0:
+            data_format = unpack_size(patch_reader)[0]
+            patch = patch_reader.decompress(dfpatch_size)
+            dfpatch_info = data_format_info(data_format, patch, fsize)
+            data_format = data_format_number_to_string(data_format)
+
         info = patch_info_normal_inner(patch_reader, to_size)
 
         if not patch_reader.eof:
             raise Error('End of patch not found.')
 
-    return (patch_size, compression, *info)
+    return (patch_size,
+            compression,
+            dfpatch_size,
+            data_format,
+            dfpatch_info,
+            *info)
 
 
 def patch_info_in_place(fpatch):
@@ -94,8 +112,17 @@ def patch_info_in_place(fpatch):
 
         for to_pos in range(0, to_size, segment_size):
             segment_to_size = min(segment_size, to_size - to_pos)
+            dfpatch_size = unpack_size(patch_reader)[0]
+
+            if dfpatch_size > 0:
+                data_format = unpack_size(patch_reader)[0]
+                data_format = data_format_number_to_string(data_format)
+                patch_reader.decompress(dfpatch_size)
+            else:
+                data_format = None
+
             info = patch_info_normal_inner(patch_reader, segment_to_size)
-            segments.append(info)
+            segments.append((dfpatch_size, data_format, info))
 
     return (patch_size,
             compression,
@@ -107,26 +134,29 @@ def patch_info_in_place(fpatch):
             segments)
 
 
-def patch_info(fpatch):
+def patch_info(fpatch, fsize=None):
     """Get patch information from given file-like patch object `fpatch`.
 
     """
 
+    if fsize is None:
+        fsize = str
+
     patch_type = peek_header_type(fpatch)
 
     if patch_type == PATCH_TYPE_NORMAL:
-        return 'normal', patch_info_normal(fpatch)
+        return 'normal', patch_info_normal(fpatch, fsize)
     elif patch_type == PATCH_TYPE_IN_PLACE:
         return 'in-place', patch_info_in_place(fpatch)
     else:
         raise Error('Bad patch type {}.'.format(patch_type))
 
 
-def patch_info_filename(patchfile):
+def patch_info_filename(patchfile, fsize=None):
     """Same as :func:`~detools.patch_info()`, but with a filename instead
     of a file-like object.
 
     """
 
     with open(patchfile, 'rb') as fpatch:
-        return patch_info(fpatch)
+        return patch_info(fpatch, fsize)
