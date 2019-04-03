@@ -312,34 +312,6 @@ def disassemble(reader,
     """Disassembles given data and returns address-value pairs of b.w, bl,
     *ldr and *ldr.w.
 
-1f5d945af missed:
-
- 8023760:	68b3            ldr	r3, [r6, #8]
- 8023762:	091b            lsrs	r3, r3, #4
- 8023764:	e001            b.n	802376a <scope_new+0x2e>
- -> 8023766:	4b08            ldr	r3, [pc, #32]	; (8023788 <scope_new+0x4c>)
-
-erroneously overwritten with zeros:
-
- 802c3c4:	4630            mov	r0, r6
- 802c3c6:	f00c fefb       bl	80391c0 <mp_small_int_floor_divide>
-
-not overwritten:
-
- 802e92e:	bf08            it	eq
- 802e930:	4615            moveq	r5, r2
- 802e932:	4a21            ldr	r2, [pc, #132]	; (802e9b8 <dict_print+0x94>)
-
- 802e9b4:	e8bd 87f0       ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, sl, pc}
- -> 802e9b8:	0805d8c8        .word	0x0805d8c8
-
- 8045a7e:	4602            mov	r2, r0
- 8045a80:	d905            bls.n	8045a8e <led_obj_make_new+0x2a>
- 8045a82:	4905            ldr	r1, [pc, #20]	; (8045a98 <led_obj_make_new+0x34>)
-
- 8045a96:	bd10            pop	{r4, pc}
- -> 8045a98:	08068b5c        .word	0x08068b5c
-
     """
 
     length = file_size(reader)
