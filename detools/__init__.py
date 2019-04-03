@@ -22,29 +22,38 @@ def _do_create_patch(args):
     if args.type == 'in-place':
         if args.memory_size is None:
             raise Error('--memory-size is required for in-place patch.')
-
-        if args.segment_size is None:
+        elif args.segment_size is None:
             raise Error('--segment-size is required for in-place patch.')
+
+    if args.data_format is not None:
+        if args.from_data_begin > args.from_data_end:
+            raise Error('--from-data-begin greater than --from-data-end.')
+        elif args.from_code_begin > args.from_code_end:
+            raise Error('--from-code-begin greater than --from-code-end.')
+        elif args.to_data_begin > args.to_data_end:
+            raise Error('--to-data-begin greater than --to-data-end.')
+        elif args.to_code_begin > args.to_code_end:
+            raise Error('--to-code-begin greater than --to-code-end.')
 
     create_patch_filenames(args.fromfile,
                            args.tofile,
                            args.patchfile,
                            args.compression,
-                           patch_type=args.type,
-                           memory_size=args.memory_size,
-                           segment_size=args.segment_size,
-                           minimum_shift_size=args.minimum_shift_size,
-                           data_format=args.data_format,
-                           from_data_offset=args.from_data_offset,
-                           from_data_begin=args.from_data_begin,
-                           from_data_end=args.from_data_end,
-                           from_code_begin=args.from_code_begin,
-                           from_code_end=args.from_code_end,
-                           to_data_offset=args.to_data_offset,
-                           to_data_begin=args.to_data_begin,
-                           to_data_end=args.to_data_end,
-                           to_code_begin=args.to_code_begin,
-                           to_code_end=args.to_code_end)
+                           args.type,
+                           args.memory_size,
+                           args.segment_size,
+                           args.minimum_shift_size,
+                           args.data_format,
+                           args.from_data_offset,
+                           args.from_data_begin,
+                           args.from_data_end,
+                           args.from_code_begin,
+                           args.from_code_end,
+                           args.to_data_offset,
+                           args.to_data_begin,
+                           args.to_data_end,
+                           args.to_code_begin,
+                           args.to_code_end)
 
 
 def _do_apply_patch(args):
@@ -243,8 +252,14 @@ def to_binary_size(value):
     return parse_size(value, binary=True)
 
 
-def auto_int(value):
-    return int(value, 0)
+def to_uint(value):
+    value = int(value, 0)
+
+    if value < 0:
+        raise Error(
+            'Expected a non-negative integer, but got {}.'.format(value))
+
+    return value
 
 
 def _main():
@@ -289,52 +304,52 @@ def _main():
         help='Data format to often create smaller patches.')
     subparser.add_argument(
         '--from-data-offset',
-        type=auto_int,
+        type=to_uint,
         default=0,
         help='From file data section offset.')
     subparser.add_argument(
         '--from-data-begin',
-        type=auto_int,
+        type=to_uint,
         default=0,
         help='From file data address begin.')
     subparser.add_argument(
         '--from-data-end',
-        type=auto_int,
+        type=to_uint,
         default=0,
         help='From file data address end.')
     subparser.add_argument(
         '--from-code-begin',
-        type=auto_int,
+        type=to_uint,
         default=0,
         help='From file code address begin.')
     subparser.add_argument(
         '--from-code-end',
-        type=auto_int,
+        type=to_uint,
         default=0,
         help='From file code address end.')
     subparser.add_argument(
         '--to-data-offset',
-        type=auto_int,
+        type=to_uint,
         default=0,
         help='To file data section offset.')
     subparser.add_argument(
         '--to-data-begin',
-        type=auto_int,
+        type=to_uint,
         default=0,
         help='To file data address begin.')
     subparser.add_argument(
         '--to-data-end',
-        type=auto_int,
+        type=to_uint,
         default=0,
         help='To file data address end.')
     subparser.add_argument(
         '--to-code-begin',
-        type=auto_int,
+        type=to_uint,
         default=0,
         help='To file code address begin.')
     subparser.add_argument(
         '--to-code-end',
-        type=auto_int,
+        type=to_uint,
         default=0,
         help='To file code address end.')
     subparser.add_argument('fromfile', help='From file.')
