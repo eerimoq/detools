@@ -21,11 +21,13 @@ class DiffReader(object):
     def __init__(self,
                  ffrom,
                  to_size,
+                 bw,
                  bl,
                  ldr,
                  ldr_w,
                  data_pointers,
                  code_pointers,
+                 bw_blocks,
                  bl_blocks,
                  ldr_blocks,
                  ldr_w_blocks,
@@ -37,6 +39,7 @@ class DiffReader(object):
         self._write_values_to_to(ldr_blocks, ldr)
         self._write_values_to_to(ldr_w_blocks, ldr_w)
         self._write_values_to_to(bl_blocks, bl)
+        self._write_values_to_to(bw_blocks, bw)
 
         if data_pointers_blocks is not None:
             self._write_values_to_to(data_pointers_blocks, data_pointers)
@@ -65,11 +68,13 @@ class FromReader(object):
 
     def __init__(self,
                  ffrom,
+                 bw,
                  bl,
                  ldr,
                  ldr_w,
                  data_pointers,
                  code_pointers,
+                 bw_blocks,
                  bl_blocks,
                  ldr_blocks,
                  ldr_w_blocks,
@@ -77,6 +82,7 @@ class FromReader(object):
                  code_pointers_blocks):
         # ToDo: Calculate in read() for less memory usage.
         self._ffrom = BytesIO(file_read(ffrom))
+        self._write_zeros_to_from(bw_blocks, bw)
         self._write_zeros_to_from(bl_blocks, bl)
         self._write_zeros_to_from(ldr_blocks, ldr)
         self._write_zeros_to_from(ldr_w_blocks, ldr_w)
@@ -156,7 +162,7 @@ def disassemble_data(reader,
         code_pointers[address] = value
 
 
-def disassemble_bl(reader, address, bl, upper_16):
+def disassemble_bw_bl(reader, address, bw, bl, upper_16):
     lower_16 = struct.unpack('<H', reader.read(2))[0]
 
     if (lower_16 & 0xd000) == 0xd000:
@@ -171,6 +177,9 @@ def disassemble_bl(reader, address, bl, upper_16):
         # ToDo: Use imm32 for smaller patches.
         reader.seek(-4, os.SEEK_CUR)
         bl[address] = struct.unpack('<i', reader.read(4))[0]
+    elif (lower_16 & 0xc000) == 0x8000:
+        reader.seek(-4, os.SEEK_CUR)
+        bw[address] = struct.unpack('<i', reader.read(4))[0]
 
 
 def disassemble_ldr_common(reader, address, ldr, imm):
@@ -201,14 +210,10 @@ def disassemble(reader,
                 data_end,
                 code_begin,
                 code_end):
-    """Disassembles given data and returns address-value pairs of bl, *ldr
-    and *ldr.w.
+    """Disassembles given data and returns address-value pairs of b.w, bl,
+    *ldr and *ldr.w.
 
 1f5d945af missed:
-
- -> 80215e2:	f01d b9b1       b.w	803e948 <memcpy>
- -> 803bc3e:	f7c7 bf0b       b.w	8003a58 <mp_printf>
- -> 804d5c8:	f7b6 ba46       b.w	8003a58 <mp_printf>
 
  8023760:	68b3            ldr	r3, [r6, #8]
  8023762:	091b            lsrs	r3, r3, #4
@@ -239,6 +244,7 @@ not overwritten:
     """
 
     length = file_size(reader)
+    bw = {}
     bl = {}
     ldr = {}
     ldr_w = {}
@@ -264,15 +270,15 @@ not overwritten:
             upper_16 = struct.unpack('<H', reader.read(2))[0]
 
             if (upper_16 & 0xf800) == 0xf000:
-                disassemble_bl(reader, address, bl, upper_16)
+                disassemble_bw_bl(reader, address, bw, bl, upper_16)
             elif (upper_16 & 0xfff0) == 0xfbb0:
                 reader.read(2)
             elif (upper_16 & 0xf800) == 0x4800:
                 disassemble_ldr(reader, address, ldr, upper_16)
             elif upper_16 == 0xf8df:
                 disassemble_ldr_w(reader, address, ldr_w)
-
-    return bl, ldr, ldr_w, data_pointers, code_pointers
+                
+    return bw, bl, ldr, ldr_w, data_pointers, code_pointers
 
 
 def cortex_m4_encode(ffrom,
@@ -289,7 +295,8 @@ def cortex_m4_encode(ffrom,
                      to_code_end):
     ffrom = BytesIO(file_read(ffrom))
     fto = BytesIO(file_read(fto))
-    (from_bl,
+    (from_bw,
+     from_bl,
      from_ldr,
      from_ldr_w,
      from_data_pointers,
@@ -299,7 +306,8 @@ def cortex_m4_encode(ffrom,
                                        from_data_end,
                                        from_code_begin,
                                        from_code_end)
-    (to_bl,
+    (to_bw,
+     to_bl,
      to_ldr,
      to_ldr_w,
      to_data_pointers,
@@ -333,6 +341,7 @@ def cortex_m4_encode(ffrom,
                                     from_code_pointers,
                                     to_code_pointers)
 
+    patch += create_patch_block(ffrom, fto, from_bw, to_bw)
     patch += create_patch_block(ffrom, fto, from_bl, to_bl)
     patch += create_patch_block(ffrom, fto, from_ldr, to_ldr)
     patch += create_patch_block(ffrom, fto, from_ldr_w, to_ldr_w)
@@ -370,10 +379,12 @@ def cortex_m4_create_readers(ffrom, patch, to_size):
         from_code_end = 0
         code_pointers_blocks = None
 
+    bw_blocks = Blocks.from_fpatch(fpatch)
     bl_blocks = Blocks.from_fpatch(fpatch)
     ldr_blocks = Blocks.from_fpatch(fpatch)
     ldr_w_blocks = Blocks.from_fpatch(fpatch)
-    (bl,
+    (bw,
+     bl,
      ldr,
      ldr_w,
      data_pointers,
@@ -385,22 +396,26 @@ def cortex_m4_create_readers(ffrom, patch, to_size):
                                   from_code_end)
     diff_reader = DiffReader(ffrom,
                              to_size,
+                             bw,
                              bl,
                              ldr,
                              ldr_w,
                              data_pointers,
                              code_pointers,
+                             bw_blocks,
                              bl_blocks,
                              ldr_blocks,
                              ldr_w_blocks,
                              data_pointers_blocks,
                              code_pointers_blocks)
     from_reader = FromReader(ffrom,
+                             bw,
                              bl,
                              ldr,
                              ldr_w,
                              data_pointers,
                              code_pointers,
+                             bw_blocks,
                              bl_blocks,
                              ldr_blocks,
                              ldr_w_blocks,
@@ -453,12 +468,15 @@ def cortex_m4_info(patch, fsize):
         from_code_end = unpack_size(fpatch)[0]
         code_pointers_blocks, code_pointers_blocks_size = load_blocks(fpatch)
 
+    bw_blocks, bw_blocks_size = load_blocks(fpatch)
     bl_blocks, bl_blocks_size = load_blocks(fpatch)
     ldr_blocks, ldr_blocks_size = load_blocks(fpatch)
     ldr_w_blocks, ldr_w_blocks_size = load_blocks(fpatch)
     fout = StringIO()
 
     with redirect_stdout(fout):
+        print('Instruction:        b.w')
+        format_blocks(bw_blocks, bw_blocks_size, fsize)
         print('Instruction:        bl')
         format_blocks(bl_blocks, bl_blocks_size, fsize)
         print('Instruction:        ldr')
