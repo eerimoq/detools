@@ -273,11 +273,21 @@ not overwritten:
                 disassemble_bw_bl(reader, address, bw, bl, upper_16)
             elif (upper_16 & 0xfff0) == 0xfbb0:
                 reader.read(2)
+            elif (upper_16 & 0xffc0) == 0xe900:
+                reader.read(2)
+            elif (upper_16 & 0xffe0) == 0xfa00:
+                reader.read(2)
+            elif (upper_16 & 0xfff0) == 0xfb90:
+                reader.read(2)
             elif (upper_16 & 0xf800) == 0x4800:
                 disassemble_ldr(reader, address, ldr, upper_16)
-            elif upper_16 == 0xf8df:
+            elif (upper_16 & 0xffff) == 0xf8df:
                 disassemble_ldr_w(reader, address, ldr_w)
-                
+            elif (upper_16 & 0xfff0) == 0xf8d0:
+                reader.read(2)
+            elif (upper_16 & 0xfff0) == 0xf850:
+                reader.read(2)
+
     return bw, bl, ldr, ldr_w, data_pointers, code_pointers
 
 
