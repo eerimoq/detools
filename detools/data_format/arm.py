@@ -4,6 +4,7 @@ from io import BytesIO
 from io import StringIO
 from contextlib import redirect_stdout
 import textwrap
+import bitstruct
 from ..common import file_size
 from ..common import file_read
 from .utils import Blocks
@@ -34,12 +35,14 @@ class DiffReader(object):
                  data_pointers_blocks,
                  code_pointers_blocks):
         self._ffrom = ffrom
+        self._cf_bw = bitstruct.compile('u5u1u4u6u2u1u1u1u11')
+        self._cf_bl = bitstruct.compile('u5u1u10u2u1u1u1u11')
         # ToDo: Calculate in read() for less memory usage.
         self._fdiff = BytesIO(b'\x00' * to_size)
         self._write_values_to_to(ldr_blocks, ldr)
         self._write_values_to_to(ldr_w_blocks, ldr_w)
-        self._write_values_to_to(bl_blocks, bl)
-        self._write_values_to_to(bw_blocks, bw)
+        self._write_values_to_bl(bl_blocks, bl)
+        self._write_values_to_bw(bw_blocks, bw)
 
         if data_pointers_blocks is not None:
             self._write_values_to_to(data_pointers_blocks, data_pointers)
@@ -59,6 +62,71 @@ class DiffReader(object):
                 from_address, from_value = from_sorted[from_offset + i]
                 self._fdiff.seek(to_address + from_address - from_address_base)
                 self._fdiff.write(struct.pack('<i', from_value - value))
+
+    def _write_values_to_bw(self, bw_blocks, bw):
+        bw_sorted = sorted(bw.items())
+
+        for from_offset, to_address, values in bw_blocks:
+            from_address_base = bw_sorted[from_offset][0]
+
+            for i, value in enumerate(values):
+                from_address, from_value = bw_sorted[from_offset + i]
+                value = (from_value - value)
+
+                if value < 0:
+                    value += (1 << 25)
+
+                t = (value & 0x1)
+                value >>= 1
+                cond = (value & 0xf)
+                imm32 = (value >> 4)
+                s = (imm32 >> 19)
+                j2 = ((imm32 >> 18) & 0x1)
+                j1 = ((imm32 >> 17) & 0x1)
+                imm6 = ((imm32 >> 11) & 0x3f)
+                imm11 = (imm32 & 0x7ff)
+                bw = self._cf_bw.pack(0b11110,
+                                      s,
+                                      cond,
+                                      imm6,
+                                      0b10,
+                                      j1,
+                                      t,
+                                      j2,
+                                      imm11)
+                self._fdiff.seek(to_address + from_address - from_address_base)
+                self._fdiff.write(bitstruct.byteswap('22', bw))
+
+    def _write_values_to_bl(self, bl_blocks, bl):
+        bl_sorted = sorted(bl.items())
+
+        for from_offset, to_address, values in bl_blocks:
+            from_address_base = bl_sorted[from_offset][0]
+
+            for i, value in enumerate(values):
+                from_address, from_value = bl_sorted[from_offset + i]
+                imm32 = (from_value - value)
+
+                if imm32 < 0:
+                    imm32 += (1 << 24)
+
+                s = (imm32 >> 23)
+                i1 = ((imm32 >> 22) & 0x1)
+                i2 = ((imm32 >> 21) & 0x1)
+                j1 = {1: 0, 0: 1}[i1 ^ s]
+                j2 = {1: 0, 0: 1}[i2 ^ s]
+                imm10 = ((imm32 >> 11) & 0x3ff)
+                imm11 = (imm32 & 0x7ff)
+                bl = self._cf_bl.pack(0b11110,
+                                      s,
+                                      imm10,
+                                      0b11,
+                                      j1,
+                                      0b1,
+                                      j2,
+                                      imm11)
+                self._fdiff.seek(to_address + from_address - from_address_base)
+                self._fdiff.write(bitstruct.byteswap('22', bl))
 
     def read(self, size=-1):
         return self._fdiff.read(size)
@@ -162,24 +230,55 @@ def disassemble_data(reader,
         code_pointers[address] = value
 
 
+def disassemble_bw(address, bw, upper_16, lower_16):
+    s = ((upper_16 & 0x400) >> 10)
+    cond = ((upper_16 & 0x3c0) >> 6)
+    imm6 = (upper_16 & 0x3f)
+    imm11 = (lower_16 & 0x7ff)
+    j1 = ((lower_16 & 0x2000) >> 13)
+    t = ((lower_16 & 0x1000) >> 12)
+    j2 = ((lower_16 & 0x0800) >> 11)
+    value = ((s << 24)
+             | (j2 << 23)
+             | (j1 << 22)
+             | (imm6 << 16)
+             | (imm11 << 5)
+             | (cond << 1)
+             | (t << 0))
+
+    if value & (1 << 24):
+        value -= (1 << 25)
+
+    bw[address] = value
+
+
+def disassemble_bl(address, bl, upper_16, lower_16):
+    s = ((upper_16 & 0x400) >> 10)
+    imm10 = (upper_16 & 0x3ff)
+    imm11 = (lower_16 & 0x7ff)
+    j1 = ((lower_16 & 0x2000) >> 13)
+    j2 = ((lower_16 & 0x0800) >> 11)
+    i1 = {1: 0, 0: 1}[j1 ^ s]
+    i2 = {1: 0, 0: 1}[j2 ^ s]
+    imm32 = ((s << 23)
+             | (i1 << 22)
+             | (i2 << 21)
+             | (imm10 << 11)
+             | (imm11 << 0))
+
+    if imm32 & (1 << 23):
+        imm32 -= (1 << 24)
+
+    bl[address] = imm32
+
+
 def disassemble_bw_bl(reader, address, bw, bl, upper_16):
     lower_16 = struct.unpack('<H', reader.read(2))[0]
 
     if (lower_16 & 0xd000) == 0xd000:
-        imm32 = ((upper_16 & 0x3ff) << 12)
-        imm32 += ((lower_16 & 0x7ff) << 1)
-        imm32 += 4
-
-        if imm32 & (1 << 21):
-            imm32 -= (1 << 22)
-
-        bl[address] = imm32
-        # ToDo: Use imm32 for smaller patches.
-        reader.seek(-4, os.SEEK_CUR)
-        bl[address] = struct.unpack('<i', reader.read(4))[0]
+        disassemble_bl(address, bl, upper_16, lower_16)
     elif (lower_16 & 0xc000) == 0x8000:
-        reader.seek(-4, os.SEEK_CUR)
-        bw[address] = struct.unpack('<i', reader.read(4))[0]
+        disassemble_bw(address, bw, upper_16, lower_16)
 
 
 def disassemble_ldr_common(reader, address, ldr, imm):
