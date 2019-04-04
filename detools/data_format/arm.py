@@ -158,12 +158,16 @@ def create_patch_block(ffrom, fto, from_dict, to_dict):
 
     """
 
+    blocks = Blocks()
+
+    if not from_dict or not to_dict:
+        return blocks.to_bytes()
+
     from_sorted = sorted(from_dict.items())
     to_sorted = sorted(to_dict.items())
     from_addresses, from_values = zip(*from_sorted)
     to_addresses, to_values = zip(*to_sorted)
     matching_blocks = get_matching_blocks(from_addresses, to_addresses)
-    blocks = Blocks()
 
     for from_offset, to_offset, size in matching_blocks:
         # Skip small blocks as the block overhead is too big.
@@ -197,7 +201,12 @@ def disassemble_data(reader,
                      code_end,
                      data_pointers,
                      code_pointers):
-    value = struct.unpack('<I', reader.read(4))[0]
+    data = reader.read(4)
+
+    if len(data) != 4:
+        return
+
+    value = struct.unpack('<I', data)[0]
 
     if data_begin <= value < data_end:
         data_pointers[address] = value
@@ -263,8 +272,13 @@ def disassemble_ldr_common(reader, address, ldr, imm):
     address += imm
     position = reader.tell()
     reader.seek(address)
-    ldr[address] = struct.unpack('<i', reader.read(4))[0]
+    data = reader.read(4)
     reader.seek(position)
+
+    if len(data) != 4:
+        return
+
+    ldr[address] = struct.unpack('<i', data)[0]
 
 
 def disassemble_ldr(reader, address, ldr, upper_16):
@@ -273,7 +287,12 @@ def disassemble_ldr(reader, address, ldr, upper_16):
 
 
 def disassemble_ldr_w(reader, address, ldr_w):
-    lower_16 = struct.unpack('<H', reader.read(2))[0]
+    data = reader.read(2)
+
+    if len(data) != 2:
+        return
+
+    lower_16 = struct.unpack('<H', data)[0]
     imm12 = (lower_16 & 0xfff) + 4
     disassemble_ldr_common(reader, address, ldr_w, imm12)
 

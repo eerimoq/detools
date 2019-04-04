@@ -4,11 +4,6 @@ from io import BytesIO
 import detools
 
 
-def read_file(filename):
-    with open(filename, 'rb') as fin:
-        return fin.read()
-
-
 class DetoolsTest(unittest.TestCase):
 
     def assert_create_patch(self,
@@ -587,6 +582,13 @@ class DetoolsTest(unittest.TestCase):
 
         self.assertEqual(len(data), 3003)
         self.assertEqual(data[-3:], b'\x01\x02\x03')
+
+    def test_create_and_apply_patch_foo_data_format_arm_cortex_m4(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/foo.old',
+            'tests/files/foo.new',
+            'tests/files/foo-arm-cortex-m4.patch',
+            data_format='arm-cortex-m4')
 
 
 if __name__ == '__main__':
