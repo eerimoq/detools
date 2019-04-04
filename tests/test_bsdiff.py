@@ -68,16 +68,16 @@ class DetoolsBsdiffTest(unittest.TestCase):
 
     def test_bsdiff_c_and_py_compatibility(self):
         datas = [
-            read_file('tests/files/foo-backwards.patch'),
-            read_file('tests/files/foo-bad-lzma-end.patch'),
-            read_file('tests/files/foo-diff-data-too-long.patch'),
-            read_file('tests/files/foo-extra-data-too-long.patch'),
-            read_file('tests/files/foo.new'),
-            read_file('tests/files/foo-no-delta.patch'),
-            read_file('tests/files/foo.old'),
-            read_file('tests/files/foo.patch'),
-            read_file('tests/files/foo-short.patch'),
-            read_file('tests/files/micropython-esp8266-20190125-v1.10.bin'),
+            read_file('tests/files/foo/backwards.patch'),
+            read_file('tests/files/foo/bad-lzma-end.patch'),
+            read_file('tests/files/foo/diff-data-too-long.patch'),
+            read_file('tests/files/foo/extra-data-too-long.patch'),
+            read_file('tests/files/foo/new'),
+            read_file('tests/files/foo/no-delta.patch'),
+            read_file('tests/files/foo/old'),
+            read_file('tests/files/foo/patch'),
+            read_file('tests/files/foo/short.patch'),
+            read_file('tests/files/micropython/esp8266-20190125-v1.10.bin'),
             read_file('tests/files/errors.cpython-36.bin')
         ]
 

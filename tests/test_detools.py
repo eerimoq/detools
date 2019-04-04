@@ -80,32 +80,32 @@ class DetoolsTest(unittest.TestCase):
                                 **kwargs)
 
     def test_create_and_apply_patch_foo(self):
-        self.assert_create_and_apply_patch('tests/files/foo.old',
-                                           'tests/files/foo.new',
-                                           'tests/files/foo.patch')
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/patch')
 
     def test_create_and_apply_patch_foo_backwards(self):
-        self.assert_create_and_apply_patch('tests/files/foo.new',
-                                           'tests/files/foo.old',
-                                           'tests/files/foo-backwards.patch')
+        self.assert_create_and_apply_patch('tests/files/foo/new',
+                                           'tests/files/foo/old',
+                                           'tests/files/foo/backwards.patch')
 
     def test_create_and_apply_patch_micropython(self):
         self.assert_create_and_apply_patch(
-            'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
-            'tests/files/micropython-esp8266-20190125-v1.10.bin',
-            'tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10.patch')
+            'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython/esp8266-20190125-v1.10.bin',
+            'tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10.patch')
 
     def test_create_and_apply_patch_programmer(self):
         self.assert_create_and_apply_patch(
-            'tests/files/programmer-0.8.0.bin',
-            'tests/files/programmer-0.9.0.bin',
-            'tests/files/programmer-0.8.0--0.9.0.patch')
+            'tests/files/programmer/0.8.0.bin',
+            'tests/files/programmer/0.9.0.bin',
+            'tests/files/programmer/0.8.0--0.9.0.patch')
 
     def test_create_and_apply_patch_programmer_arm_cortex_m4(self):
         self.assert_create_and_apply_patch(
-            'tests/files/programmer-0.8.0.bin',
-            'tests/files/programmer-0.9.0.bin',
-            'tests/files/programmer-0.8.0--0.9.0-arm-cortex-m4.patch',
+            'tests/files/programmer/0.8.0.bin',
+            'tests/files/programmer/0.9.0.bin',
+            'tests/files/programmer/0.8.0--0.9.0-arm-cortex-m4.patch',
             data_format='arm-cortex-m4')
 
     def test_create_and_apply_patch_pybv11_v_1_10(self):
@@ -153,86 +153,86 @@ class DetoolsTest(unittest.TestCase):
             to_code_end=0x8056f54)
 
     def test_create_and_apply_patch_shell(self):
-        self.assert_create_and_apply_patch('tests/files/shell.old',
-                                           'tests/files/shell.new',
-                                           'tests/files/shell.patch')
+        self.assert_create_and_apply_patch('tests/files/shell/old',
+                                           'tests/files/shell/new',
+                                           'tests/files/shell/patch')
 
     def test_create_and_apply_patch_shell_crle_compression(self):
-        self.assert_create_and_apply_patch('tests/files/shell.old',
-                                           'tests/files/shell.new',
-                                           'tests/files/shell-crle.patch',
+        self.assert_create_and_apply_patch('tests/files/shell/old',
+                                           'tests/files/shell/new',
+                                           'tests/files/shell/crle.patch',
                                            compression='crle')
 
     def test_create_and_apply_patch_shell_arm_cortex_m4(self):
-        self.assert_create_and_apply_patch('tests/files/shell.old',
-                                           'tests/files/shell.new',
-                                           'tests/files/shell-arm-cortex-m4.patch',
+        self.assert_create_and_apply_patch('tests/files/shell/old',
+                                           'tests/files/shell/new',
+                                           'tests/files/shell/arm-cortex-m4.patch',
                                            data_format='arm-cortex-m4')
 
     def test_create_and_apply_patch_shell_arm_cortex_m4_crle_compression(self):
         self.assert_create_and_apply_patch(
-            'tests/files/shell.old',
-            'tests/files/shell.new',
-            'tests/files/shell-arm-cortex-m4-crle.patch',
+            'tests/files/shell/old',
+            'tests/files/shell/new',
+            'tests/files/shell/arm-cortex-m4-crle.patch',
             data_format='arm-cortex-m4',
             compression='crle')
 
     def test_create_and_apply_patch_synthesizer_1_2(self):
-        self.assert_create_and_apply_patch('tests/files/synthesizer-1.bin',
-                                           'tests/files/synthesizer-2.bin',
-                                           'tests/files/synthesizer-1--2.patch')
+        self.assert_create_and_apply_patch('tests/files/synthesizer/1.bin',
+                                           'tests/files/synthesizer/2.bin',
+                                           'tests/files/synthesizer/1--2.patch')
 
     def test_create_and_apply_patch_synthesizer_1_2_arm_cortex_m4(self):
         self.assert_create_and_apply_patch(
-            'tests/files/synthesizer-1.bin',
-            'tests/files/synthesizer-2.bin',
-            'tests/files/synthesizer-1--2-arm-cortex-m4.patch',
+            'tests/files/synthesizer/1.bin',
+            'tests/files/synthesizer/2.bin',
+            'tests/files/synthesizer/1--2-arm-cortex-m4.patch',
             data_format='arm-cortex-m4')
 
     def test_create_and_apply_patch_synthesizer_1_3(self):
-        self.assert_create_and_apply_patch('tests/files/synthesizer-1.bin',
-                                           'tests/files/synthesizer-3.bin',
-                                           'tests/files/synthesizer-1--3.patch')
+        self.assert_create_and_apply_patch('tests/files/synthesizer/1.bin',
+                                           'tests/files/synthesizer/3.bin',
+                                           'tests/files/synthesizer/1--3.patch')
 
     def test_create_and_apply_patch_synthesizer_1_3_arm_cortex_m4(self):
         self.assert_create_and_apply_patch(
-            'tests/files/synthesizer-1.bin',
-            'tests/files/synthesizer-3.bin',
-            'tests/files/synthesizer-1--3-arm-cortex-m4.patch',
+            'tests/files/synthesizer/1.bin',
+            'tests/files/synthesizer/3.bin',
+            'tests/files/synthesizer/1--3-arm-cortex-m4.patch',
             data_format='arm-cortex-m4')
 
     def test_create_and_apply_patch_foo_none_compression(self):
-        self.assert_create_and_apply_patch('tests/files/foo.old',
-                                           'tests/files/foo.new',
-                                           'tests/files/foo-none.patch',
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/none.patch',
                                            compression='none')
 
     def test_create_and_apply_patch_micropython_none_compression(self):
         self.assert_create_and_apply_patch(
-            'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
-            'tests/files/micropython-esp8266-20190125-v1.10.bin',
-            'tests/files/micropython-esp8266-20180511-v1.9.4--'
+            'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython/esp8266-20190125-v1.10.bin',
+            'tests/files/micropython/esp8266-20180511-v1.9.4--'
             '20190125-v1.10-none.patch',
             compression='none')
 
     def test_create_and_apply_patch_foo_crle_compression(self):
-        self.assert_create_and_apply_patch('tests/files/foo.old',
-                                           'tests/files/foo.new',
-                                           'tests/files/foo-crle.patch',
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/crle.patch',
                                            compression='crle')
 
     def test_create_and_apply_patch_micropython_crle_compression(self):
         self.assert_create_and_apply_patch(
-            'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
-            'tests/files/micropython-esp8266-20190125-v1.10.bin',
-            'tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-crle.patch',
+            'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython/esp8266-20190125-v1.10.bin',
+            'tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-crle.patch',
             compression='crle')
 
     def test_create_and_apply_patch_micropython_in_place(self):
         self.assert_create_and_apply_patch(
-            'tests/files/micropython-esp8266-20180511-v1.9.4.bin',
-            'tests/files/micropython-esp8266-20190125-v1.10.bin',
-            'tests/files/micropython-esp8266-20180511-v1.9.4--'
+            'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython/esp8266-20190125-v1.10.bin',
+            'tests/files/micropython/esp8266-20180511-v1.9.4--'
             '20190125-v1.10-in-place.patch',
             patch_type='in-place',
             memory_size=2097152,
@@ -240,43 +240,43 @@ class DetoolsTest(unittest.TestCase):
 
     def test_create_and_apply_patch_foo_in_place_3000_1500(self):
         self.assert_create_and_apply_patch(
-            'tests/files/foo.old',
-            'tests/files/foo.new',
-            'tests/files/foo-in-place-3000-1500.patch',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            'tests/files/foo/in-place-3000-1500.patch',
             patch_type='in-place',
             memory_size=3000,
             segment_size=1500)
 
     def test_create_and_apply_patch_foo_in_place_3k_1_5k(self):
-        self.assert_create_and_apply_patch('tests/files/foo.old',
-                                           'tests/files/foo.new',
-                                           'tests/files/foo-in-place-3k-1.5k.patch',
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/in-place-3k-1.5k.patch',
                                            patch_type='in-place',
                                            memory_size=3072,
                                            segment_size=1536)
 
     def test_create_and_apply_patch_foo_in_place_3000_1500_1500(self):
-        self.assert_create_and_apply_patch('tests/files/foo.old',
-                                           'tests/files/foo.new',
-                                           'tests/files/foo-in-place-3000-1500-1500.patch',
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/in-place-3000-1500-1500.patch',
                                            patch_type='in-place',
                                            memory_size=3000,
                                            segment_size=1500,
                                            minimum_shift_size=1500)
 
     def test_create_and_apply_patch_foo_in_place_3000_500(self):
-        self.assert_create_and_apply_patch('tests/files/foo.old',
-                                           'tests/files/foo.new',
-                                           'tests/files/foo-in-place-3000-500.patch',
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/in-place-3000-500.patch',
                                            patch_type='in-place',
                                            memory_size=3000,
                                            segment_size=500)
 
     def test_create_and_apply_patch_foo_in_place_3000_500_crle(self):
         self.assert_create_and_apply_patch(
-            'tests/files/foo.old',
-            'tests/files/foo.new',
-            'tests/files/foo-in-place-3000-500-crle.patch',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            'tests/files/foo/in-place-3000-500-crle.patch',
             patch_type='in-place',
             compression='crle',
             memory_size=3000,
@@ -284,9 +284,9 @@ class DetoolsTest(unittest.TestCase):
 
     def test_create_and_apply_patch_foo_in_place_6000_1000_crle(self):
         self.assert_create_and_apply_patch(
-            'tests/files/foo.old',
-            'tests/files/foo.new',
-            'tests/files/foo-in-place-6000-1000-crle.patch',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            'tests/files/foo/in-place-6000-1000-crle.patch',
             patch_type='in-place',
             compression='crle',
             memory_size=6000,
@@ -294,9 +294,9 @@ class DetoolsTest(unittest.TestCase):
 
     def test_create_and_apply_patch_foo_in_place_minimum_size(self):
         self.assert_create_and_apply_patch(
-            'tests/files/foo.old',
-            'tests/files/foo.new',
-            'tests/files/foo-in-place-minimum-size.patch',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            'tests/files/foo/in-place-minimum-size.patch',
             patch_type='in-place',
             memory_size=3000,
             segment_size=500,
@@ -304,9 +304,9 @@ class DetoolsTest(unittest.TestCase):
 
     def test_create_and_apply_patch_foo_in_place_many_segments(self):
         self.assert_create_and_apply_patch(
-            'tests/files/foo.old',
-            'tests/files/foo.new',
-            'tests/files/foo-in-place-many-segments.patch',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            'tests/files/foo/in-place-many-segments.patch',
             patch_type='in-place',
             memory_size=3000,
             segment_size=50)
@@ -348,40 +348,40 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/eb9ed88e9975028c4694e070cfaece2498e92d-READ-ME.patch')
 
     def test_create_and_apply_patch_no_delta(self):
-        self.assert_create_and_apply_patch('tests/files/foo.new',
-                                           'tests/files/foo.new',
-                                           'tests/files/foo-no-delta.patch')
+        self.assert_create_and_apply_patch('tests/files/foo/new',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/no-delta.patch')
 
     def test_create_and_apply_patch_empty(self):
-        self.assert_create_and_apply_patch('tests/files/empty.old',
-                                           'tests/files/empty.new',
-                                           'tests/files/empty.patch')
+        self.assert_create_and_apply_patch('tests/files/empty/old',
+                                           'tests/files/empty/new',
+                                           'tests/files/empty/patch')
 
     def test_create_and_apply_patch_empty_none_compression(self):
-        self.assert_create_and_apply_patch('tests/files/empty.old',
-                                           'tests/files/empty.new',
-                                           'tests/files/empty-none.patch',
+        self.assert_create_and_apply_patch('tests/files/empty/old',
+                                           'tests/files/empty/new',
+                                           'tests/files/empty/none.patch',
                                            compression='none')
 
     def test_create_and_apply_patch_empty_crle_compression(self):
-        self.assert_create_and_apply_patch('tests/files/empty.old',
-                                           'tests/files/empty.new',
-                                           'tests/files/empty-crle.patch',
+        self.assert_create_and_apply_patch('tests/files/empty/old',
+                                           'tests/files/empty/new',
+                                           'tests/files/empty/crle.patch',
                                            compression='crle')
 
     def test_create_and_apply_patch_empty_in_place(self):
-        self.assert_create_and_apply_patch('tests/files/empty.old',
-                                           'tests/files/empty.new',
-                                           'tests/files/empty-in-place.patch',
+        self.assert_create_and_apply_patch('tests/files/empty/old',
+                                           'tests/files/empty/new',
+                                           'tests/files/empty/in-place.patch',
                                            patch_type='in-place',
                                            memory_size=30000,
                                            segment_size=500)
 
-    def test_apply_patch_empty(self):
+    def test_apply_patch_foo_empty(self):
         fnew = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-empty.patch', 'rb') as fpatch:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/empty.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
@@ -391,8 +391,8 @@ class DetoolsTest(unittest.TestCase):
     def test_apply_patch_foo_short(self):
         fnew = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-short.patch', 'rb') as fpatch:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/short.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
@@ -402,8 +402,8 @@ class DetoolsTest(unittest.TestCase):
     def test_apply_patch_foo_short_none_compression(self):
         fnew = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-short-none.patch', 'rb') as fpatch:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/short-none.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
@@ -412,8 +412,8 @@ class DetoolsTest(unittest.TestCase):
     def test_apply_patch_foo_long(self):
         fnew = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-bad-lzma-end.patch', 'rb') as fpatch:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/bad-lzma-end.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
@@ -423,8 +423,8 @@ class DetoolsTest(unittest.TestCase):
     def test_apply_patch_foo_diff_data_too_long(self):
         fnew = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-diff-data-too-long.patch', 'rb') as fpatch:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/diff-data-too-long.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
@@ -434,8 +434,8 @@ class DetoolsTest(unittest.TestCase):
     def test_apply_patch_foo_extra_data_too_long(self):
         fnew = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-extra-data-too-long.patch', 'rb') as fpatch:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/extra-data-too-long.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
@@ -445,8 +445,8 @@ class DetoolsTest(unittest.TestCase):
     def test_apply_patch_foo_bad_patch_type(self):
         fnew = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-bad-patch-type.patch', 'rb') as fpatch:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/bad-patch-type.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
@@ -457,8 +457,8 @@ class DetoolsTest(unittest.TestCase):
     def test_create_patch_foo_bad_patch_type(self):
         fpatch = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo.new', 'rb') as fnew:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/new', 'rb') as fnew:
                 with self.assertRaises(detools.Error) as cm:
                     detools.create_patch(fold, fnew, fpatch, patch_type='bad')
 
@@ -467,8 +467,8 @@ class DetoolsTest(unittest.TestCase):
     def test_apply_patch_foo_bad_compression(self):
         fnew = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-bad-compression.patch', 'rb') as fpatch:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/bad-compression.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
@@ -479,8 +479,8 @@ class DetoolsTest(unittest.TestCase):
     def test_create_patch_foo_bad_compression(self):
         fpatch = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo.new', 'rb') as fnew:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/new', 'rb') as fnew:
                 with self.assertRaises(detools.Error) as cm:
                     detools.create_patch(fold, fnew, fpatch, compression='bad')
 
@@ -491,8 +491,8 @@ class DetoolsTest(unittest.TestCase):
     def test_apply_patch_one_byte(self):
         fnew = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-one-byte.patch', 'rb') as fpatch:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/one-byte.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
@@ -502,8 +502,8 @@ class DetoolsTest(unittest.TestCase):
     def test_apply_patch_short_to_size(self):
         fnew = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo-short-to-size.patch', 'rb') as fpatch:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/short-to-size.patch', 'rb') as fpatch:
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
@@ -513,8 +513,8 @@ class DetoolsTest(unittest.TestCase):
     def test_create_patch_in_place_bad_memory_and_segment_size_ratio(self):
         fpatch = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo.new', 'rb') as fnew:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/new', 'rb') as fnew:
                 with self.assertRaises(detools.Error) as cm:
                     detools.create_patch(fold,
                                          fnew,
@@ -530,8 +530,8 @@ class DetoolsTest(unittest.TestCase):
     def test_create_patch_in_place_bad_minimum_shift_and_segment_size_ratio(self):
         fpatch = BytesIO()
 
-        with open('tests/files/foo.old', 'rb') as fold:
-            with open('tests/files/foo.new', 'rb') as fnew:
+        with open('tests/files/foo/old', 'rb') as fold:
+            with open('tests/files/foo/new', 'rb') as fnew:
                 with self.assertRaises(detools.Error) as cm:
                     detools.create_patch(fold,
                                          fnew,
@@ -547,21 +547,21 @@ class DetoolsTest(unittest.TestCase):
 
     def test_patch_info_bad_empty_header(self):
         with self.assertRaises(detools.Error) as cm:
-            detools.patch_info_filename('tests/files/empty.old')
+            detools.patch_info_filename('tests/files/empty/old')
 
         self.assertEqual(str(cm.exception), "Failed to read the patch header.")
 
     def test_patch_info_bad_patch_type(self):
         with self.assertRaises(detools.Error) as cm:
-            detools.patch_info_filename('tests/files/foo-bad-patch-type.patch')
+            detools.patch_info_filename('tests/files/foo/bad-patch-type.patch')
 
         self.assertEqual(str(cm.exception), "Bad patch type 7.")
 
     def test_apply_patch_in_place_small_memory_size(self):
         with self.assertRaises(detools.Error) as cm:
             detools.apply_patch_in_place_filenames(
-                'tests/files/foo.old',
-                'tests/files/foo-in-place-3000-1500.patch')
+                'tests/files/foo/old',
+                'tests/files/foo/in-place-3000-1500.patch')
 
         self.assertEqual(
             str(cm.exception),
@@ -569,14 +569,14 @@ class DetoolsTest(unittest.TestCase):
 
     def test_apply_patch_in_place_foo_retain_after_3000(self):
         with open('foo.mem', 'wb') as fmem:
-            with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo/old', 'rb') as fold:
                 fmem.write(fold.read())
                 fmem.write((3000 - 2780) * b'\xff')
                 fmem.write(b'\x01\x02\x03')
 
         detools.apply_patch_in_place_filenames(
             'foo.mem',
-            'tests/files/foo-in-place-3000-1500.patch')
+            'tests/files/foo/in-place-3000-1500.patch')
 
         with open('foo.mem', 'rb') as fmem:
             data = fmem.read()
@@ -586,9 +586,9 @@ class DetoolsTest(unittest.TestCase):
 
     def test_create_and_apply_patch_foo_data_format_arm_cortex_m4(self):
         self.assert_create_and_apply_patch(
-            'tests/files/foo.old',
-            'tests/files/foo.new',
-            'tests/files/foo-arm-cortex-m4.patch',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            'tests/files/foo/arm-cortex-m4.patch',
             data_format='arm-cortex-m4')
 
 

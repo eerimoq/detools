@@ -18,8 +18,8 @@ class DetoolsCommandLineTest(unittest.TestCase):
         argv = [
             'detools',
             'create_patch',
-            'tests/files/foo.old',
-            'tests/files/foo.new',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
             foo_patch
         ]
 
@@ -30,7 +30,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             detools._main()
 
         self.assertEqual(read_file(foo_patch),
-                         read_file('tests/files/foo.patch'))
+                         read_file('tests/files/foo/patch'))
 
     def test_command_line_apply_patch_foo(self):
         foo_new = 'foo.new'
@@ -38,8 +38,8 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'detools',
             '--debug',
             'apply_patch',
-            'tests/files/foo.old',
-            'tests/files/foo.patch',
+            'tests/files/foo/old',
+            'tests/files/foo/patch',
             foo_new
         ]
 
@@ -50,13 +50,13 @@ class DetoolsCommandLineTest(unittest.TestCase):
             detools._main()
 
         self.assertEqual(read_file(foo_new),
-                         read_file('tests/files/foo.new'))
+                         read_file('tests/files/foo/new'))
 
     def test_command_line_patch_info_foo(self):
         argv = [
             'detools',
             'patch_info',
-            'tests/files/foo.patch'
+            'tests/files/foo/patch'
         ]
         stdout = StringIO()
 
@@ -88,7 +88,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         argv = [
             'detools',
             'patch_info',
-            'tests/files/foo-no-delta.patch'
+            'tests/files/foo/no-delta.patch'
         ]
         stdout = StringIO()
 
@@ -120,7 +120,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         argv = [
             'detools',
             'patch_info',
-            'tests/files/foo-none.patch'
+            'tests/files/foo/none.patch'
         ]
         stdout = StringIO()
 
@@ -152,7 +152,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         argv = [
             'detools',
             'patch_info',
-            'tests/files/foo-crle.patch'
+            'tests/files/foo/crle.patch'
         ]
         stdout = StringIO()
 
@@ -188,8 +188,8 @@ class DetoolsCommandLineTest(unittest.TestCase):
             '--type', 'in-place',
             '--memory-size', '3000',
             '--segment-size', '1500',
-            'tests/files/foo.old',
-            'tests/files/foo.new',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
             foo_patch
         ]
 
@@ -200,7 +200,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             detools._main()
 
         self.assertEqual(read_file(foo_patch),
-                         read_file('tests/files/foo-in-place-3000-1500.patch'))
+                         read_file('tests/files/foo/in-place-3000-1500.patch'))
 
     def test_command_line_apply_patch_foo_in_place(self):
         foo_mem = 'foo.mem'
@@ -209,11 +209,11 @@ class DetoolsCommandLineTest(unittest.TestCase):
             '--debug',
             'apply_patch_in_place',
             foo_mem,
-            'tests/files/foo-in-place-3000-1500.patch'
+            'tests/files/foo/in-place-3000-1500.patch'
         ]
 
         with open(foo_mem, 'wb') as fmem:
-            with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo/old', 'rb') as fold:
                 fmem.write(fold.read() + (3000 - 2780) * b'\xff')
 
         with patch('sys.argv', argv):
@@ -221,13 +221,13 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(
             read_file(foo_mem),
-            read_file('tests/files/foo.new') + (3000 - 2780) * b'\xff')
+            read_file('tests/files/foo/new') + (3000 - 2780) * b'\xff')
 
     def test_command_line_patch_info_foo_in_place(self):
         argv = [
             'detools',
             'patch_info',
-            'tests/files/foo-in-place-3000-1500.patch'
+            'tests/files/foo/in-place-3000-1500.patch'
         ]
         stdout = StringIO()
 
@@ -290,7 +290,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'detools',
             'patch_info',
             '--no-human',
-            'tests/files/foo-in-place-3000-1500.patch'
+            'tests/files/foo/in-place-3000-1500.patch'
         ]
         stdout = StringIO()
 
@@ -356,8 +356,8 @@ class DetoolsCommandLineTest(unittest.TestCase):
             '--type', 'in-place',
             '--memory-size', '3k',
             '--segment-size', '1.5k',
-            'tests/files/foo.old',
-            'tests/files/foo.new',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
             foo_patch
         ]
 
@@ -368,7 +368,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             detools._main()
 
         self.assertEqual(read_file(foo_patch),
-                         read_file('tests/files/foo-in-place-3k-1.5k.patch'))
+                         read_file('tests/files/foo/in-place-3k-1.5k.patch'))
 
     def test_command_line_apply_patch_foo_in_place_size_units(self):
         foo_mem = 'foo.mem'
@@ -377,11 +377,11 @@ class DetoolsCommandLineTest(unittest.TestCase):
             '--debug',
             'apply_patch_in_place',
             foo_mem,
-            'tests/files/foo-in-place-3k-1.5k.patch'
+            'tests/files/foo/in-place-3k-1.5k.patch'
         ]
 
         with open(foo_mem, 'wb') as fmem:
-            with open('tests/files/foo.old', 'rb') as fold:
+            with open('tests/files/foo/old', 'rb') as fold:
                 fmem.write(fold.read() + (3072 - 2780) * b'\xff')
 
         with patch('sys.argv', argv):
@@ -389,13 +389,13 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(
             read_file(foo_mem),
-            read_file('tests/files/foo.new') + (3072 - 2780) * b'\xff')
+            read_file('tests/files/foo/new') + (3072 - 2780) * b'\xff')
 
     def test_command_line_patch_info_foo_in_place_size_units(self):
         argv = [
             'detools',
             'patch_info',
-            'tests/files/foo-in-place-3k-1.5k.patch'
+            'tests/files/foo/in-place-3k-1.5k.patch'
         ]
         stdout = StringIO()
 
@@ -457,7 +457,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         argv = [
             'detools',
             'patch_info',
-            'tests/files/empty.patch'
+            'tests/files/empty/patch'
         ]
         stdout = StringIO()
 
@@ -490,7 +490,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         argv = [
             'detools',
             'patch_info',
-            'tests/files/empty-in-place.patch'
+            'tests/files/empty/in-place.patch'
         ]
         stdout = StringIO()
 
@@ -516,7 +516,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         argv = [
             'detools',
             'patch_info',
-            'tests/files/shell.patch'
+            'tests/files/shell/patch'
         ]
         stdout = StringIO()
 
@@ -549,7 +549,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         argv = [
             'detools',
             'patch_info',
-            'tests/files/shell-arm-cortex-m4.patch'
+            'tests/files/shell/arm-cortex-m4.patch'
         ]
         stdout = StringIO()
 

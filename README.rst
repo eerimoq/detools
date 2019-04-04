@@ -125,12 +125,12 @@ Command line tool
 The create patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Create a patch ``foo.patch`` from ``tests/files/foo.old`` to
-``tests/files/foo.new``.
+Create a patch ``foo.patch`` from ``tests/files/foo/old`` to
+``tests/files/foo/new``.
 
 .. code-block:: text
 
-   $ detools create_patch tests/files/foo.old tests/files/foo.new foo.patch
+   $ detools create_patch tests/files/foo/old tests/files/foo/new foo.patch
    $ ls -l foo.patch
    -rw-rw-r-- 1 erik erik 127 Mar  1 19:18 foo.patch
 
@@ -139,7 +139,7 @@ Create the same patch as above, but without compression.
 .. code-block:: text
 
    $ detools create_patch --compression none \
-         tests/files/foo.old tests/files/foo.new foo-no-compression.patch
+         tests/files/foo/old tests/files/foo/new foo-no-compression.patch
    $ ls -l foo-no-compression.patch
    -rw-rw-r-- 1 erik erik 2792 Mar  1 19:18 foo-no-compression.patch
 
@@ -148,19 +148,19 @@ Create an in-place patch ``foo-in-place.patch``.
 .. code-block:: text
 
    $ detools create_patch --type in-place --memory-size 3000 --segment-size 500 \
-         tests/files/foo.old tests/files/foo.new foo-in-place.patch
+         tests/files/foo/old tests/files/foo/new foo-in-place.patch
    $ ls -l foo-in-place.patch
    -rw-rw-r-- 1 erik erik 672 Mar 16 08:49 foo-in-place.patch
 
 The apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Apply the patch ``foo.patch`` to ``tests/files/foo.old`` to create
+Apply the patch ``foo.patch`` to ``tests/files/foo/old`` to create
 ``foo.new``.
 
 .. code-block:: text
 
-   $ detools apply_patch tests/files/foo.old foo.patch foo.new
+   $ detools apply_patch tests/files/foo/old foo.patch foo.new
    $ ls -l foo.new
    -rw-rw-r-- 1 erik erik 2780 Mar  1 19:18 foo.new
 
@@ -171,7 +171,7 @@ Apply the in-place patch ``foo-in-place.patch`` to ``foo.mem``.
 
 .. code-block:: text
 
-   $ cp tests/files/foo.old foo.mem
+   $ cp tests/files/foo/old foo.mem
    $ detools apply_patch_in_place foo.mem foo-in-place.patch
    $ ls -l foo.mem
    -rwxrwxr-x 1 erik erik 2780 Mar 16 08:51 foo.mem
