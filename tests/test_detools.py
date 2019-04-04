@@ -1,3 +1,4 @@
+import logging
 import unittest
 from io import BytesIO
 
@@ -590,6 +591,10 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/foo-arm-cortex-m4.patch',
             data_format='arm-cortex-m4')
 
+
+# This file is not '__main__' when executed via 'python setup.py3
+# test'.
+logging.basicConfig(level=logging.DEBUG)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,4 +1,5 @@
 import os
+import logging
 import struct
 from io import BytesIO
 from io import StringIO
@@ -11,6 +12,9 @@ from .utils import Blocks
 from .utils import get_matching_blocks
 from ..common import pack_size
 from ..common import unpack_size
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class DiffReader(object):
@@ -204,6 +208,8 @@ def disassemble_data(reader,
     data = reader.read(4)
 
     if len(data) != 4:
+        LOGGER.debug('Failed to read 4 data bytes at address 0x%x.',
+                     address)
         return
 
     value = struct.unpack('<I', data)[0]
@@ -257,7 +263,14 @@ def unpack_bl(upper_16, lower_16):
 
 
 def disassemble_bw_bl(reader, address, bw, bl, upper_16):
-    lower_16 = struct.unpack('<H', reader.read(2))[0]
+    data = reader.read(2)
+
+    if len(data) != 2:
+        LOGGER.debug('Failed to read 2 bw/bl bytes at address 0x%x.',
+                     address + 2)
+        return
+
+    lower_16 = struct.unpack('<H', data)[0]
 
     if (lower_16 & 0xd000) == 0xd000:
         bl[address] = unpack_bl(upper_16, lower_16)
@@ -276,6 +289,8 @@ def disassemble_ldr_common(reader, address, ldr, imm):
     reader.seek(position)
 
     if len(data) != 4:
+        LOGGER.debug('Failed to read 4 ldr common bytes at address 0x%x.',
+                     address)
         return
 
     ldr[address] = struct.unpack('<i', data)[0]
@@ -290,6 +305,8 @@ def disassemble_ldr_w(reader, address, ldr_w):
     data = reader.read(2)
 
     if len(data) != 2:
+        LOGGER.debug('Failed to read 2 ldr.w bytes at address 0x%x.',
+                     address + 2)
         return
 
     lower_16 = struct.unpack('<H', data)[0]
@@ -330,9 +347,18 @@ def disassemble(reader,
                              data_pointers,
                              code_pointers)
         elif address in ldr or address in ldr_w:
-            reader.read(4)
+            if len(reader.read(4)) != 4:
+                LOGGER.debug('Failed to read 4 ldr/ldr.w bytes at address 0x%x.',
+                             address)
         else:
-            upper_16 = struct.unpack('<H', reader.read(2))[0]
+            data = reader.read(2)
+
+            if len(data) != 2:
+                LOGGER.debug('Failed to read 2 upper bytes at address 0x%x.',
+                             address)
+                continue
+
+            upper_16 = struct.unpack('<H', data)[0]
 
             if (upper_16 & 0xf800) == 0xf000:
                 disassemble_bw_bl(reader, address, bw, bl, upper_16)
