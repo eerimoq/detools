@@ -132,7 +132,7 @@ Create a patch ``foo.patch`` from ``tests/files/foo.old`` to
 
    $ detools create_patch tests/files/foo.old tests/files/foo.new foo.patch
    $ ls -l foo.patch
-   -rw-rw-r-- 1 erik erik 126 Mar  1 19:18 foo.patch
+   -rw-rw-r-- 1 erik erik 127 Mar  1 19:18 foo.patch
 
 Create the same patch as above, but without compression.
 
@@ -141,7 +141,7 @@ Create the same patch as above, but without compression.
    $ detools create_patch --compression none \
          tests/files/foo.old tests/files/foo.new foo-no-compression.patch
    $ ls -l foo-no-compression.patch
-   -rw-rw-r-- 1 erik erik 2791 Mar  1 19:18 foo-no-compression.patch
+   -rw-rw-r-- 1 erik erik 2792 Mar  1 19:18 foo-no-compression.patch
 
 Create an in-place patch ``foo-in-place.patch``.
 
@@ -150,7 +150,7 @@ Create an in-place patch ``foo-in-place.patch``.
    $ detools create_patch --type in-place --memory-size 3000 --segment-size 500 \
          tests/files/foo.old tests/files/foo.new foo-in-place.patch
    $ ls -l foo-in-place.patch
-   -rw-rw-r-- 1 erik erik 662 Mar 16 08:49 foo-in-place.patch
+   -rw-rw-r-- 1 erik erik 672 Mar 16 08:49 foo-in-place.patch
 
 The apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -185,9 +185,9 @@ Print information about the patch ``foo.patch``.
 
    $ detools patch_info foo.patch
    Type:               normal
-   Patch size:         126 bytes
+   Patch size:         127 bytes
    To size:            2.71 KiB
-   Patch/to ratio:     4.5 % (lower is better)
+   Patch/to ratio:     4.6 % (lower is better)
    Diff/extra ratio:   9828.6 % (higher is better)
    Size/data ratio:    0.3 % (lower is better)
    Compression:        lzma
