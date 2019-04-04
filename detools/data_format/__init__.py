@@ -2,7 +2,8 @@ from ..errors import Error
 from ..common import DATA_FORMAT_ARM_CORTEX_M4
 from ..common import format_bad_data_format
 from ..common import format_bad_data_format_number
-from . import arm
+from . import aarch64
+from . import arm_cortex_m4
 
 
 def encode(ffrom,
@@ -24,8 +25,10 @@ def encode(ffrom,
 
     """
 
-    if data_format == 'arm-cortex-m4':
-        return arm.cortex_m4_encode(ffrom,
+    if data_format == 'aarch64':
+        return aarch64.encode(ffrom, fto)
+    elif data_format == 'arm-cortex-m4':
+        return arm_cortex_m4.encode(ffrom,
                                     fto,
                                     from_data_offset,
                                     from_data_begin,
@@ -47,7 +50,7 @@ def create_readers(data_format, ffrom, patch, to_size):
     """
 
     if data_format == DATA_FORMAT_ARM_CORTEX_M4:
-        return arm.cortex_m4_create_readers(ffrom, patch, to_size)
+        return arm_cortex_m4.create_readers(ffrom, patch, to_size)
     else:
         raise Error(format_bad_data_format_number(data_format))
 
@@ -58,6 +61,6 @@ def info(data_format, patch, fsize):
     """
 
     if data_format == DATA_FORMAT_ARM_CORTEX_M4:
-        return arm.cortex_m4_info(patch, fsize)
+        return arm_cortex_m4.info(patch, fsize)
     else:
         raise Error(format_bad_data_format_number(data_format))

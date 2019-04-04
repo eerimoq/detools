@@ -19,7 +19,8 @@ COMPRESSIONS = {
 DATA_FORMAT_ARM_CORTEX_M4 = 0
 
 DATA_FORMATS = {
-    'arm-cortex-m4': 0
+    'arm-cortex-m4': 0,
+    'aarch64': 1
 }
 
 

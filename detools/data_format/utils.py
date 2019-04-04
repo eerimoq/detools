@@ -85,3 +85,43 @@ def get_matching_blocks(from_addresses, to_addresses):
     sm = difflib.SequenceMatcher(None, from_offsets, to_offsets)
 
     return sm.get_matching_blocks()[:-1]
+
+
+def create_patch_block_4_bytes(ffrom, fto, from_dict, to_dict):
+    """Returns a bytes object of blocks.
+
+    """
+
+    blocks = Blocks()
+
+    if not from_dict or not to_dict:
+        return blocks.to_bytes()
+
+    from_sorted = sorted(from_dict.items())
+    to_sorted = sorted(to_dict.items())
+    from_addresses, from_values = zip(*from_sorted)
+    to_addresses, to_values = zip(*to_sorted)
+    matching_blocks = get_matching_blocks(from_addresses, to_addresses)
+
+    for from_offset, to_offset, size in matching_blocks:
+        # Skip small blocks as the block overhead is too big.
+        if size < 8:
+            continue
+
+        size += 1
+        from_slice = from_values[from_offset:from_offset + size]
+        to_slice = to_values[to_offset:to_offset + size]
+        blocks.append(from_offset,
+                      to_addresses[to_offset],
+                      [fv - tv for fv, tv in zip(from_slice, to_slice)])
+
+        # Overwrite blocks with zeros.
+        for address in from_addresses[from_offset:from_offset + size]:
+            ffrom.seek(address)
+            ffrom.write(4 * b'\x00')
+
+        for address in to_addresses[to_offset:to_offset + size]:
+            fto.seek(address)
+            fto.write(4 * b'\x00')
+
+    return blocks.to_bytes()

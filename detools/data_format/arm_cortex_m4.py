@@ -9,9 +9,9 @@ import bitstruct
 from ..common import file_size
 from ..common import file_read
 from .utils import Blocks
-from .utils import get_matching_blocks
 from ..common import pack_size
 from ..common import unpack_size
+from .utils import create_patch_block_4_bytes as create_patch_block
 
 
 LOGGER = logging.getLogger(__name__)
@@ -155,46 +155,6 @@ class FromReader(object):
                 from_address = from_sorted[from_offset + i][0]
                 self._ffrom.seek(from_address)
                 self._ffrom.write(4 * b'\x00')
-
-
-def create_patch_block(ffrom, fto, from_dict, to_dict):
-    """Returns a bytes object of blocks.
-
-    """
-
-    blocks = Blocks()
-
-    if not from_dict or not to_dict:
-        return blocks.to_bytes()
-
-    from_sorted = sorted(from_dict.items())
-    to_sorted = sorted(to_dict.items())
-    from_addresses, from_values = zip(*from_sorted)
-    to_addresses, to_values = zip(*to_sorted)
-    matching_blocks = get_matching_blocks(from_addresses, to_addresses)
-
-    for from_offset, to_offset, size in matching_blocks:
-        # Skip small blocks as the block overhead is too big.
-        if size < 8:
-            continue
-
-        size += 1
-        from_slice = from_values[from_offset:from_offset + size]
-        to_slice = to_values[to_offset:to_offset + size]
-        blocks.append(from_offset,
-                      to_addresses[to_offset],
-                      [fv - tv for fv, tv in zip(from_slice, to_slice)])
-
-        # Overwrite blocks with zeros.
-        for address in from_addresses[from_offset:from_offset + size]:
-            ffrom.seek(address)
-            ffrom.write(4 * b'\x00')
-
-        for address in to_addresses[to_offset:to_offset + size]:
-            fto.seek(address)
-            fto.write(4 * b'\x00')
-
-    return blocks.to_bytes()
 
 
 def disassemble_data(reader,
@@ -376,18 +336,18 @@ def disassemble(reader,
     return bw, bl, ldr, ldr_w, data_pointers, code_pointers
 
 
-def cortex_m4_encode(ffrom,
-                     fto,
-                     from_data_offset,
-                     from_data_begin,
-                     from_data_end,
-                     from_code_begin,
-                     from_code_end,
-                     to_data_offset,
-                     to_data_begin,
-                     to_data_end,
-                     to_code_begin,
-                     to_code_end):
+def encode(ffrom,
+           fto,
+           from_data_offset,
+           from_data_begin,
+           from_data_end,
+           from_code_begin,
+           from_code_end,
+           to_data_offset,
+           to_data_begin,
+           to_data_end,
+           to_code_begin,
+           to_code_end):
     ffrom = BytesIO(file_read(ffrom))
     fto = BytesIO(file_read(fto))
     (from_bw,
@@ -444,7 +404,7 @@ def cortex_m4_encode(ffrom,
     return ffrom, fto, patch
 
 
-def cortex_m4_create_readers(ffrom, patch, to_size):
+def create_readers(ffrom, patch, to_size):
     """Return diff and from readers, used when applying a patch.
 
     """
@@ -546,7 +506,7 @@ def load_blocks(fpatch):
     return blocks, blocks_size
 
 
-def cortex_m4_info(patch, fsize):
+def info(patch, fsize):
     fpatch = BytesIO(patch)
     data_pointers_blocks_present = (fpatch.read(1) == b'\x01')
 
