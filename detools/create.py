@@ -12,6 +12,7 @@ from .common import compression_string_to_number
 from .common import div_ceil
 from .common import file_size
 from .common import file_read
+from .common import pack_size
 from .data_format import encode as data_format_encode
 
 try:
@@ -63,7 +64,7 @@ def create_patch_normal_data(ffrom,
     compressor = create_compressor(compression)
 
     if data_format is None:
-        dfpatch = bsdiff.pack_size(0)
+        dfpatch = pack_size(0)
     else:
         ffrom, fto, patch = data_format_encode(
             ffrom,
@@ -86,8 +87,8 @@ def create_patch_normal_data(ffrom,
         # with open('data-format-to.bin', 'wb') as fout:
         #     fout.write(file_read(fto))
 
-        dfpatch = bsdiff.pack_size(len(patch))
-        dfpatch += bsdiff.pack_size(DATA_FORMATS[data_format])
+        dfpatch = pack_size(len(patch))
+        dfpatch += pack_size(DATA_FORMATS[data_format])
         dfpatch += patch
 
     fpatch.write(compressor.compress(dfpatch))
@@ -118,7 +119,7 @@ def create_patch_normal(ffrom,
                         to_code_size):
     fpatch.write(pack_header(PATCH_TYPE_NORMAL,
                              compression_string_to_number(compression)))
-    fpatch.write(bsdiff.pack_size(file_size(fto)))
+    fpatch.write(pack_size(file_size(fto)))
     create_patch_normal_data(ffrom,
                              fto,
                              fpatch,
@@ -216,11 +217,11 @@ def create_patch_in_place(ffrom,
     # Create the patch.
     fpatch.write(pack_header(PATCH_TYPE_IN_PLACE,
                              compression_string_to_number(compression)))
-    fpatch.write(bsdiff.pack_size(memory_size))
-    fpatch.write(bsdiff.pack_size(segment_size))
-    fpatch.write(bsdiff.pack_size(shift_size))
-    fpatch.write(bsdiff.pack_size(from_size))
-    fpatch.write(bsdiff.pack_size(to_size))
+    fpatch.write(pack_size(memory_size))
+    fpatch.write(pack_size(segment_size))
+    fpatch.write(pack_size(shift_size))
+    fpatch.write(pack_size(from_size))
+    fpatch.write(pack_size(to_size))
 
     if to_size == 0:
         return

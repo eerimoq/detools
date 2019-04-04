@@ -20,7 +20,7 @@ def encode(ffrom,
            to_code_end):
     """Returns the new from-data and to-data, along with a patch that can
     be used to convert the new from-data to the original to-data later
-    (in the decode function).
+    (by the diff and from readers).
 
     """
 
@@ -42,7 +42,7 @@ def encode(ffrom,
 
 
 def create_readers(data_format, ffrom, patch, to_size):
-    """Return diff and from readers, used when applying a patch.
+    """Returns diff and from readers, used when applying a patch.
 
     """
 
@@ -53,6 +53,10 @@ def create_readers(data_format, ffrom, patch, to_size):
 
 
 def info(data_format, patch, fsize):
+    """Returns an info string.
+
+    """
+
     if data_format == DATA_FORMAT_ARM_CORTEX_M4:
         return arm.cortex_m4_info(patch, fsize)
     else:

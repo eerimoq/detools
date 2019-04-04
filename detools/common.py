@@ -1,6 +1,11 @@
 import os
 from .errors import Error
 
+try:
+    from .cbsdiff import pack_size
+except ImportError:
+    from .bsdiff import pack_size
+
 
 PATCH_TYPE_NORMAL    = 0
 PATCH_TYPE_IN_PLACE  = 1

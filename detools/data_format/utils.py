@@ -1,12 +1,8 @@
 from io import StringIO
 import difflib
 from contextlib import redirect_stdout
+from ..common import pack_size
 from ..common import unpack_size
-
-try:
-    from .. import cbsdiff as bsdiff
-except ImportError:
-    from .. import bsdiff as bsdiff
 
 
 class Blocks(object):
@@ -25,13 +21,13 @@ class Blocks(object):
         self._blocks.append((from_offset, to_address, values))
 
     def to_bytes(self):
-        data = [bsdiff.pack_size(len(self._blocks))]
+        data = [pack_size(len(self._blocks))]
 
         for from_offset, to_address, values in self._blocks:
-            data.append(bsdiff.pack_size(from_offset))
-            data.append(bsdiff.pack_size(to_address))
-            data.append(bsdiff.pack_size(len(values)))
-            data.extend([bsdiff.pack_size(value) for value in values])
+            data.append(pack_size(from_offset))
+            data.append(pack_size(to_address))
+            data.append(pack_size(len(values)))
+            data.extend([pack_size(value) for value in values])
 
         return b''.join(data)
 
