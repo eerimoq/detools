@@ -259,105 +259,105 @@ static void assert_apply_patch_error(const char *from_p,
 
 static void test_apply_patch_foo(void)
 {
-    assert_apply_patch("tests/files/foo.old",
-                       "tests/files/foo.patch",
-                       "tests/files/foo.new");
+    assert_apply_patch("tests/files/foo/old",
+                       "tests/files/foo/patch",
+                       "tests/files/foo/new");
 }
 
 static void test_apply_patch_foo_backwards(void)
 {
-    assert_apply_patch("tests/files/foo.new",
-                       "tests/files/foo-backwards.patch",
-                       "tests/files/foo.old");
+    assert_apply_patch("tests/files/foo/new",
+                       "tests/files/foo/backwards.patch",
+                       "tests/files/foo/old");
 }
 
 static void test_apply_patch_micropython(void)
 {
     assert_apply_patch(
-        "tests/files/micropython-esp8266-20180511-v1.9.4.bin",
-        "tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10.patch",
-        "tests/files/micropython-esp8266-20190125-v1.10.bin");
+        "tests/files/micropython/esp8266-20180511-v1.9.4.bin",
+        "tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10.patch",
+        "tests/files/micropython/esp8266-20190125-v1.10.bin");
 }
 
 static void test_apply_patch_foo_none_compression(void)
 {
-    assert_apply_patch("tests/files/foo.old",
-                       "tests/files/foo-none.patch",
-                       "tests/files/foo.new");
+    assert_apply_patch("tests/files/foo/old",
+                       "tests/files/foo/none.patch",
+                       "tests/files/foo/new");
 }
 
 static void test_apply_patch_micropython_none_compression(void)
 {
     assert_apply_patch(
-        "tests/files/micropython-esp8266-20180511-v1.9.4.bin",
-        "tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-none.patch",
-        "tests/files/micropython-esp8266-20190125-v1.10.bin");
+        "tests/files/micropython/esp8266-20180511-v1.9.4.bin",
+        "tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-none.patch",
+        "tests/files/micropython/esp8266-20190125-v1.10.bin");
 }
 
 static void test_apply_patch_foo_crle_compression(void)
 {
-    assert_apply_patch("tests/files/foo.old",
-                       "tests/files/foo-crle.patch",
-                       "tests/files/foo.new");
+    assert_apply_patch("tests/files/foo/old",
+                       "tests/files/foo/crle.patch",
+                       "tests/files/foo/new");
 }
 
 static void test_apply_patch_micropython_crle_compression(void)
 {
     assert_apply_patch(
-        "tests/files/micropython-esp8266-20180511-v1.9.4.bin",
-        "tests/files/micropython-esp8266-20180511-v1.9.4--20190125-v1.10-crle.patch",
-        "tests/files/micropython-esp8266-20190125-v1.10.bin");
+        "tests/files/micropython/esp8266-20180511-v1.9.4.bin",
+        "tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-crle.patch",
+        "tests/files/micropython/esp8266-20190125-v1.10.bin");
 }
 
 static void test_apply_patch_micropython_in_place(void)
 {
     assert_apply_patch_error(
-        "tests/files/micropython-esp8266-20180511-v1.9.4.bin",
-        "tests/files/micropython-esp8266-20180511-v1.9.4--"
+        "tests/files/micropython/esp8266-20180511-v1.9.4.bin",
+        "tests/files/micropython/esp8266-20180511-v1.9.4--"
         "20190125-v1.10-in-place.patch",
         -DETOOLS_BAD_PATCH_TYPE);
 }
 
 static void test_apply_patch_foo_in_place_3000_1500(void)
 {
-    assert_apply_patch_in_place("tests/files/foo.old",
-                                "tests/files/foo-in-place-3000-1500.patch",
-                                "tests/files/foo.new",
+    assert_apply_patch_in_place("tests/files/foo/old",
+                                "tests/files/foo/in-place-3000-1500.patch",
+                                "tests/files/foo/new",
                                 3000);
 }
 
 static void test_apply_patch_foo_in_place_3k_1_5k(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-in-place-3k-1.5k.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/in-place-3k-1.5k.patch",
                              -DETOOLS_BAD_PATCH_TYPE);
 }
 
 static void test_apply_patch_foo_in_place_3000_1500_1500(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-in-place-3000-1500-1500.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/in-place-3000-1500-1500.patch",
                              -DETOOLS_BAD_PATCH_TYPE);
 }
 
 static void test_apply_patch_foo_in_place_3000_500(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-in-place-3000-500.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/in-place-3000-500.patch",
                              -DETOOLS_BAD_PATCH_TYPE);
 }
 
 static void test_apply_patch_foo_in_place_3000_500_crle(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-in-place-3000-500-crle.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/in-place-3000-500-crle.patch",
                              -DETOOLS_BAD_PATCH_TYPE);
 }
 
 static void test_apply_patch_foo_in_place_6000_1000_crle(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-in-place-6000-1000-crle.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/in-place-6000-1000-crle.patch",
                              -DETOOLS_BAD_PATCH_TYPE);
 }
 
@@ -409,107 +409,107 @@ static void test_apply_patch_eb9ed88e9975028c4694e070cfaece2498e92d(void)
 
 static void test_apply_patch_no_delta(void)
 {
-    assert_apply_patch("tests/files/foo.new",
-                       "tests/files/foo-no-delta.patch",
-                       "tests/files/foo.new");
+    assert_apply_patch("tests/files/foo/new",
+                       "tests/files/foo/no-delta.patch",
+                       "tests/files/foo/new");
 }
 
 static void test_apply_patch_empty(void)
 {
-    assert_apply_patch("tests/files/empty.old",
-                       "tests/files/empty.patch",
-                       "tests/files/empty.new");
+    assert_apply_patch("tests/files/empty/old",
+                       "tests/files/empty/patch",
+                       "tests/files/empty/new");
 }
 
 static void test_apply_patch_empty_none_compression(void)
 {
-    assert_apply_patch("tests/files/empty.old",
-                       "tests/files/empty-none.patch",
-                       "tests/files/empty.new");
+    assert_apply_patch("tests/files/empty/old",
+                       "tests/files/empty/none.patch",
+                       "tests/files/empty/new");
 }
 
 static void test_apply_patch_empty_crle_compression(void)
 {
-    assert_apply_patch("tests/files/empty.old",
-                       "tests/files/empty.patch",
-                       "tests/files/empty.new");
+    assert_apply_patch("tests/files/empty/old",
+                       "tests/files/empty/patch",
+                       "tests/files/empty/new");
 }
 
 static void test_apply_patch_foo_short(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-short.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/short.patch",
                              -DETOOLS_CORRUPT_PATCH);
 }
 
 static void test_apply_patch_foo_short_none_compression(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-short-none.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/short-none.patch",
                              -DETOOLS_CORRUPT_PATCH);
 }
 
 static void test_apply_patch_foo_long(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-bad-lzma-end.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/bad-lzma-end.patch",
                              -DETOOLS_LZMA_DECODE);
 }
 
 static void test_apply_patch_foo_diff_data_too_long(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-diff-data-too-long.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/diff-data-too-long.patch",
                              -DETOOLS_CORRUPT_PATCH);
 }
 
 static void test_apply_patch_foo_extra_data_too_long(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-extra-data-too-long.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/extra-data-too-long.patch",
                              -DETOOLS_CORRUPT_PATCH);
 }
 
 static void test_apply_patch_foo_bad_patch_type(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-bad-patch-type.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/bad-patch-type.patch",
                              -DETOOLS_BAD_PATCH_TYPE);
 }
 
 static void test_apply_patch_foo_bad_compression(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-bad-compression.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/bad-compression.patch",
                              -DETOOLS_BAD_COMPRESSION);
 }
 
 static void test_apply_patch_one_byte(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-one-byte.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/one-byte.patch",
                              -DETOOLS_SHORT_HEADER);
 }
 
 static void test_apply_patch_short_to_size(void)
 {
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-short-to-size.patch",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/short-to-size.patch",
                              -DETOOLS_SHORT_HEADER);
 }
 
 static void test_apply_patch_file_open_error(void)
 {
-    assert_apply_patch_error("tests/files/foo.old.missing",
-                             "tests/files/foo-bad-compression.patch",
+    assert_apply_patch_error("tests/files/foo/old.missing",
+                             "tests/files/foo/bad-compression.patch",
                              -DETOOLS_FILE_OPEN_FAILED);
 
-    assert_apply_patch_error("tests/files/foo.old",
-                             "tests/files/foo-bad-compression.patch.missing",
+    assert_apply_patch_error("tests/files/foo/old",
+                             "tests/files/foo/bad-compression.patch.missing",
                              -DETOOLS_FILE_OPEN_FAILED);
 
-    assert(detools_apply_patch_filenames("tests/files/foo.old",
-                                         "tests/files/foo-bad-compression.patch",
+    assert(detools_apply_patch_filenames("tests/files/foo/old",
+                                         "tests/files/foo/bad-compression.patch",
                                          "") == -DETOOLS_FILE_OPEN_FAILED);
 }
 
@@ -523,8 +523,8 @@ static void test_apply_patch_foo_incremental(void)
     size_t patch_offset;
     int res;
 
-    io_init(&io, "tests/files/foo.old", "tests/files/foo.new");
-    patch_p = patch_init("tests/files/foo.patch", &patch_size);
+    io_init(&io, "tests/files/foo/old", "tests/files/foo/new");
+    patch_p = patch_init("tests/files/foo/patch", &patch_size);
     expected_patch_size = patch_size;
 
     assert(detools_apply_patch_init(&apply_patch,
@@ -555,7 +555,7 @@ static void test_apply_patch_foo_incremental_init_finalize(void)
     struct detools_apply_patch_t apply_patch;
     struct io_t io;
 
-    io_init(&io, "tests/files/foo.old", "tests/files/foo.new");
+    io_init(&io, "tests/files/foo/old", "tests/files/foo/new");
 
     assert(detools_apply_patch_init(&apply_patch,
                                     io_read,
@@ -573,8 +573,8 @@ static void test_apply_patch_foo_incremental_process_once(void)
     const uint8_t *patch_p;
     size_t patch_size;
 
-    io_init(&io, "tests/files/foo.old", "tests/files/foo.new");
-    patch_p = patch_init("tests/files/foo.patch", &patch_size);
+    io_init(&io, "tests/files/foo/old", "tests/files/foo/new");
+    patch_p = patch_init("tests/files/foo/patch", &patch_size);
 
     assert(detools_apply_patch_init(&apply_patch,
                                     io_read,

@@ -58,13 +58,13 @@ test-c:
 	$(CC) $(CFLAGS) $(C_SOURCES) -llzma -o main
 	./main
 	$(MAKE) -C src/c
-	src/c/detools apply_patch tests/files/foo.old tests/files/foo.patch foo.new
-	cmp foo.new tests/files/foo.new
+	src/c/detools apply_patch tests/files/foo/old tests/files/foo/patch foo.new
+	cmp foo.new tests/files/foo/new
 	! src/c/detools
 	! src/c/detools apply_patch
-	! src/c/detools apply_patch tests/files/foo.old tests/files/foo.patch
+	! src/c/detools apply_patch tests/files/foo/old tests/files/foo/patch
 	! src/c/detools apply_patch_in_place
-	! src/c/detools apply_patch_in_place tests/files/foo.old
+	! src/c/detools apply_patch_in_place tests/files/foo/old
 
 test-c-fuzzer:
 	clang $(FUZZER_CFLAGS) src/c/detools.c tests/fuzzer.c -l lzma -o fuzzer
