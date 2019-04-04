@@ -49,9 +49,6 @@ class Blocks(object):
         fout = StringIO()
 
         with redirect_stdout(fout):
-            print('Blocks(', end='')
-            print('number_of_blocks={}, '.format(len(self._blocks)), end='')
-            print('blocks=[', end='')
             blocks = []
 
             for from_offset, to_address, values in self._blocks:
@@ -62,14 +59,17 @@ class Blocks(object):
                         to_address,
                         len(values)))
 
-            print(', '.join(blocks), end='')
-            print('])')
+            print(
+                'Blocks(number_of_blocks={}, blocks=[{}])'.format(
+                    len(self._blocks),
+                    ', '.join(blocks)),
+                end='')
 
         return fout.getvalue()
 
 
 def get_matching_blocks(from_addresses, to_addresses):
-    """Returns matching blocks.
+    """Returns matching blocks based on address differences.
 
     """
 
@@ -83,6 +83,5 @@ def get_matching_blocks(from_addresses, to_addresses):
         to_offsets.append(to_addresses[i + 1] - to_addresses[i])
 
     sm = difflib.SequenceMatcher(None, from_offsets, to_offsets)
-    matching_blocks = sm.get_matching_blocks()[:-1]
 
-    return matching_blocks
+    return sm.get_matching_blocks()[:-1]
