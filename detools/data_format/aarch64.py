@@ -27,15 +27,18 @@ class DiffReader(object):
                  b,
                  bl,
                  add,
+                 ldr,
                  b_blocks,
                  bl_blocks,
-                 add_blocks):
+                 add_blocks,
+                 ldr_blocks):
         self._ffrom = ffrom
         # ToDo: Calculate in read() for less memory usage.
         self._fdiff = BytesIO(b'\x00' * to_size)
         self._write_values_to_to(b_blocks, b)
         self._write_values_to_to(bl_blocks, bl)
         self._write_add_values_to_to(add_blocks, add)
+        self._write_values_to_to(ldr_blocks, ldr)
         self._fdiff.seek(0)
 
     def read(self, size=-1):
@@ -78,14 +81,17 @@ class FromReader(object):
                  b,
                  bl,
                  add,
+                 ldr,
                  b_blocks,
                  bl_blocks,
-                 add_blocks):
+                 add_blocks,
+                 ldr_blocks):
         # ToDo: Calculate in read() for less memory usage.
         self._ffrom = BytesIO(file_read(ffrom))
         write_zeros_to_from(self._ffrom, b_blocks, b)
         write_zeros_to_from(self._ffrom, bl_blocks, bl)
         write_zeros_to_from(self._ffrom, add_blocks, add)
+        write_zeros_to_from(self._ffrom, ldr_blocks, ldr)
 
     def read(self, size=-1):
         return self._ffrom.read(size)
@@ -119,8 +125,10 @@ def disassemble_add(address, add, upper_32):
         add[address] = value
 
 
-def disassemble_ldr(reader, address, ldr, upper_32):
-    ldr[address] = upper_32
+def disassemble_ldr(reader, address, ldr):
+    reader.seek(-4, os.SEEK_CUR)
+    data = reader.read(4)
+    ldr[address] = struct.unpack('<i', data)[0]
 
 
 def disassemble_stp(reader, address, stp, upper_32):
@@ -141,7 +149,7 @@ def disassemble(reader):
     b = {}
     bl = {}
     add = {}
-    #ldr = {}
+    ldr = {}
     #stp = {}
     #adrp = {}
 
@@ -163,9 +171,8 @@ def disassemble(reader):
         elif (upper_32 & 0xff000000) == 0x14000000:
             # disassemble_b(reader, address, b)
             pass
-        #elif (upper_32 & 0xffc00000) == 0xf9400000:
-        #    # LDR (immediate) 64-bit
-        #    disassemble_ldr(reader, address, ldr, upper_32)
+        elif (upper_32 & 0xffc00000) == 0xf9400000:
+            disassemble_ldr(reader, address, ldr)
         #elif (upper_32 & 0xffc00000) == 0xa9000000:
         #    disassemble_stp(reader, address, stp, upper_32)
         #elif (upper_32 & 0x9f000000) == 0x90000000:
@@ -192,17 +199,18 @@ def disassemble(reader):
         #    # STR (immediate) 64-bit
         #    disassemble_ldr(reader, address, ldr, upper_32)
 
-    return b, bl, add #, ldr, stp, adrp
+    return b, bl, add, ldr #, ldr, stp, adrp
 
 
 def encode(ffrom, fto):
     ffrom = BytesIO(file_read(ffrom))
     fto = BytesIO(file_read(fto))
-    from_b, from_bl, from_add = disassemble(ffrom)
-    to_b, to_bl, to_add = disassemble(fto)
+    from_b, from_bl, from_add, from_ldr = disassemble(ffrom)
+    to_b, to_bl, to_add, to_ldr = disassemble(fto)
     patch = create_patch_block(ffrom, fto, from_b, to_b)
     patch += create_patch_block(ffrom, fto, from_bl, to_bl)
     patch += create_patch_block(ffrom, fto, from_add, to_add)
+    patch += create_patch_block(ffrom, fto, from_ldr, to_ldr)
     #patch += create_patch_block(ffrom, fto, from_stp, to_stp)
     #patch += create_patch_block(ffrom, fto, from_adrp, to_adrp)
 
@@ -218,22 +226,27 @@ def create_readers(ffrom, patch, to_size):
     b_blocks = Blocks.from_fpatch(fpatch)
     bl_blocks = Blocks.from_fpatch(fpatch)
     add_blocks = Blocks.from_fpatch(fpatch)
-    b, bl, add = disassemble(ffrom)
+    ldr_blocks = Blocks.from_fpatch(fpatch)
+    b, bl, add, ldr = disassemble(ffrom)
     diff_reader = DiffReader(ffrom,
                              to_size,
                              b,
                              bl,
                              add,
+                             ldr,
                              b_blocks,
                              bl_blocks,
-                             add_blocks)
+                             add_blocks,
+                             ldr_blocks)
     from_reader = FromReader(ffrom,
                              b,
                              bl,
                              add,
+                             ldr,
                              b_blocks,
                              bl_blocks,
-                             add_blocks)
+                             add_blocks,
+                             ldr_blocks)
 
     return diff_reader, from_reader
 
@@ -243,6 +256,7 @@ def info(patch, fsize):
     b_blocks, b_blocks_size = load_blocks(fpatch)
     bl_blocks, bl_blocks_size = load_blocks(fpatch)
     add_blocks, add_blocks_size = load_blocks(fpatch)
+    ldr_blocks, ldr_blocks_size = load_blocks(fpatch)
     fout = StringIO()
 
     with redirect_stdout(fout):
@@ -252,5 +266,7 @@ def info(patch, fsize):
         format_blocks(bl_blocks, bl_blocks_size, fsize)
         print('Instruction:        add')
         format_blocks(add_blocks, add_blocks_size, fsize)
+        print('Instruction:        ldr')
+        format_blocks(ldr_blocks, ldr_blocks_size, fsize)
 
     return fout.getvalue()
