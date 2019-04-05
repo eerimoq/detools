@@ -1447,7 +1447,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(
             stdout.getvalue(),
             'Type:               normal\n'
-            'Patch size:         621 bytes\n'
+            'Patch size:         623 bytes\n'
             'To size:            109.94 KiB\n'
             'Patch/to ratio:     0.6 % (lower is better)\n'
             'Diff/extra ratio:   288556.4 % (higher is better)\n'
@@ -1467,6 +1467,10 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'Median extra size:  0 bytes\n'
             '\n'
             'Data format details:\n'
+            '\n'
+            'Instruction:        b\n'
+            'Number of blocks:   0\n'
+            'Size:               1 byte\n'
             '\n'
             'Instruction:        bl\n'
             'Number of blocks:   2\n'

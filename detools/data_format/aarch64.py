@@ -24,13 +24,16 @@ class DiffReader(object):
     def __init__(self,
                  ffrom,
                  to_size,
+                 b,
                  bl,
                  add,
+                 b_blocks,
                  bl_blocks,
                  add_blocks):
         self._ffrom = ffrom
         # ToDo: Calculate in read() for less memory usage.
         self._fdiff = BytesIO(b'\x00' * to_size)
+        self._write_values_to_to(b_blocks, b)
         self._write_values_to_to(bl_blocks, bl)
         self._write_add_values_to_to(add_blocks, add)
         self._fdiff.seek(0)
@@ -72,12 +75,15 @@ class FromReader(object):
 
     def __init__(self,
                  ffrom,
+                 b,
                  bl,
                  add,
+                 b_blocks,
                  bl_blocks,
                  add_blocks):
         # ToDo: Calculate in read() for less memory usage.
         self._ffrom = BytesIO(file_read(ffrom))
+        write_zeros_to_from(self._ffrom, b_blocks, b)
         write_zeros_to_from(self._ffrom, bl_blocks, bl)
         write_zeros_to_from(self._ffrom, add_blocks, add)
 
@@ -86,6 +92,12 @@ class FromReader(object):
 
     def seek(self, position, whence=os.SEEK_SET):
         self._ffrom.seek(position, whence)
+
+
+def disassemble_b(reader, address, b):
+    reader.seek(-4, os.SEEK_CUR)
+    data = reader.read(4)
+    b[address] = struct.unpack('<i', data)[0]
 
 
 def disassemble_bl(reader, address, bl):
@@ -126,6 +138,7 @@ def disassemble(reader):
     """
 
     length = file_size(reader)
+    b = {}
     bl = {}
     add = {}
     #ldr = {}
@@ -147,6 +160,9 @@ def disassemble(reader):
             disassemble_bl(reader, address, bl)
         elif (upper_32 & 0xff000000) == 0x91000000:
             disassemble_add(address, add, upper_32)
+        elif (upper_32 & 0xff000000) == 0x14000000:
+            # disassemble_b(reader, address, b)
+            pass
         #elif (upper_32 & 0xffc00000) == 0xf9400000:
         #    # LDR (immediate) 64-bit
         #    disassemble_ldr(reader, address, ldr, upper_32)
@@ -176,17 +192,17 @@ def disassemble(reader):
         #    # STR (immediate) 64-bit
         #    disassemble_ldr(reader, address, ldr, upper_32)
 
-    return bl, add #, ldr, stp, adrp
+    return b, bl, add #, ldr, stp, adrp
 
 
 def encode(ffrom, fto):
     ffrom = BytesIO(file_read(ffrom))
     fto = BytesIO(file_read(fto))
-    from_bl, from_add = disassemble(ffrom)
-    to_bl, to_add = disassemble(fto)
-    patch = create_patch_block(ffrom, fto, from_bl, to_bl)
+    from_b, from_bl, from_add = disassemble(ffrom)
+    to_b, to_bl, to_add = disassemble(fto)
+    patch = create_patch_block(ffrom, fto, from_b, to_b)
+    patch += create_patch_block(ffrom, fto, from_bl, to_bl)
     patch += create_patch_block(ffrom, fto, from_add, to_add)
-    #patch += create_patch_block(ffrom, fto, from_ldr, to_ldr)
     #patch += create_patch_block(ffrom, fto, from_stp, to_stp)
     #patch += create_patch_block(ffrom, fto, from_adrp, to_adrp)
 
@@ -199,18 +215,23 @@ def create_readers(ffrom, patch, to_size):
     """
 
     fpatch = BytesIO(patch)
+    b_blocks = Blocks.from_fpatch(fpatch)
     bl_blocks = Blocks.from_fpatch(fpatch)
     add_blocks = Blocks.from_fpatch(fpatch)
-    bl, add = disassemble(ffrom)
+    b, bl, add = disassemble(ffrom)
     diff_reader = DiffReader(ffrom,
                              to_size,
+                             b,
                              bl,
                              add,
+                             b_blocks,
                              bl_blocks,
                              add_blocks)
     from_reader = FromReader(ffrom,
+                             b,
                              bl,
                              add,
+                             b_blocks,
                              bl_blocks,
                              add_blocks)
 
@@ -219,11 +240,14 @@ def create_readers(ffrom, patch, to_size):
 
 def info(patch, fsize):
     fpatch = BytesIO(patch)
+    b_blocks, b_blocks_size = load_blocks(fpatch)
     bl_blocks, bl_blocks_size = load_blocks(fpatch)
     add_blocks, add_blocks_size = load_blocks(fpatch)
     fout = StringIO()
 
     with redirect_stdout(fout):
+        print('Instruction:        b')
+        format_blocks(b_blocks, b_blocks_size, fsize)
         print('Instruction:        bl')
         format_blocks(bl_blocks, bl_blocks_size, fsize)
         print('Instruction:        add')
