@@ -1,7 +1,11 @@
+import os
+import struct
+from io import BytesIO
 from io import StringIO
 import difflib
 import textwrap
 from contextlib import redirect_stdout
+from ..common import file_read
 from ..common import pack_size
 from ..common import unpack_size
 
@@ -69,6 +73,59 @@ class Blocks(object):
         return fout.getvalue()
 
 
+class DiffReader(object):
+
+    def __init__(self, ffrom, to_size):
+        self._ffrom = ffrom
+        # ToDo: Calculate in read() for less memory usage.
+        self._fdiff = BytesIO(b'\x00' * to_size)
+
+    def read(self, size=-1):
+        return self._fdiff.read(size)
+
+    def _write_values_to_to_with_callback(self, blocks, from_dict, pack_callback):
+        from_sorted = sorted(from_dict.items())
+
+        for from_offset, to_address, values in blocks:
+            from_address_base = from_sorted[from_offset][0]
+
+            for i, value in enumerate(values):
+                from_address, from_value = from_sorted[from_offset + i]
+                self._fdiff.seek(to_address + from_address - from_address_base)
+                self._fdiff.write(pack_callback(from_value - value))
+
+    def _write_values_to_to(self, blocks, from_dict):
+        self._write_values_to_to_with_callback(blocks, from_dict, self._pack_bytes)
+
+    def _pack_bytes(self, value):
+        return struct.pack('<i', value)
+
+
+class FromReader(object):
+
+    def __init__(self, ffrom):
+        # ToDo: Calculate in read() for less memory usage.
+        self._ffrom = BytesIO(file_read(ffrom))
+
+    def read(self, size=-1):
+        return self._ffrom.read(size)
+
+    def seek(self, position, whence=os.SEEK_SET):
+        self._ffrom.seek(position, whence)
+
+    def _write_zeros_to_from(self, blocks, from_dict):
+        self._write_zeros_to_from_4_bytes(blocks, from_dict)
+
+    def _write_zeros_to_from_4_bytes(self, blocks, from_dict):
+        from_sorted = sorted(from_dict.items())
+
+        for from_offset, _, values in blocks:
+            for i in range(len(values)):
+                from_address = from_sorted[from_offset + i][0]
+                self._ffrom.seek(from_address)
+                self._ffrom.write(4 * b'\x00')
+
+
 def get_matching_blocks(from_addresses, to_addresses):
     """Returns matching blocks based on address differences.
 
@@ -126,16 +183,6 @@ def create_patch_block_4_bytes(ffrom, fto, from_dict, to_dict):
             fto.write(4 * b'\x00')
 
     return blocks.to_bytes()
-
-
-def write_zeros_to_from_4_bytes(ffrom, blocks, from_dict):
-    from_sorted = sorted(from_dict.items())
-
-    for from_offset, _, values in blocks:
-        for i in range(len(values)):
-            from_address = from_sorted[from_offset + i][0]
-            ffrom.seek(from_address)
-            ffrom.write(4 * b'\x00')
 
 
 def load_blocks(fpatch):

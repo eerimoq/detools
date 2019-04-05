@@ -8,16 +8,17 @@ import bitstruct
 from ..common import file_size
 from ..common import file_read
 from .utils import Blocks
+from .utils import DiffReader as UtilsDiffReader
+from .utils import FromReader as UtilsFromReader
 from .utils import create_patch_block_4_bytes as create_patch_block
 from .utils import load_blocks
 from .utils import format_blocks
-from .utils import write_zeros_to_from_4_bytes as write_zeros_to_from
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-class DiffReader(object):
+class DiffReader(UtilsDiffReader):
 
     _CF_ADD = bitstruct.compile('u8u2u12u5u5')
     _CF_ADRP = bitstruct.compile('u1u2u5u19u5')
@@ -41,9 +42,7 @@ class DiffReader(object):
                  adrp_blocks,
                  str_blocks,
                  str_imm_64_blocks):
-        self._ffrom = ffrom
-        # ToDo: Calculate in read() for less memory usage.
-        self._fdiff = BytesIO(b'\x00' * to_size)
+        super().__init__(ffrom, to_size)
         self._write_values_to_to(b_blocks, b)
         self._write_values_to_to(bl_blocks, bl)
         self._write_add_values_to_to(add_blocks, add)
@@ -54,32 +53,11 @@ class DiffReader(object):
         self._write_values_to_to(str_imm_64_blocks, str_imm_64)
         self._fdiff.seek(0)
 
-    def read(self, size=-1):
-        return self._fdiff.read(size)
-
-    def _write_values_to_to_with_callback(self, blocks, from_dict, pack_callback):
-        from_sorted = sorted(from_dict.items())
-
-        for from_offset, to_address, values in blocks:
-            from_address_base = from_sorted[from_offset][0]
-
-            for i, value in enumerate(values):
-                from_address, from_value = from_sorted[from_offset + i]
-                value = pack_callback(from_value - value)
-                self._fdiff.seek(to_address + from_address - from_address_base)
-                self._fdiff.write(value)
-
-    def _write_values_to_to(self, blocks, from_dict):
-        self._write_values_to_to_with_callback(blocks, from_dict, self._pack_bytes)
-
     def _write_add_values_to_to(self, blocks, from_dict):
         self._write_values_to_to_with_callback(blocks, from_dict, self._pack_add)
 
     def _write_adrp_values_to_to(self, blocks, from_dict):
         self._write_values_to_to_with_callback(blocks, from_dict, self._pack_adrp)
-
-    def _pack_bytes(self, value):
-        return struct.pack('<i', value)
 
     def _pack_add(self, value):
         imm12 = (value & 0xfff)
@@ -98,7 +76,7 @@ class DiffReader(object):
         return value[::-1]
 
 
-class FromReader(object):
+class FromReader(UtilsFromReader):
 
     def __init__(self,
                  ffrom,
@@ -118,22 +96,15 @@ class FromReader(object):
                  adrp_blocks,
                  str_blocks,
                  str_imm_64_blocks):
-        # ToDo: Calculate in read() for less memory usage.
-        self._ffrom = BytesIO(file_read(ffrom))
-        write_zeros_to_from(self._ffrom, b_blocks, b)
-        write_zeros_to_from(self._ffrom, bl_blocks, bl)
-        write_zeros_to_from(self._ffrom, add_blocks, add)
-        write_zeros_to_from(self._ffrom, add_generic_blocks, add_generic)
-        write_zeros_to_from(self._ffrom, ldr_blocks, ldr)
-        write_zeros_to_from(self._ffrom, adrp_blocks, adrp)
-        write_zeros_to_from(self._ffrom, str_blocks, str_)
-        write_zeros_to_from(self._ffrom, str_imm_64_blocks, str_imm_64)
-
-    def read(self, size=-1):
-        return self._ffrom.read(size)
-
-    def seek(self, position, whence=os.SEEK_SET):
-        self._ffrom.seek(position, whence)
+        super().__init__(ffrom)
+        self._write_zeros_to_from(b_blocks, b)
+        self._write_zeros_to_from(bl_blocks, bl)
+        self._write_zeros_to_from(add_blocks, add)
+        self._write_zeros_to_from(add_generic_blocks, add_generic)
+        self._write_zeros_to_from(ldr_blocks, ldr)
+        self._write_zeros_to_from(adrp_blocks, adrp)
+        self._write_zeros_to_from(str_blocks, str_)
+        self._write_zeros_to_from(str_imm_64_blocks, str_imm_64)
 
 
 def disassemble_b(reader, address, b):
