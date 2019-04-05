@@ -27,6 +27,12 @@ differences:
   https://patents.google.com/patent/EP1988455B1/en. Anyway, this
   patent expires in August 2019 as I understand it.
 
+  Supported data formats:
+
+  - ARM Cortex-M4
+
+  - AArch64
+
 Planned functionality:
 
 - in-place patch type support in C.
