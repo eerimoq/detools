@@ -1,5 +1,6 @@
 from io import StringIO
 import difflib
+import textwrap
 from contextlib import redirect_stdout
 from ..common import pack_size
 from ..common import unpack_size
@@ -125,3 +126,39 @@ def create_patch_block_4_bytes(ffrom, fto, from_dict, to_dict):
             fto.write(4 * b'\x00')
 
     return blocks.to_bytes()
+
+
+def write_zeros_to_from_4_bytes(ffrom, blocks, from_dict):
+    from_sorted = sorted(from_dict.items())
+
+    for from_offset, _, values in blocks:
+        for i in range(len(values)):
+            from_address = from_sorted[from_offset + i][0]
+            ffrom.seek(from_address)
+            ffrom.write(4 * b'\x00')
+
+
+def load_blocks(fpatch):
+    position = fpatch.tell()
+    blocks = Blocks.from_fpatch(fpatch)
+    blocks_size = fpatch.tell() - position
+
+    return blocks, blocks_size
+
+
+def format_blocks(blocks, blocks_size, fsize):
+    print('Number of blocks:   {}'.format(len(blocks)))
+    print('Size:               {}'.format(fsize(blocks_size)))
+    print()
+
+    for i, (from_offset, to_address, values) in enumerate(blocks):
+        print('------------------- Block {} -------------------'.format(i + 1))
+        print()
+        print('From offset:        {}'.format(from_offset))
+        print('To address:         0x{:x}'.format(to_address))
+        print('Number of values:   {}'.format(len(values)))
+        print('Values:')
+        lines = textwrap.wrap(' '.join([str(value) for value in values]))
+        lines = ['  ' + line for line in lines]
+        print('\n'.join(lines))
+        print()

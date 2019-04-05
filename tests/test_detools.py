@@ -591,6 +591,19 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/foo/arm-cortex-m4.patch',
             data_format='arm-cortex-m4')
 
+    def test_create_and_apply_patch_shell_pi_3(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/shell-pi-3/1.bin',
+            'tests/files/shell-pi-3/2.bin',
+            'tests/files/shell-pi-3/1--2.patch')
+
+    def test_create_and_apply_patch_shell_pi_3_data_format_aarch64(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/shell-pi-3/1.bin',
+            'tests/files/shell-pi-3/2.bin',
+            'tests/files/shell-pi-3/1--2-aarch64.patch',
+            data_format='aarch64')
+
 
 # This file is not '__main__' when executed via 'python setup.py3
 # test'.

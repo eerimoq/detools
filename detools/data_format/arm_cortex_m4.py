@@ -4,14 +4,16 @@ import struct
 from io import BytesIO
 from io import StringIO
 from contextlib import redirect_stdout
-import textwrap
 import bitstruct
 from ..common import file_size
 from ..common import file_read
-from .utils import Blocks
 from ..common import pack_size
 from ..common import unpack_size
+from .utils import Blocks
 from .utils import create_patch_block_4_bytes as create_patch_block
+from .utils import load_blocks
+from .utils import format_blocks
+from .utils import write_zeros_to_from_4_bytes as write_zeros_to_from
 
 
 LOGGER = logging.getLogger(__name__)
@@ -52,6 +54,9 @@ class DiffReader(object):
             self._write_values_to_to(code_pointers_blocks, code_pointers)
 
         self._fdiff.seek(0)
+
+    def read(self, size=-1):
+        return self._fdiff.read(size)
 
     def _write_values_to_to_with_callback(self, blocks, from_dict, pack_callback):
         from_sorted = sorted(from_dict.items())
@@ -108,9 +113,6 @@ class DiffReader(object):
 
         return bitstruct.byteswap('22', value)
 
-    def read(self, size=-1):
-        return self._fdiff.read(size)
-
 
 class FromReader(object):
 
@@ -130,31 +132,22 @@ class FromReader(object):
                  code_pointers_blocks):
         # ToDo: Calculate in read() for less memory usage.
         self._ffrom = BytesIO(file_read(ffrom))
-        self._write_zeros_to_from(bw_blocks, bw)
-        self._write_zeros_to_from(bl_blocks, bl)
-        self._write_zeros_to_from(ldr_blocks, ldr)
-        self._write_zeros_to_from(ldr_w_blocks, ldr_w)
+        write_zeros_to_from(self._ffrom, bw_blocks, bw)
+        write_zeros_to_from(self._ffrom, bl_blocks, bl)
+        write_zeros_to_from(self._ffrom, ldr_blocks, ldr)
+        write_zeros_to_from(self._ffrom, ldr_w_blocks, ldr_w)
 
         if data_pointers_blocks is not None:
-            self._write_zeros_to_from(data_pointers_blocks, data_pointers)
+            write_zeros_to_from(self._ffrom, data_pointers_blocks, data_pointers)
 
         if code_pointers_blocks is not None:
-            self._write_zeros_to_from(code_pointers_blocks, code_pointers)
+            write_zeros_to_from(self._ffrom, code_pointers_blocks, code_pointers)
 
     def read(self, size=-1):
         return self._ffrom.read(size)
 
     def seek(self, position, whence=os.SEEK_SET):
         self._ffrom.seek(position, whence)
-
-    def _write_zeros_to_from(self, blocks, from_dict):
-        from_sorted = sorted(from_dict.items())
-
-        for from_offset, _, values in blocks:
-            for i in range(len(values)):
-                from_address = from_sorted[from_offset + i][0]
-                self._ffrom.seek(from_address)
-                self._ffrom.write(4 * b'\x00')
 
 
 def disassemble_data(reader,
@@ -478,32 +471,6 @@ def create_readers(ffrom, patch, to_size):
                              code_pointers_blocks)
 
     return diff_reader, from_reader
-
-
-def format_blocks(blocks, blocks_size, fsize):
-    print('Number of blocks:   {}'.format(len(blocks)))
-    print('Size:               {}'.format(fsize(blocks_size)))
-    print()
-
-    for i, (from_offset, to_address, values) in enumerate(blocks):
-        print('------------------- Block {} -------------------'.format(i + 1))
-        print()
-        print('From offset:        {}'.format(from_offset))
-        print('To address:         0x{:x}'.format(to_address))
-        print('Number of values:   {}'.format(len(values)))
-        print('Values:')
-        lines = textwrap.wrap(' '.join([str(value) for value in values]))
-        lines = ['  ' + line for line in lines]
-        print('\n'.join(lines))
-        print()
-
-
-def load_blocks(fpatch):
-    position = fpatch.tell()
-    blocks = Blocks.from_fpatch(fpatch)
-    blocks_size = fpatch.tell() - position
-
-    return blocks, blocks_size
 
 
 def info(patch, fsize):

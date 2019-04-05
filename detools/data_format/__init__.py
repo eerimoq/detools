@@ -1,4 +1,5 @@
 from ..errors import Error
+from ..common import DATA_FORMAT_AARCH64
 from ..common import DATA_FORMAT_ARM_CORTEX_M4
 from ..common import format_bad_data_format
 from ..common import format_bad_data_format_number
@@ -49,7 +50,9 @@ def create_readers(data_format, ffrom, patch, to_size):
 
     """
 
-    if data_format == DATA_FORMAT_ARM_CORTEX_M4:
+    if data_format == DATA_FORMAT_AARCH64:
+        return aarch64.create_readers(ffrom, patch, to_size)
+    elif data_format == DATA_FORMAT_ARM_CORTEX_M4:
         return arm_cortex_m4.create_readers(ffrom, patch, to_size)
     else:
         raise Error(format_bad_data_format_number(data_format))
@@ -60,7 +63,9 @@ def info(data_format, patch, fsize):
 
     """
 
-    if data_format == DATA_FORMAT_ARM_CORTEX_M4:
+    if data_format == DATA_FORMAT_AARCH64:
+        return aarch64.info(patch, fsize)
+    elif data_format == DATA_FORMAT_ARM_CORTEX_M4:
         return arm_cortex_m4.info(patch, fsize)
     else:
         raise Error(format_bad_data_format_number(data_format))
