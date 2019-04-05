@@ -28,21 +28,30 @@ class DiffReader(object):
                  b,
                  bl,
                  add,
+                 add_generic,
                  ldr,
                  adrp,
+                 str_,
+                 str_imm_64,
                  b_blocks,
                  bl_blocks,
                  add_blocks,
+                 add_generic_blocks,
                  ldr_blocks,
-                 adrp_blocks):
+                 adrp_blocks,
+                 str_blocks,
+                 str_imm_64_blocks):
         self._ffrom = ffrom
         # ToDo: Calculate in read() for less memory usage.
         self._fdiff = BytesIO(b'\x00' * to_size)
         self._write_values_to_to(b_blocks, b)
         self._write_values_to_to(bl_blocks, bl)
         self._write_add_values_to_to(add_blocks, add)
+        self._write_values_to_to(add_generic_blocks, add_generic)
         self._write_values_to_to(ldr_blocks, ldr)
         self._write_adrp_values_to_to(adrp_blocks, adrp)
+        self._write_values_to_to(str_blocks, str_)
+        self._write_values_to_to(str_imm_64_blocks, str_imm_64)
         self._fdiff.seek(0)
 
     def read(self, size=-1):
@@ -96,20 +105,29 @@ class FromReader(object):
                  b,
                  bl,
                  add,
+                 add_generic,
                  ldr,
                  adrp,
+                 str_,
+                 str_imm_64,
                  b_blocks,
                  bl_blocks,
                  add_blocks,
+                 add_generic_blocks,
                  ldr_blocks,
-                 adrp_blocks):
+                 adrp_blocks,
+                 str_blocks,
+                 str_imm_64_blocks):
         # ToDo: Calculate in read() for less memory usage.
         self._ffrom = BytesIO(file_read(ffrom))
         write_zeros_to_from(self._ffrom, b_blocks, b)
         write_zeros_to_from(self._ffrom, bl_blocks, bl)
         write_zeros_to_from(self._ffrom, add_blocks, add)
+        write_zeros_to_from(self._ffrom, add_generic_blocks, add_generic)
         write_zeros_to_from(self._ffrom, ldr_blocks, ldr)
         write_zeros_to_from(self._ffrom, adrp_blocks, adrp)
+        write_zeros_to_from(self._ffrom, str_blocks, str_)
+        write_zeros_to_from(self._ffrom, str_imm_64_blocks, str_imm_64)
 
     def read(self, size=-1):
         return self._ffrom.read(size)
@@ -130,7 +148,7 @@ def disassemble_bl(reader, address, bl):
     bl[address] = struct.unpack('<i', data)[0]
 
 
-def disassemble_add(address, add, upper_32):
+def disassemble_add(reader, address, add, add_generic, upper_32):
     rn = ((upper_32 >> 5) & 0x1f)
     rd = (upper_32 & 0x1f)
 
@@ -141,7 +159,10 @@ def disassemble_add(address, add, upper_32):
         value |= (shift << 12)
         value |= (rn << 14)
         add[address] = value
-
+    else:
+        reader.seek(-4, os.SEEK_CUR)
+        data = reader.read(4)
+        add_generic[address] = struct.unpack('<i', data)[0]
 
 def disassemble_ldr(reader, address, ldr):
     reader.seek(-4, os.SEEK_CUR)
@@ -149,8 +170,16 @@ def disassemble_ldr(reader, address, ldr):
     ldr[address] = struct.unpack('<i', data)[0]
 
 
-def disassemble_stp(reader, address, stp, upper_32):
-    stp[address] = upper_32
+def disassemble_str(reader, address, str_):
+    reader.seek(-4, os.SEEK_CUR)
+    data = reader.read(4)
+    str_[address] = struct.unpack('<i', data)[0]
+
+
+def disassemble_str_imm_64(reader, address, str_imm_64):
+    reader.seek(-4, os.SEEK_CUR)
+    data = reader.read(4)
+    str_imm_64[address] = struct.unpack('<i', data)[0]
 
 
 def disassemble_adrp(address, adrp, upper_32):
@@ -173,8 +202,10 @@ def disassemble(reader):
     b = {}
     bl = {}
     add = {}
+    add_generic = {}
     ldr = {}
-    #stp = {}
+    str_ = {}
+    str_imm_64 = {}
     adrp = {}
 
     while reader.tell() < length:
@@ -191,52 +222,65 @@ def disassemble(reader):
         if (upper_32 & 0xfc000000) == 0x94000000:
             disassemble_bl(reader, address, bl)
         elif (upper_32 & 0xff000000) == 0x91000000:
-            disassemble_add(address, add, upper_32)
+            disassemble_add(reader, address, add, add_generic, upper_32)
         elif (upper_32 & 0xff000000) == 0x14000000:
             # disassemble_b(reader, address, b)
             pass
         elif (upper_32 & 0xffc00000) == 0xf9400000:
             disassemble_ldr(reader, address, ldr)
-        #elif (upper_32 & 0xffc00000) == 0xa9000000:
-        #    disassemble_stp(reader, address, stp, upper_32)
+        elif (upper_32 & 0xffc00000) == 0xa9000000:
+            disassemble_str(reader, address, str_)
         elif (upper_32 & 0x9f000000) == 0x90000000:
             disassemble_adrp(address, adrp, upper_32)
-        #elif (upper_32 & 0xffc00000) == 0xb9400000:
-        #    # LDR (immediate) 32-bit
-        #    disassemble_ldr(reader, address, ldr, upper_32)
-        #elif (upper_32 & 0xffc00000) == 0x39400000:
-        #    # LDRB (immediate) Unsigned offset
-        #    disassemble_ldr(reader, address, ldr, upper_32)
-        #elif (upper_32 & 0xffc00000) == 0x39000000:
-        #    # LDRB (immediate) Unsigned offset
-        #    disassemble_ldr(reader, address, ldr, upper_32)
-        #elif (upper_32 & 0xffc00000) == 0xb9000000:
-        #    # STR (immediate) 32-bit
-        #    disassemble_ldr(reader, address, ldr, upper_32)
-        #elif (upper_32 & 0xffe00000) == 0xf8400000:
-        #    # LDUR 64-bit
-        #    disassemble_ldr(reader, address, ldr, upper_32)
-        #elif (upper_32 & 0xffe00000) == 0xb8400000:
-        #    # LDTR 64-bit
-        #    disassemble_ldr(reader, address, ldr, upper_32)
-        #elif (upper_32 & 0xffc00000) == 0xf9000000:
-        #    # STR (immediate) 64-bit
-        #    disassemble_ldr(reader, address, ldr, upper_32)
+        elif (upper_32 & 0xffc00000) == 0xb9400000:
+            disassemble_ldr(reader, address, ldr)
+        elif (upper_32 & 0xffc00000) == 0x39400000:
+            # LDRB (immediate) Unsigned offset
+            disassemble_ldr(reader, address, ldr)
+        elif (upper_32 & 0xffc00000) == 0x39000000:
+            # LDRB (immediate) Unsigned offset
+            disassemble_ldr(reader, address, ldr)
+        elif (upper_32 & 0xffc00000) == 0xb9000000:
+            disassemble_str(reader, address, str_)
+        elif (upper_32 & 0xffe00000) == 0xf8400000:
+            # LDUR 64-bit
+            disassemble_ldr(reader, address, ldr)
+        elif (upper_32 & 0xffe00000) == 0xb8400000:
+            # LDTR 64-bit
+            disassemble_ldr(reader, address, ldr)
+        elif (upper_32 & 0xffc00000) == 0xf9000000:
+            disassemble_str_imm_64(reader, address, str_imm_64)
 
-    return b, bl, add, ldr, adrp
+    return b, bl, add, add_generic, ldr, adrp, str_, str_imm_64
 
 
 def encode(ffrom, fto):
     ffrom = BytesIO(file_read(ffrom))
     fto = BytesIO(file_read(fto))
-    from_b, from_bl, from_add, from_ldr, from_adrp = disassemble(ffrom)
-    to_b, to_bl, to_add, to_ldr, to_adrp = disassemble(fto)
+    (from_b,
+     from_bl,
+     from_add,
+     from_add_generic,
+     from_ldr,
+     from_adrp,
+     from_str,
+     from_str_imm_64) = disassemble(ffrom)
+    (to_b,
+     to_bl,
+     to_add,
+     to_add_generic,
+     to_ldr,
+     to_adrp,
+     to_str,
+     to_str_imm_64) = disassemble(fto)
     patch = create_patch_block(ffrom, fto, from_b, to_b)
     patch += create_patch_block(ffrom, fto, from_bl, to_bl)
     patch += create_patch_block(ffrom, fto, from_add, to_add)
+    patch += create_patch_block(ffrom, fto, from_add_generic, to_add_generic)
     patch += create_patch_block(ffrom, fto, from_ldr, to_ldr)
     patch += create_patch_block(ffrom, fto, from_adrp, to_adrp)
-    #patch += create_patch_block(ffrom, fto, from_stp, to_stp)
+    patch += create_patch_block(ffrom, fto, from_str, to_str)
+    patch += create_patch_block(ffrom, fto, from_str_imm_64, to_str_imm_64)
 
     return ffrom, fto, patch
 
@@ -250,32 +294,47 @@ def create_readers(ffrom, patch, to_size):
     b_blocks = Blocks.from_fpatch(fpatch)
     bl_blocks = Blocks.from_fpatch(fpatch)
     add_blocks = Blocks.from_fpatch(fpatch)
+    add_generic_blocks = Blocks.from_fpatch(fpatch)
     ldr_blocks = Blocks.from_fpatch(fpatch)
     adrp_blocks = Blocks.from_fpatch(fpatch)
-    b, bl, add, ldr, adrp = disassemble(ffrom)
+    str_blocks = Blocks.from_fpatch(fpatch)
+    str_imm_64_blocks = Blocks.from_fpatch(fpatch)
+    b, bl, add, add_generic, ldr, adrp, str_, str_imm_64 = disassemble(ffrom)
     diff_reader = DiffReader(ffrom,
                              to_size,
                              b,
                              bl,
                              add,
+                             add_generic,
                              ldr,
                              adrp,
+                             str_,
+                             str_imm_64,
                              b_blocks,
                              bl_blocks,
                              add_blocks,
+                             add_generic_blocks,
                              ldr_blocks,
-                             adrp_blocks)
+                             adrp_blocks,
+                             str_blocks,
+                             str_imm_64_blocks)
     from_reader = FromReader(ffrom,
                              b,
                              bl,
                              add,
+                             add_generic,
                              ldr,
                              adrp,
+                             str_,
+                             str_imm_64,
                              b_blocks,
                              bl_blocks,
                              add_blocks,
+                             add_generic_blocks,
                              ldr_blocks,
-                             adrp_blocks)
+                             adrp_blocks,
+                             str_blocks,
+                             str_imm_64_blocks)
 
     return diff_reader, from_reader
 
@@ -287,6 +346,8 @@ def info(patch, fsize):
     add_blocks, add_blocks_size = load_blocks(fpatch)
     ldr_blocks, ldr_blocks_size = load_blocks(fpatch)
     adrp_blocks, adrp_blocks_size = load_blocks(fpatch)
+    str_blocks, str_blocks_size = load_blocks(fpatch)
+    str_imm_64_blocks, str_imm_64_blocks_size = load_blocks(fpatch)
     fout = StringIO()
 
     with redirect_stdout(fout):
@@ -300,5 +361,9 @@ def info(patch, fsize):
         format_blocks(ldr_blocks, ldr_blocks_size, fsize)
         print('Instruction:        adrp')
         format_blocks(adrp_blocks, adrp_blocks_size, fsize)
+        print('Instruction:        str')
+        format_blocks(str_blocks, str_blocks_size, fsize)
+        print('Instruction:        str (imm 64)')
+        format_blocks(str_imm_64_blocks, str_imm_64_blocks_size, fsize)
 
     return fout.getvalue()
