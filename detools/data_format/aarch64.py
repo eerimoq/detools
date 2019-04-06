@@ -7,7 +7,6 @@ from contextlib import redirect_stdout
 import bitstruct
 from ..common import file_size
 from ..common import file_read
-from ..common import pack_usize
 from ..common import unpack_usize
 from .utils import Blocks
 from .utils import DiffReader as UtilsDiffReader
@@ -15,6 +14,10 @@ from .utils import FromReader as UtilsFromReader
 from .utils import create_patch_block
 from .utils import load_blocks
 from .utils import format_blocks
+from .utils import create_data_pointers_patch_block
+from .utils import create_code_pointers_patch_block
+from .utils import unpack_pointers_header
+from .utils import unpack_pointers_blocks
 
 
 LOGGER = logging.getLogger(__name__)
@@ -371,34 +374,23 @@ def encode(ffrom,
                                      to_data_end,
                                      to_code_begin,
                                      to_code_end)
-
-    if from_data_end == 0:
-        patch = b'\x00'
-        data_pointers = (b'', b'')
-    else:
-        patch = b'\x01'
-        patch += pack_usize(from_data_offset)
-        patch += pack_usize(from_data_begin)
-        patch += pack_usize(from_data_end)
-        data_pointers = create_patch_block(ffrom,
-                                           fto,
-                                           from_data_pointers,
-                                           to_data_pointers,
-                                           overwrite_size=8)
-
-    if from_code_end == 0:
-        patch += b'\x00'
-        code_pointers = (b'', b'')
-    else:
-        patch += b'\x01'
-        patch += pack_usize(from_code_begin)
-        patch += pack_usize(from_code_end)
-        code_pointers = create_patch_block(ffrom,
-                                           fto,
-                                           from_code_pointers,
-                                           to_code_pointers,
-                                           overwrite_size=8)
-
+    data_pointers_header, data_pointers = create_data_pointers_patch_block(
+        ffrom,
+        fto,
+        from_data_offset,
+        from_data_begin,
+        from_data_end,
+        from_data_pointers,
+        to_data_pointers,
+        overwrite_size=8)
+    code_pointers_header, code_pointers = create_code_pointers_patch_block(
+        ffrom,
+        fto,
+        from_code_begin,
+        from_code_end,
+        from_code_pointers,
+        to_code_pointers,
+        overwrite_size=8)
     b = create_patch_block(ffrom, fto, from_b, to_b)
     bl = create_patch_block(ffrom, fto, from_bl, to_bl)
     add = create_patch_block(ffrom, fto, from_add, to_add)
@@ -423,7 +415,9 @@ def encode(ffrom,
                          adrp,
                          str_,
                          str_imm_64)
-    patch += b''.join(headers) + b''.join(datas)
+    patch = b''.join([data_pointers_header, code_pointers_header]
+                     + list(headers)
+                     + list(datas))
 
     return ffrom, fto, patch
 
@@ -434,32 +428,17 @@ def create_readers(ffrom, patch, to_size):
     """
 
     fpatch = BytesIO(patch)
-    data_pointers_blocks_present = (fpatch.read(1) == b'\x01')
 
-    if data_pointers_blocks_present:
-        from_data_offset = unpack_usize(fpatch)
-        from_data_begin = unpack_usize(fpatch)
-        from_data_end = unpack_usize(fpatch)
-    else:
-        from_data_offset = 0
-        from_data_begin = 0
-        from_data_end = 0
-
-    code_pointers_blocks_present = (fpatch.read(1) == b'\x01')
-
-    if code_pointers_blocks_present:
-        from_code_begin = unpack_usize(fpatch)
-        from_code_end = unpack_usize(fpatch)
-    else:
-        from_code_begin = 0
-        from_code_end = 0
-
-    if data_pointers_blocks_present:
-        data_pointers_header = Blocks.unpack_header(fpatch)
-
-    if code_pointers_blocks_present:
-        code_pointers_header = Blocks.unpack_header(fpatch)
-
+    # Headers.
+    (data_pointers_blocks_present,
+     code_pointers_blocks_present,
+     data_pointers_header,
+     code_pointers_header,
+     from_data_offset,
+     from_data_begin,
+     from_data_end,
+     from_code_begin,
+     from_code_end) = unpack_pointers_header(fpatch)
     b_header = Blocks.unpack_header(fpatch)
     bl_header = Blocks.unpack_header(fpatch)
     add_header = Blocks.unpack_header(fpatch)
@@ -469,16 +448,13 @@ def create_readers(ffrom, patch, to_size):
     str_header = Blocks.unpack_header(fpatch)
     str_imm_64_header = Blocks.unpack_header(fpatch)
 
-    if data_pointers_blocks_present:
-        data_pointers_blocks = Blocks.from_fpatch(data_pointers_header, fpatch)
-    else:
-        data_pointers_blocks = Blocks()
-
-    if code_pointers_blocks_present:
-        code_pointers_blocks = Blocks.from_fpatch(code_pointers_header, fpatch)
-    else:
-        code_pointers_blocks = Blocks()
-
+    # Blocks.
+    data_pointers_blocks, code_pointers_blocks = unpack_pointers_blocks(
+        fpatch,
+        data_pointers_blocks_present,
+        code_pointers_blocks_present,
+        data_pointers_header,
+        code_pointers_header)
     b_blocks = Blocks.from_fpatch(b_header, fpatch)
     bl_blocks = Blocks.from_fpatch(bl_header, fpatch)
     add_blocks = Blocks.from_fpatch(add_header, fpatch)
@@ -503,6 +479,7 @@ def create_readers(ffrom, patch, to_size):
                                   from_code_begin,
                                   from_code_end)
 
+    # Diff and from readers.
     diff_reader = DiffReader(ffrom,
                              to_size,
                              b,

@@ -8,6 +8,8 @@ from contextlib import redirect_stdout
 from ..common import file_read
 from ..common import pack_size
 from ..common import unpack_size
+from ..common import pack_usize
+from ..common import unpack_usize
 
 
 class Blocks(object):
@@ -218,3 +220,111 @@ def format_blocks(blocks, blocks_size, fsize):
         lines = ['  ' + line for line in lines]
         print('\n'.join(lines))
         print()
+
+
+def create_data_pointers_patch_block(ffrom,
+                                     fto,
+                                     from_data_offset,
+                                     from_data_begin,
+                                     from_data_end,
+                                     from_data_pointers,
+                                     to_data_pointers,
+                                     overwrite_size=4):
+    if from_data_end == 0:
+        header = b'\x00'
+        data_pointers = (b'', b'')
+    else:
+        header = b'\x01'
+        header += pack_usize(from_data_offset)
+        header += pack_usize(from_data_begin)
+        header += pack_usize(from_data_end)
+        data_pointers = create_patch_block(ffrom,
+                                           fto,
+                                           from_data_pointers,
+                                           to_data_pointers,
+                                           overwrite_size)
+
+    return header, data_pointers
+
+
+def create_code_pointers_patch_block(ffrom,
+                                     fto,
+                                     from_code_begin,
+                                     from_code_end,
+                                     from_code_pointers,
+                                     to_code_pointers,
+                                     overwrite_size=4):
+    if from_code_end == 0:
+        header = b'\x00'
+        code_pointers = (b'', b'')
+    else:
+        header = b'\x01'
+        header += pack_usize(from_code_begin)
+        header += pack_usize(from_code_end)
+        code_pointers = create_patch_block(ffrom,
+                                           fto,
+                                           from_code_pointers,
+                                           to_code_pointers,
+                                           overwrite_size)
+
+    return header, code_pointers
+
+
+def unpack_pointers_header(fpatch):
+    data_pointers_blocks_present = (fpatch.read(1) == b'\x01')
+
+    if data_pointers_blocks_present:
+        from_data_offset = unpack_usize(fpatch)
+        from_data_begin = unpack_usize(fpatch)
+        from_data_end = unpack_usize(fpatch)
+    else:
+        from_data_offset = 0
+        from_data_begin = 0
+        from_data_end = 0
+
+    code_pointers_blocks_present = (fpatch.read(1) == b'\x01')
+
+    if code_pointers_blocks_present:
+        from_code_begin = unpack_usize(fpatch)
+        from_code_end = unpack_usize(fpatch)
+    else:
+        from_code_begin = 0
+        from_code_end = 0
+
+    if data_pointers_blocks_present:
+        data_pointers_header = Blocks.unpack_header(fpatch)
+    else:
+        data_pointers_header = None
+
+    if code_pointers_blocks_present:
+        code_pointers_header = Blocks.unpack_header(fpatch)
+    else:
+        code_pointers_header = None
+
+    return (data_pointers_blocks_present,
+            code_pointers_blocks_present,
+            data_pointers_header,
+            code_pointers_header,
+            from_data_offset,
+            from_data_begin,
+            from_data_end,
+            from_code_begin,
+            from_code_end)
+
+
+def unpack_pointers_blocks(fpatch,
+                           data_pointers_blocks_present,
+                           code_pointers_blocks_present,
+                           data_pointers_header,
+                           code_pointers_header):
+    if data_pointers_blocks_present:
+        data_pointers_blocks = Blocks.from_fpatch(data_pointers_header, fpatch)
+    else:
+        data_pointers_blocks = Blocks()
+
+    if code_pointers_blocks_present:
+        code_pointers_blocks = Blocks.from_fpatch(code_pointers_header, fpatch)
+    else:
+        code_pointers_blocks = Blocks()
+
+    return data_pointers_blocks, code_pointers_blocks
