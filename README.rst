@@ -78,12 +78,16 @@ All sizes are in bytes.
 +---------------------+----------+---------+--------+------------+--------+------------+--------+
 | upy 1f5d945af (3)   |   319988 |  183976 | 57.5 % |       2994 |  0.9 % |         \- |     \- |
 +---------------------+----------+---------+--------+------------+--------+------------+--------+
+| python3 (4)         |  3498472 |  912539 | 26.1 % |      88485 |  2.5 % |         \- |     \- |
++---------------------+----------+---------+--------+------------+--------+------------+--------+
+| python3 (5)         |  3498472 |  912539 | 26.1 % |      47203 |  1.3 % |         \- |     \- |
++---------------------+----------+---------+--------+------------+--------+------------+--------+
 
-Two builds of MicroPython for PYBv1.1. The from-file is build from
+Two builds of MicroPython for PYBv1.1. The from-file is built from
 commit 1f5d945af, while the to-file is built from the same commit, but
 with line 209 in ``vm.c`` deleted.
 
-(1): Default arguments.
+(1): Default settings.
 
 .. code-block:: text
 
@@ -121,6 +125,27 @@ with line 209 in ``vm.c`` deleted.
        tests/files/pybv11/1f5d945af/firmware1.bin \
        tests/files/pybv11/1f5d945af-dirty/firmware1.bin \
        tests/files/pybv11/1f5d945af--1f5d945af-dirty-arm-cortex-m4-data-sections.patch
+
+Python 3 built for a 64-bit ARM processor.
+
+(4): Default settings.
+
+.. code-block:: text
+
+   detools create_patch \
+       tests/files/python3/aarch64/3.7.2-3/libpython3.7m.so.1.0 \
+       tests/files/python3/aarch64/3.7.3-1/libpython3.7m.so.1.0 \
+       tests/files/python3/aarch64/3.7.2-3--3.7.3-1.patch
+
+(5): AArch64 aware algorithm.
+
+.. code-block:: text
+
+   detools create_patch \
+       --data-format aarch64 \
+       tests/files/python3/aarch64/3.7.2-3/libpython3.7m.so.1.0 \
+       tests/files/python3/aarch64/3.7.3-1/libpython3.7m.so.1.0 \
+       tests/files/python3/aarch64/3.7.2-3--3.7.3-1-aarch64.patch
 
 Example usage
 =============
