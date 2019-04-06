@@ -604,6 +604,23 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/shell-pi-3/1--2-aarch64.patch',
             data_format='aarch64')
 
+    def test_create_and_apply_patch_shell_pi_3_data_and_code_sections(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/shell-pi-3/1.bin',
+            'tests/files/shell-pi-3/2.bin',
+            'tests/files/shell-pi-3/1--2-aarch64-data-sections.patch',
+            data_format='aarch64',
+            from_data_offset=0x15300,
+            from_data_begin=0x40000000,
+            from_data_end=0x4001b7b8,
+            from_code_begin=0x0,
+            from_code_end=0xd2e0,
+            to_data_offset=0x15300,
+            to_data_begin=0x40000000,
+            to_data_end=0x4001b7b8,
+            to_code_begin=0x0,
+            to_code_end=0xd2f0)
+
 
 # This file is not '__main__' when executed via 'python setup.py3
 # test'.

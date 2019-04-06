@@ -6,12 +6,12 @@ from contextlib import redirect_stdout
 import bitstruct
 from ..common import file_size
 from ..common import file_read
-from ..common import pack_size
-from ..common import unpack_size
+from ..common import pack_usize
+from ..common import unpack_usize
 from .utils import Blocks
 from .utils import DiffReader as UtilsDiffReader
 from .utils import FromReader as UtilsFromReader
-from .utils import create_patch_block_4_bytes as create_patch_block
+from .utils import create_patch_block
 from .utils import load_blocks
 from .utils import format_blocks
 
@@ -341,9 +341,9 @@ def encode(ffrom,
         data_pointers = (b'', b'')
     else:
         patch = b'\x01'
-        patch += pack_size(from_data_offset)
-        patch += pack_size(from_data_begin)
-        patch += pack_size(from_data_end)
+        patch += pack_usize(from_data_offset)
+        patch += pack_usize(from_data_begin)
+        patch += pack_usize(from_data_end)
         data_pointers = create_patch_block(ffrom,
                                            fto,
                                            from_data_pointers,
@@ -354,8 +354,8 @@ def encode(ffrom,
         code_pointers = (b'', b'')
     else:
         patch += b'\x01'
-        patch += pack_size(from_code_begin)
-        patch += pack_size(from_code_end)
+        patch += pack_usize(from_code_begin)
+        patch += pack_usize(from_code_end)
         code_pointers = create_patch_block(ffrom,
                                            fto,
                                            from_code_pointers,
@@ -380,9 +380,9 @@ def create_readers(ffrom, patch, to_size):
     data_pointers_blocks_present = (fpatch.read(1) == b'\x01')
 
     if data_pointers_blocks_present:
-        from_data_offset = unpack_size(fpatch)
-        from_data_begin = unpack_size(fpatch)
-        from_data_end = unpack_size(fpatch)
+        from_data_offset = unpack_usize(fpatch)
+        from_data_begin = unpack_usize(fpatch)
+        from_data_end = unpack_usize(fpatch)
     else:
         from_data_offset = 0
         from_data_begin = 0
@@ -391,8 +391,8 @@ def create_readers(ffrom, patch, to_size):
     code_pointers_blocks_present = (fpatch.read(1) == b'\x01')
 
     if code_pointers_blocks_present:
-        from_code_begin = unpack_size(fpatch)
-        from_code_end = unpack_size(fpatch)
+        from_code_begin = unpack_usize(fpatch)
+        from_code_end = unpack_usize(fpatch)
     else:
         from_code_begin = 0
         from_code_end = 0
@@ -402,7 +402,7 @@ def create_readers(ffrom, patch, to_size):
 
     if code_pointers_blocks_present:
         code_pointers_header = Blocks.unpack_header(fpatch)
-        
+
     bw_header = Blocks.unpack_header(fpatch)
     bl_header = Blocks.unpack_header(fpatch)
     ldr_header = Blocks.unpack_header(fpatch)
@@ -469,9 +469,9 @@ def info(patch, fsize):
     data_pointers_blocks_present = (fpatch.read(1) == b'\x01')
 
     if data_pointers_blocks_present:
-        from_data_offset = unpack_size(fpatch)
-        from_data_begin = unpack_size(fpatch)
-        from_data_end = unpack_size(fpatch)
+        from_data_offset = unpack_usize(fpatch)
+        from_data_begin = unpack_usize(fpatch)
+        from_data_end = unpack_usize(fpatch)
     else:
         from_data_offset = 0
         from_data_begin = 0
@@ -480,8 +480,8 @@ def info(patch, fsize):
     code_pointers_blocks_present = (fpatch.read(1) == b'\x01')
 
     if code_pointers_blocks_present:
-        from_code_begin = unpack_size(fpatch)
-        from_code_end = unpack_size(fpatch)
+        from_code_begin = unpack_usize(fpatch)
+        from_code_end = unpack_usize(fpatch)
     else:
         from_code_begin = 0
         from_code_end = 0

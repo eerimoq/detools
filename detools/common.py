@@ -1,4 +1,5 @@
 import os
+import struct
 from .errors import Error
 
 try:
@@ -124,3 +125,11 @@ def unpack_size_with_length(fin):
 
 def unpack_size(fin):
     return unpack_size_with_length(fin)[0]
+
+
+def pack_usize(value):
+    return pack_size(struct.unpack('>q', struct.pack('>Q', value))[0])
+
+
+def unpack_usize(fin):
+    return struct.unpack('>Q', struct.pack('>q', unpack_size(fin)))[0]

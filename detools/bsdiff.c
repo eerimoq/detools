@@ -97,7 +97,7 @@ static int pack_size(uint8_t *buf_p, int64_t value, size_t size)
     if (value == 0) {
         buf_p[0] = 0;
         res++;
-    } else if (value != 0x8000000000000000ll) {
+    } else {
         if (value > 0) {
             buf_p[res] = 0;
         } else {
@@ -114,8 +114,6 @@ static int pack_size(uint8_t *buf_p, int64_t value, size_t size)
             value >>= 7;
             res++;
         }
-    } else {
-        return (-1);
     }
 
     buf_p[res - 1] &= 0x7f;

@@ -27,7 +27,18 @@ def encode(ffrom,
     """
 
     if data_format == 'aarch64':
-        return aarch64.encode(ffrom, fto)
+        return aarch64.encode(ffrom,
+                              fto,
+                              from_data_offset,
+                              from_data_begin,
+                              from_data_end,
+                              from_code_begin,
+                              from_code_end,
+                              to_data_offset,
+                              to_data_begin,
+                              to_data_end,
+                              to_code_begin,
+                              to_code_end)
     elif data_format == 'arm-cortex-m4':
         return arm_cortex_m4.encode(ffrom,
                                     fto,

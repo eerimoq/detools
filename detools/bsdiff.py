@@ -76,7 +76,7 @@ def pack_size(value):
 
     if value == 0:
         packed.append(0)
-    elif value < 0x8000000000000000:
+    else:
         if value > 0:
             packed.append(0)
         else:
@@ -89,8 +89,6 @@ def pack_size(value):
         while value > 0:
             packed.append(0x80 | (value & 0x7f))
             value >>= 7
-    else:
-        raise Exception('Size too big.')
 
     packed[-1] &= 0x7f
 

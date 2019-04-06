@@ -28,7 +28,7 @@ class Blocks(object):
     def to_bytes(self):
         header = [pack_size(len(self._blocks))]
         data = []
-        
+
         for from_offset, to_address, values in self._blocks:
             header.append(pack_size(from_offset))
             header.append(pack_size(to_address))
@@ -51,7 +51,7 @@ class Blocks(object):
             header.append((from_offset, to_address, number_of_values))
 
         return header
-    
+
     @classmethod
     def from_fpatch(cls, header, fpatch):
         blocks = cls()
@@ -125,17 +125,14 @@ class FromReader(object):
     def seek(self, position, whence=os.SEEK_SET):
         self._ffrom.seek(position, whence)
 
-    def _write_zeros_to_from(self, blocks, from_dict):
-        self._write_zeros_to_from_4_bytes(blocks, from_dict)
-
-    def _write_zeros_to_from_4_bytes(self, blocks, from_dict):
+    def _write_zeros_to_from(self, blocks, from_dict, overwrite_size=4):
         from_sorted = sorted(from_dict.items())
 
         for from_offset, _, values in blocks:
             for i in range(len(values)):
                 from_address = from_sorted[from_offset + i][0]
                 self._ffrom.seek(from_address)
-                self._ffrom.write(4 * b'\x00')
+                self._ffrom.write(overwrite_size * b'\x00')
 
 
 def get_matching_blocks(from_addresses, to_addresses):
@@ -157,7 +154,7 @@ def get_matching_blocks(from_addresses, to_addresses):
     return sm.get_matching_blocks()[:-1]
 
 
-def create_patch_block_4_bytes(ffrom, fto, from_dict, to_dict):
+def create_patch_block(ffrom, fto, from_dict, to_dict, overwrite_size=4):
     """Returns a bytes object of blocks.
 
     """
@@ -188,11 +185,11 @@ def create_patch_block_4_bytes(ffrom, fto, from_dict, to_dict):
         # Overwrite blocks with zeros.
         for address in from_addresses[from_offset:from_offset + size]:
             ffrom.seek(address)
-            ffrom.write(4 * b'\x00')
+            ffrom.write(overwrite_size * b'\x00')
 
         for address in to_addresses[to_offset:to_offset + size]:
             fto.seek(address)
-            fto.write(4 * b'\x00')
+            fto.write(overwrite_size * b'\x00')
 
     return blocks.to_bytes()
 
