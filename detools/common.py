@@ -97,7 +97,7 @@ def file_read(f):
     return f.read()
 
 
-def unpack_size(fin):
+def unpack_size_with_length(fin):
     try:
         byte = fin.read(1)[0]
     except IndexError:
@@ -120,3 +120,7 @@ def unpack_size(fin):
         value *= -1
 
     return value, ((offset - 6) / 7 + 1)
+
+
+def unpack_size(fin):
+    return unpack_size_with_length(fin)[0]

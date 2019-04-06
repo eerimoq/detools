@@ -338,31 +338,35 @@ def encode(ffrom,
 
     if from_data_end == 0:
         patch = b'\x00'
+        data_pointers = (b'', b'')
     else:
         patch = b'\x01'
         patch += pack_size(from_data_offset)
         patch += pack_size(from_data_begin)
         patch += pack_size(from_data_end)
-        patch += create_patch_block(ffrom,
-                                    fto,
-                                    from_data_pointers,
-                                    to_data_pointers)
+        data_pointers = create_patch_block(ffrom,
+                                           fto,
+                                           from_data_pointers,
+                                           to_data_pointers)
 
     if from_code_end == 0:
         patch += b'\x00'
+        code_pointers = (b'', b'')
     else:
         patch += b'\x01'
         patch += pack_size(from_code_begin)
         patch += pack_size(from_code_end)
-        patch += create_patch_block(ffrom,
-                                    fto,
-                                    from_code_pointers,
-                                    to_code_pointers)
+        code_pointers = create_patch_block(ffrom,
+                                           fto,
+                                           from_code_pointers,
+                                           to_code_pointers)
 
-    patch += create_patch_block(ffrom, fto, from_bw, to_bw)
-    patch += create_patch_block(ffrom, fto, from_bl, to_bl)
-    patch += create_patch_block(ffrom, fto, from_ldr, to_ldr)
-    patch += create_patch_block(ffrom, fto, from_ldr_w, to_ldr_w)
+    bw = create_patch_block(ffrom, fto, from_bw, to_bw)
+    bl = create_patch_block(ffrom, fto, from_bl, to_bl)
+    ldr = create_patch_block(ffrom, fto, from_ldr, to_ldr)
+    ldr_w = create_patch_block(ffrom, fto, from_ldr_w, to_ldr_w)
+    headers, datas = zip(data_pointers, code_pointers, bw, bl, ldr, ldr_w)
+    patch += b''.join(headers) + b''.join(datas)
 
     return ffrom, fto, patch
 
@@ -376,31 +380,48 @@ def create_readers(ffrom, patch, to_size):
     data_pointers_blocks_present = (fpatch.read(1) == b'\x01')
 
     if data_pointers_blocks_present:
-        from_data_offset = unpack_size(fpatch)[0]
-        from_data_begin = unpack_size(fpatch)[0]
-        from_data_end = unpack_size(fpatch)[0]
-        data_pointers_blocks = Blocks.from_fpatch(fpatch)
+        from_data_offset = unpack_size(fpatch)
+        from_data_begin = unpack_size(fpatch)
+        from_data_end = unpack_size(fpatch)
     else:
         from_data_offset = 0
         from_data_begin = 0
         from_data_end = 0
-        data_pointers_blocks = None
 
     code_pointers_blocks_present = (fpatch.read(1) == b'\x01')
 
     if code_pointers_blocks_present:
-        from_code_begin = unpack_size(fpatch)[0]
-        from_code_end = unpack_size(fpatch)[0]
-        code_pointers_blocks = Blocks.from_fpatch(fpatch)
+        from_code_begin = unpack_size(fpatch)
+        from_code_end = unpack_size(fpatch)
     else:
         from_code_begin = 0
         from_code_end = 0
-        code_pointers_blocks = None
 
-    bw_blocks = Blocks.from_fpatch(fpatch)
-    bl_blocks = Blocks.from_fpatch(fpatch)
-    ldr_blocks = Blocks.from_fpatch(fpatch)
-    ldr_w_blocks = Blocks.from_fpatch(fpatch)
+    if data_pointers_blocks_present:
+        data_pointers_header = Blocks.unpack_header(fpatch)
+
+    if code_pointers_blocks_present:
+        code_pointers_header = Blocks.unpack_header(fpatch)
+        
+    bw_header = Blocks.unpack_header(fpatch)
+    bl_header = Blocks.unpack_header(fpatch)
+    ldr_header = Blocks.unpack_header(fpatch)
+    ldr_w_header = Blocks.unpack_header(fpatch)
+
+    if data_pointers_blocks_present:
+        data_pointers_blocks = Blocks.from_fpatch(data_pointers_header, fpatch)
+    else:
+        data_pointers_blocks = Blocks()
+
+    if code_pointers_blocks_present:
+        code_pointers_blocks = Blocks.from_fpatch(code_pointers_header, fpatch)
+    else:
+        code_pointers_blocks = Blocks()
+
+    bw_blocks = Blocks.from_fpatch(bw_header, fpatch)
+    bl_blocks = Blocks.from_fpatch(bl_header, fpatch)
+    ldr_blocks = Blocks.from_fpatch(ldr_header, fpatch)
+    ldr_w_blocks = Blocks.from_fpatch(ldr_w_header, fpatch)
     (bw,
      bl,
      ldr,
@@ -448,22 +469,54 @@ def info(patch, fsize):
     data_pointers_blocks_present = (fpatch.read(1) == b'\x01')
 
     if data_pointers_blocks_present:
-        from_data_offset = unpack_size(fpatch)[0]
-        from_data_begin = unpack_size(fpatch)[0]
-        from_data_end = unpack_size(fpatch)[0]
-        data_pointers_blocks, data_pointers_blocks_size = load_blocks(fpatch)
+        from_data_offset = unpack_size(fpatch)
+        from_data_begin = unpack_size(fpatch)
+        from_data_end = unpack_size(fpatch)
+    else:
+        from_data_offset = 0
+        from_data_begin = 0
+        from_data_end = 0
 
     code_pointers_blocks_present = (fpatch.read(1) == b'\x01')
 
     if code_pointers_blocks_present:
-        from_code_begin = unpack_size(fpatch)[0]
-        from_code_end = unpack_size(fpatch)[0]
-        code_pointers_blocks, code_pointers_blocks_size = load_blocks(fpatch)
+        from_code_begin = unpack_size(fpatch)
+        from_code_end = unpack_size(fpatch)
+    else:
+        from_code_begin = 0
+        from_code_end = 0
 
-    bw_blocks, bw_blocks_size = load_blocks(fpatch)
-    bl_blocks, bl_blocks_size = load_blocks(fpatch)
-    ldr_blocks, ldr_blocks_size = load_blocks(fpatch)
-    ldr_w_blocks, ldr_w_blocks_size = load_blocks(fpatch)
+    if data_pointers_blocks_present:
+        data_pointers_header = Blocks.unpack_header(fpatch)
+
+    if code_pointers_blocks_present:
+        code_pointers_header = Blocks.unpack_header(fpatch)
+
+    bw_header = Blocks.unpack_header(fpatch)
+    bl_header = Blocks.unpack_header(fpatch)
+    ldr_header = Blocks.unpack_header(fpatch)
+    ldr_w_header = Blocks.unpack_header(fpatch)
+
+    if data_pointers_blocks_present:
+        data_pointers_blocks, data_pointers_blocks_size = load_blocks(
+            data_pointers_header,
+            fpatch)
+    else:
+        data_pointers_blocks = Blocks()
+        data_pointers_blocks_size = 0
+
+    if code_pointers_blocks_present:
+        code_pointers_blocks, code_pointers_blocks_size = load_blocks(
+            code_pointers_header,
+            fpatch)
+    else:
+        code_pointers_blocks = Blocks()
+        code_pointers_blocks_size = 0
+
+    bw_blocks, bw_blocks_size = load_blocks(bw_header, fpatch)
+    bl_blocks, bl_blocks_size = load_blocks(bl_header, fpatch)
+    ldr_blocks, ldr_blocks_size = load_blocks(ldr_header, fpatch)
+    ldr_w_blocks, ldr_w_blocks_size = load_blocks(ldr_w_header, fpatch)
     fout = StringIO()
 
     with redirect_stdout(fout):

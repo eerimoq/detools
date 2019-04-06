@@ -244,14 +244,22 @@ def encode(ffrom, fto):
      to_adrp,
      to_str,
      to_str_imm_64) = disassemble(fto)
-    patch = create_patch_block(ffrom, fto, from_b, to_b)
-    patch += create_patch_block(ffrom, fto, from_bl, to_bl)
-    patch += create_patch_block(ffrom, fto, from_add, to_add)
-    patch += create_patch_block(ffrom, fto, from_add_generic, to_add_generic)
-    patch += create_patch_block(ffrom, fto, from_ldr, to_ldr)
-    patch += create_patch_block(ffrom, fto, from_adrp, to_adrp)
-    patch += create_patch_block(ffrom, fto, from_str, to_str)
-    patch += create_patch_block(ffrom, fto, from_str_imm_64, to_str_imm_64)
+    b = create_patch_block(ffrom, fto, from_b, to_b)
+    bl = create_patch_block(ffrom, fto, from_bl, to_bl)
+    add = create_patch_block(ffrom, fto, from_add, to_add)
+    add_generic = create_patch_block(ffrom,
+                                     fto,
+                                     from_add_generic,
+                                     to_add_generic)
+    ldr = create_patch_block(ffrom, fto, from_ldr, to_ldr)
+    adrp = create_patch_block(ffrom, fto, from_adrp, to_adrp)
+    str_ = create_patch_block(ffrom, fto, from_str, to_str)
+    str_imm_64 = create_patch_block(ffrom,
+                                    fto,
+                                    from_str_imm_64,
+                                    to_str_imm_64)
+    headers, datas = zip(b, bl, add, add_generic, ldr, adrp, str_, str_imm_64)
+    patch = b''.join(headers) + b''.join(datas)
 
     return ffrom, fto, patch
 
@@ -262,14 +270,22 @@ def create_readers(ffrom, patch, to_size):
     """
 
     fpatch = BytesIO(patch)
-    b_blocks = Blocks.from_fpatch(fpatch)
-    bl_blocks = Blocks.from_fpatch(fpatch)
-    add_blocks = Blocks.from_fpatch(fpatch)
-    add_generic_blocks = Blocks.from_fpatch(fpatch)
-    ldr_blocks = Blocks.from_fpatch(fpatch)
-    adrp_blocks = Blocks.from_fpatch(fpatch)
-    str_blocks = Blocks.from_fpatch(fpatch)
-    str_imm_64_blocks = Blocks.from_fpatch(fpatch)
+    b_header = Blocks.unpack_header(fpatch)
+    bl_header = Blocks.unpack_header(fpatch)
+    add_header = Blocks.unpack_header(fpatch)
+    add_generic_header = Blocks.unpack_header(fpatch)
+    ldr_header = Blocks.unpack_header(fpatch)
+    adrp_header = Blocks.unpack_header(fpatch)
+    str_header = Blocks.unpack_header(fpatch)
+    str_imm_64_header = Blocks.unpack_header(fpatch)
+    b_blocks = Blocks.from_fpatch(b_header, fpatch)
+    bl_blocks = Blocks.from_fpatch(bl_header, fpatch)
+    add_blocks = Blocks.from_fpatch(add_header, fpatch)
+    add_generic_blocks = Blocks.from_fpatch(add_generic_header, fpatch)
+    ldr_blocks = Blocks.from_fpatch(ldr_header, fpatch)
+    adrp_blocks = Blocks.from_fpatch(adrp_header, fpatch)
+    str_blocks = Blocks.from_fpatch(str_header, fpatch)
+    str_imm_64_blocks = Blocks.from_fpatch(str_imm_64_header, fpatch)
     b, bl, add, add_generic, ldr, adrp, str_, str_imm_64 = disassemble(ffrom)
     diff_reader = DiffReader(ffrom,
                              to_size,
@@ -312,13 +328,24 @@ def create_readers(ffrom, patch, to_size):
 
 def info(patch, fsize):
     fpatch = BytesIO(patch)
-    b_blocks, b_blocks_size = load_blocks(fpatch)
-    bl_blocks, bl_blocks_size = load_blocks(fpatch)
-    add_blocks, add_blocks_size = load_blocks(fpatch)
-    ldr_blocks, ldr_blocks_size = load_blocks(fpatch)
-    adrp_blocks, adrp_blocks_size = load_blocks(fpatch)
-    str_blocks, str_blocks_size = load_blocks(fpatch)
-    str_imm_64_blocks, str_imm_64_blocks_size = load_blocks(fpatch)
+    b_header = Blocks.unpack_header(fpatch)
+    bl_header = Blocks.unpack_header(fpatch)
+    add_header = Blocks.unpack_header(fpatch)
+    add_generic_header = Blocks.unpack_header(fpatch)
+    ldr_header = Blocks.unpack_header(fpatch)
+    adrp_header = Blocks.unpack_header(fpatch)
+    str_header = Blocks.unpack_header(fpatch)
+    str_imm_64_header = Blocks.unpack_header(fpatch)
+    b_blocks, b_blocks_size = load_blocks(b_header, fpatch)
+    bl_blocks, bl_blocks_size = load_blocks(bl_header, fpatch)
+    add_blocks, add_blocks_size = load_blocks(add_header, fpatch)
+    add_generic_blocks, add_generic_blocks_size = load_blocks(add_generic_header,
+                                                              fpatch)
+    ldr_blocks, ldr_blocks_size = load_blocks(ldr_header, fpatch)
+    adrp_blocks, adrp_blocks_size = load_blocks(adrp_header, fpatch)
+    str_blocks, str_blocks_size = load_blocks(str_header, fpatch)
+    str_imm_64_blocks, str_imm_64_blocks_size = load_blocks(str_imm_64_header,
+                                                            fpatch)
     fout = StringIO()
 
     with redirect_stdout(fout):
@@ -328,6 +355,8 @@ def info(patch, fsize):
         format_blocks(bl_blocks, bl_blocks_size, fsize)
         print('Instruction:        add')
         format_blocks(add_blocks, add_blocks_size, fsize)
+        print('Instruction:        add (generic)')
+        format_blocks(add_generic_blocks, add_generic_blocks_size, fsize)
         print('Instruction:        ldr')
         format_blocks(ldr_blocks, ldr_blocks_size, fsize)
         print('Instruction:        adrp')

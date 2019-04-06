@@ -8,6 +8,7 @@ from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import file_size
 from .common import unpack_size
+from .common import unpack_size_with_length
 from .common import data_format_number_to_string
 from .data_format import info as data_format_info
 
@@ -32,7 +33,7 @@ def patch_info_normal_inner(patch_reader, to_size):
 
     while to_pos < to_size:
         # Diff data.
-        size, number_of_bytes = unpack_size(patch_reader)
+        size, number_of_bytes = unpack_size_with_length(patch_reader)
 
         if to_pos + size > to_size:
             raise Error("Patch diff data too long.")
@@ -43,7 +44,7 @@ def patch_info_normal_inner(patch_reader, to_size):
         to_pos += size
 
         # Extra data.
-        size, number_of_bytes = unpack_size(patch_reader)
+        size, number_of_bytes = unpack_size_with_length(patch_reader)
         number_of_size_bytes += number_of_bytes
 
         if to_pos + size > to_size:
@@ -54,7 +55,7 @@ def patch_info_normal_inner(patch_reader, to_size):
         to_pos += size
 
         # Adjustment.
-        size, number_of_bytes = unpack_size(patch_reader)
+        size, number_of_bytes = unpack_size_with_length(patch_reader)
         number_of_size_bytes += number_of_bytes
         adjustment_sizes.append(size)
 
@@ -76,10 +77,10 @@ def patch_info_normal(fpatch, fsize):
         info = (0, [], [], [], 0)
     else:
         patch_reader = PatchReader(fpatch, compression)
-        dfpatch_size = unpack_size(patch_reader)[0]
+        dfpatch_size = unpack_size(patch_reader)
 
         if dfpatch_size > 0:
-            data_format = unpack_size(patch_reader)[0]
+            data_format = unpack_size(patch_reader)
             patch = patch_reader.decompress(dfpatch_size)
             dfpatch_info = data_format_info(data_format, patch, fsize)
             data_format = data_format_number_to_string(data_format)
@@ -112,10 +113,10 @@ def patch_info_in_place(fpatch):
 
         for to_pos in range(0, to_size, segment_size):
             segment_to_size = min(segment_size, to_size - to_pos)
-            dfpatch_size = unpack_size(patch_reader)[0]
+            dfpatch_size = unpack_size(patch_reader)
 
             if dfpatch_size > 0:
-                data_format = unpack_size(patch_reader)[0]
+                data_format = unpack_size(patch_reader)
                 data_format = data_format_number_to_string(data_format)
                 patch_reader.decompress(dfpatch_size)
             else:

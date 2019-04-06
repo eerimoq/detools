@@ -26,26 +26,38 @@ class Blocks(object):
         self._blocks.append((from_offset, to_address, values))
 
     def to_bytes(self):
-        data = [pack_size(len(self._blocks))]
+        header = [pack_size(len(self._blocks))]
+        data = []
+        
+        for from_offset, to_address, values in self._blocks:
+            header.append(pack_size(from_offset))
+            header.append(pack_size(to_address))
+            header.append(pack_size(len(values)))
 
         for from_offset, to_address, values in self._blocks:
-            data.append(pack_size(from_offset))
-            data.append(pack_size(to_address))
-            data.append(pack_size(len(values)))
             data.extend([pack_size(value) for value in values])
 
-        return b''.join(data)
+        return b''.join(header), b''.join(data)
 
-    @classmethod
-    def from_fpatch(cls, fpatch):
-        blocks = cls()
-        number_of_blocks = unpack_size(fpatch)[0]
+    @staticmethod
+    def unpack_header(fpatch):
+        header = []
+        number_of_blocks = unpack_size(fpatch)
 
         for _ in range(number_of_blocks):
-            from_offset = unpack_size(fpatch)[0]
-            to_address = unpack_size(fpatch)[0]
-            number_of_values = unpack_size(fpatch)[0]
-            values = [unpack_size(fpatch)[0] for _ in range(number_of_values)]
+            from_offset = unpack_size(fpatch)
+            to_address = unpack_size(fpatch)
+            number_of_values = unpack_size(fpatch)
+            header.append((from_offset, to_address, number_of_values))
+
+        return header
+    
+    @classmethod
+    def from_fpatch(cls, header, fpatch):
+        blocks = cls()
+
+        for from_offset, to_address, number_of_values in header:
+            values = [unpack_size(fpatch) for _ in range(number_of_values)]
             blocks.append(from_offset, to_address, values)
 
         return blocks
@@ -185,9 +197,9 @@ def create_patch_block_4_bytes(ffrom, fto, from_dict, to_dict):
     return blocks.to_bytes()
 
 
-def load_blocks(fpatch):
+def load_blocks(header, fpatch):
     position = fpatch.tell()
-    blocks = Blocks.from_fpatch(fpatch)
+    blocks = Blocks.from_fpatch(header, fpatch)
     blocks_size = fpatch.tell() - position
 
     return blocks, blocks_size

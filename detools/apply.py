@@ -98,7 +98,7 @@ def read_header_normal(fpatch):
         raise Error("Expected patch type 0, but got {}.".format(patch_type))
 
     compression = convert_compression(compression)
-    to_size = unpack_size(fpatch)[0]
+    to_size = unpack_size(fpatch)
 
     return compression, to_size
 
@@ -119,11 +119,11 @@ def read_header_in_place(fpatch):
         raise Error("Expected patch type 1, but got {}.".format(patch_type))
 
     compression = convert_compression(compression)
-    memory_size = unpack_size(fpatch)[0]
-    segment_size = unpack_size(fpatch)[0]
-    shift_size = unpack_size(fpatch)[0]
-    from_size = unpack_size(fpatch)[0]
-    to_size = unpack_size(fpatch)[0]
+    memory_size = unpack_size(fpatch)
+    segment_size = unpack_size(fpatch)
+    shift_size = unpack_size(fpatch)
+    from_size = unpack_size(fpatch)
+    to_size = unpack_size(fpatch)
 
     return compression, memory_size, segment_size, shift_size, from_size, to_size
 
@@ -156,7 +156,7 @@ def apply_patch_in_place_segment(fmem,
 
     """
 
-    dfpatch_size = unpack_size(patch_reader)[0]
+    dfpatch_size = unpack_size(patch_reader)
 
     if dfpatch_size > 0:
         raise NotImplementedError()
@@ -165,7 +165,7 @@ def apply_patch_in_place_segment(fmem,
 
     while to_pos < to_size:
         # Diff data.
-        size = unpack_size(patch_reader)[0]
+        size = unpack_size(patch_reader)
 
         if to_pos + size > to_size:
             raise Error("Patch diff data too long.")
@@ -186,7 +186,7 @@ def apply_patch_in_place_segment(fmem,
             to_pos += chunk_size
 
         # Extra data.
-        size = unpack_size(patch_reader)[0]
+        size = unpack_size(patch_reader)
 
         if to_pos + size > to_size:
             raise Error("Patch extra data too long.")
@@ -196,7 +196,7 @@ def apply_patch_in_place_segment(fmem,
         to_pos += size
 
         # Adjustment.
-        from_offset += unpack_size(patch_reader)[0]
+        from_offset += unpack_size(patch_reader)
 
 
 def apply_patch(ffrom, fpatch, fto):
@@ -219,10 +219,10 @@ def apply_patch(ffrom, fpatch, fto):
         return to_size
 
     patch_reader = PatchReader(fpatch, compression)
-    dfpatch_size = unpack_size(patch_reader)[0]
+    dfpatch_size = unpack_size(patch_reader)
 
     if dfpatch_size > 0:
-        data_format = unpack_size(patch_reader)[0]
+        data_format = unpack_size(patch_reader)
         patch = patch_reader.decompress(dfpatch_size)
         dfdiff, ffrom = create_readers(data_format, ffrom, patch, to_size)
 
@@ -235,7 +235,7 @@ def apply_patch(ffrom, fpatch, fto):
 
     while to_pos < to_size:
         # Diff data.
-        size = unpack_size(patch_reader)[0]
+        size = unpack_size(patch_reader)
 
         if to_pos + size > to_size:
             raise Error("Patch diff data too long.")
@@ -265,7 +265,7 @@ def apply_patch(ffrom, fpatch, fto):
         to_pos += size
 
         # Extra data.
-        size = unpack_size(patch_reader)[0]
+        size = unpack_size(patch_reader)
 
         if to_pos + size > to_size:
             raise Error("Patch extra data too long.")
@@ -282,7 +282,7 @@ def apply_patch(ffrom, fpatch, fto):
         to_pos += size
 
         # Adjustment.
-        size = unpack_size(patch_reader)[0]
+        size = unpack_size(patch_reader)
         ffrom.seek(size, os.SEEK_CUR)
 
     if not patch_reader.eof:

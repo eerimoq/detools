@@ -19,7 +19,8 @@ class DetoolsDataFormatTest(unittest.TestCase):
             'Blocks(number_of_blocks=1, blocks=[Block(from_offset=0, '
             'to_address=1, number_of_values=3)])')
 
-        self.assertEqual(blocks.to_bytes(), b'\x01\x00\x01\x03\x02\x03\x04')
+        self.assertEqual(blocks.to_bytes(),
+                         (b'\x01\x00\x01\x03', b'\x02\x03\x04'))
 
 
 if __name__ == '__main__':
