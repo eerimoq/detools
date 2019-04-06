@@ -6,7 +6,6 @@ from contextlib import redirect_stdout
 import bitstruct
 from ..common import file_size
 from ..common import file_read
-from ..common import unpack_usize
 from .utils import Blocks
 from .utils import DiffReader as UtilsDiffReader
 from .utils import FromReader as UtilsFromReader
@@ -17,6 +16,7 @@ from .utils import create_data_pointers_patch_block
 from .utils import create_code_pointers_patch_block
 from .utils import unpack_pointers_header
 from .utils import unpack_pointers_blocks
+from .utils import unpack_pointers_blocks_with_length
 
 
 LOGGER = logging.getLogger(__name__)
@@ -444,53 +444,32 @@ def create_readers(ffrom, patch, to_size):
 
 def info(patch, fsize):
     fpatch = BytesIO(patch)
-    data_pointers_blocks_present = (fpatch.read(1) == b'\x01')
 
-    if data_pointers_blocks_present:
-        from_data_offset = unpack_usize(fpatch)
-        from_data_begin = unpack_usize(fpatch)
-        from_data_end = unpack_usize(fpatch)
-    else:
-        from_data_offset = 0
-        from_data_begin = 0
-        from_data_end = 0
-
-    code_pointers_blocks_present = (fpatch.read(1) == b'\x01')
-
-    if code_pointers_blocks_present:
-        from_code_begin = unpack_usize(fpatch)
-        from_code_end = unpack_usize(fpatch)
-    else:
-        from_code_begin = 0
-        from_code_end = 0
-
-    if data_pointers_blocks_present:
-        data_pointers_header = Blocks.unpack_header(fpatch)
-
-    if code_pointers_blocks_present:
-        code_pointers_header = Blocks.unpack_header(fpatch)
-
+    # Headers.
+    (data_pointers_blocks_present,
+     code_pointers_blocks_present,
+     data_pointers_header,
+     code_pointers_header,
+     from_data_offset,
+     from_data_begin,
+     from_data_end,
+     from_code_begin,
+     from_code_end) = unpack_pointers_header(fpatch)
     bw_header = Blocks.unpack_header(fpatch)
     bl_header = Blocks.unpack_header(fpatch)
     ldr_header = Blocks.unpack_header(fpatch)
     ldr_w_header = Blocks.unpack_header(fpatch)
 
-    if data_pointers_blocks_present:
-        data_pointers_blocks, data_pointers_blocks_size = load_blocks(
-            data_pointers_header,
-            fpatch)
-    else:
-        data_pointers_blocks = Blocks()
-        data_pointers_blocks_size = 0
-
-    if code_pointers_blocks_present:
-        code_pointers_blocks, code_pointers_blocks_size = load_blocks(
-            code_pointers_header,
-            fpatch)
-    else:
-        code_pointers_blocks = Blocks()
-        code_pointers_blocks_size = 0
-
+    # Blocks.
+    (data_pointers_blocks,
+     data_pointers_blocks_size,
+     code_pointers_blocks,
+     code_pointers_blocks_size) = unpack_pointers_blocks_with_length(
+         fpatch,
+         data_pointers_blocks_present,
+         code_pointers_blocks_present,
+         data_pointers_header,
+         code_pointers_header)
     bw_blocks, bw_blocks_size = load_blocks(bw_header, fpatch)
     bl_blocks, bl_blocks_size = load_blocks(bl_header, fpatch)
     ldr_blocks, ldr_blocks_size = load_blocks(ldr_header, fpatch)

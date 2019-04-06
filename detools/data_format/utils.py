@@ -322,19 +322,46 @@ def unpack_pointers_header(fpatch):
             from_code_end)
 
 
+def unpack_pointers_blocks_with_length(fpatch,
+                                       data_pointers_blocks_present,
+                                       code_pointers_blocks_present,
+                                       data_pointers_header,
+                                       code_pointers_header):
+    if data_pointers_blocks_present:
+        data_pointers_blocks, data_pointers_blocks_size = load_blocks(
+            data_pointers_header,
+            fpatch)
+    else:
+        data_pointers_blocks = Blocks()
+        data_pointers_blocks_size = 0
+
+    if code_pointers_blocks_present:
+        code_pointers_blocks, code_pointers_blocks_size = load_blocks(
+            code_pointers_header,
+            fpatch)
+    else:
+        code_pointers_blocks = Blocks()
+        code_pointers_blocks_size = 0
+
+    return (data_pointers_blocks,
+            data_pointers_blocks_size,
+            code_pointers_blocks,
+            code_pointers_blocks_size)
+
+
 def unpack_pointers_blocks(fpatch,
                            data_pointers_blocks_present,
                            code_pointers_blocks_present,
                            data_pointers_header,
                            code_pointers_header):
-    if data_pointers_blocks_present:
-        data_pointers_blocks = Blocks.from_fpatch(data_pointers_header, fpatch)
-    else:
-        data_pointers_blocks = Blocks()
-
-    if code_pointers_blocks_present:
-        code_pointers_blocks = Blocks.from_fpatch(code_pointers_header, fpatch)
-    else:
-        code_pointers_blocks = Blocks()
+    (data_pointers_blocks,
+     _,
+     code_pointers_blocks,
+     _) = unpack_pointers_blocks_with_length(
+         fpatch,
+         data_pointers_blocks_present,
+         code_pointers_blocks_present,
+         data_pointers_header,
+         code_pointers_header)
 
     return data_pointers_blocks, code_pointers_blocks
