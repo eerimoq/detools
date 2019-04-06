@@ -621,6 +621,32 @@ class DetoolsTest(unittest.TestCase):
             to_code_begin=0x0,
             to_code_end=0xd2f0)
 
+    def test_create_and_apply_patch_python3(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/python3/aarch64/3.6.6-1/libpython3.6m.so.1.0',
+            'tests/files/python3/aarch64/3.7.2-3/libpython3.7m.so.1.0',
+            'tests/files/python3/aarch64/3.6.6-1--3.7.2-3.patch')
+
+    def test_create_and_apply_patch_python3_aarch64(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/python3/aarch64/3.6.6-1/libpython3.6m.so.1.0',
+            'tests/files/python3/aarch64/3.7.2-3/libpython3.7m.so.1.0',
+            'tests/files/python3/aarch64/3.6.6-1--3.7.2-3-aarch64.patch',
+            data_format='aarch64')
+
+    def test_create_and_apply_patch_python3_2(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/python3/aarch64/3.7.2-3/libpython3.7m.so.1.0',
+            'tests/files/python3/aarch64/3.7.3-1/libpython3.7m.so.1.0',
+            'tests/files/python3/aarch64/3.7.2-3--3.7.3-1.patch')
+
+    def test_create_and_apply_patch_python3_2_aarch64(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/python3/aarch64/3.7.2-3/libpython3.7m.so.1.0',
+            'tests/files/python3/aarch64/3.7.3-1/libpython3.7m.so.1.0',
+            'tests/files/python3/aarch64/3.7.2-3--3.7.3-1-aarch64.patch',
+            data_format='aarch64')
+
 
 # This file is not '__main__' when executed via 'python setup.py3
 # test'.
