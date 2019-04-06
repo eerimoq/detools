@@ -183,13 +183,13 @@ def disassemble_bl(reader, address, bl):
     bl[address] = struct.unpack('<i', data)[0]
 
 
-def disassemble_add(reader, address, add, add_generic, upper_32):
-    rn = ((upper_32 >> 5) & 0x1f)
-    rd = (upper_32 & 0x1f)
+def disassemble_add(reader, address, add, add_generic, value):
+    rn = ((value >> 5) & 0x1f)
+    rd = (value & 0x1f)
 
     if rn == rd:
-        shift = ((upper_32 >> 22) & 0x3)
-        imm12 = ((upper_32 >> 10) & 0xfff)
+        shift = ((value >> 22) & 0x3)
+        imm12 = ((value >> 10) & 0xfff)
         value = imm12
         value |= (shift << 12)
         value |= (rn << 14)
@@ -217,10 +217,10 @@ def disassemble_str_imm_64(reader, address, str_imm_64):
     str_imm_64[address] = struct.unpack('<i', data)[0]
 
 
-def disassemble_adrp(address, adrp, upper_32):
-    rd = (upper_32 & 0x1f)
-    immhi = ((upper_32 >> 5) & 0x7ffff)
-    immlo = ((upper_32 >> 29) & 0x3)
+def disassemble_adrp(address, adrp, value):
+    rd = (value & 0x1f)
+    immhi = ((value >> 5) & 0x7ffff)
+    immlo = ((value >> 29) & 0x3)
     value = immlo
     value |= (immhi << 2)
     value |= (rd << 21)
@@ -271,38 +271,38 @@ def disassemble(reader,
                              address)
                 continue
 
-            upper_32 = struct.unpack('<I', data)[0]
+            value = struct.unpack('<I', data)[0]
 
-            if (upper_32 & 0xfc000000) == 0x94000000:
+            if (value & 0xfc000000) == 0x94000000:
                 disassemble_bl(reader, address, bl)
-            elif (upper_32 & 0xff000000) == 0x91000000:
-                disassemble_add(reader, address, add, add_generic, upper_32)
-            elif (upper_32 & 0xff000000) == 0x14000000:
+            elif (value & 0xff000000) == 0x91000000:
+                disassemble_add(reader, address, add, add_generic, value)
+            elif (value & 0xff000000) == 0x14000000:
                 # disassemble_b(reader, address, b)
                 pass
-            elif (upper_32 & 0xffc00000) == 0xf9400000:
+            elif (value & 0xffc00000) == 0xf9400000:
                 disassemble_ldr(reader, address, ldr)
-            elif (upper_32 & 0xffc00000) == 0xa9000000:
+            elif (value & 0xffc00000) == 0xa9000000:
                 disassemble_str(reader, address, str_)
-            elif (upper_32 & 0x9f000000) == 0x90000000:
-                disassemble_adrp(address, adrp, upper_32)
-            elif (upper_32 & 0xffc00000) == 0xb9400000:
+            elif (value & 0x9f000000) == 0x90000000:
+                disassemble_adrp(address, adrp, value)
+            elif (value & 0xffc00000) == 0xb9400000:
                 disassemble_ldr(reader, address, ldr)
-            elif (upper_32 & 0xffc00000) == 0x39400000:
+            elif (value & 0xffc00000) == 0x39400000:
                 # LDRB (immediate) Unsigned offset
                 disassemble_ldr(reader, address, ldr)
-            elif (upper_32 & 0xffc00000) == 0x39000000:
+            elif (value & 0xffc00000) == 0x39000000:
                 # LDRB (immediate) Unsigned offset
                 disassemble_ldr(reader, address, ldr)
-            elif (upper_32 & 0xffc00000) == 0xb9000000:
+            elif (value & 0xffc00000) == 0xb9000000:
                 disassemble_str(reader, address, str_)
-            elif (upper_32 & 0xffe00000) == 0xf8400000:
+            elif (value & 0xffe00000) == 0xf8400000:
                 # LDUR 64-bit
                 disassemble_ldr(reader, address, ldr)
-            elif (upper_32 & 0xffe00000) == 0xb8400000:
+            elif (value & 0xffe00000) == 0xb8400000:
                 # LDTR 64-bit
                 disassemble_ldr(reader, address, ldr)
-            elif (upper_32 & 0xffc00000) == 0xf9000000:
+            elif (value & 0xffc00000) == 0xf9000000:
                 disassemble_str_imm_64(reader, address, str_imm_64)
 
     return (b,
