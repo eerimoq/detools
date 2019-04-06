@@ -43,16 +43,16 @@ class DiffReader(UtilsDiffReader):
                  data_pointers_blocks,
                  code_pointers_blocks):
         super().__init__(ffrom, to_size)
-        self._write_values_to_to(ldr_blocks, ldr)
-        self._write_values_to_to(ldr_w_blocks, ldr_w)
+        self._write_s32_values_to_to(ldr_blocks, ldr)
+        self._write_s32_values_to_to(ldr_w_blocks, ldr_w)
         self._write_bl_values_to_to(bl_blocks, bl)
         self._write_bw_values_to_to(bw_blocks, bw)
 
         if data_pointers_blocks is not None:
-            self._write_values_to_to(data_pointers_blocks, data_pointers)
+            self._write_s32_values_to_to(data_pointers_blocks, data_pointers)
 
         if code_pointers_blocks is not None:
-            self._write_values_to_to(code_pointers_blocks, code_pointers)
+            self._write_s32_values_to_to(code_pointers_blocks, code_pointers)
 
         self._fdiff.seek(0)
 

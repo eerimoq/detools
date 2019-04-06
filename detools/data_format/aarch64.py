@@ -52,20 +52,20 @@ class DiffReader(UtilsDiffReader):
                  data_pointers_blocks,
                  code_pointers_blocks):
         super().__init__(ffrom, to_size)
-        self._write_values_to_to(b_blocks, b)
-        self._write_values_to_to(bl_blocks, bl)
+        self._write_s32_values_to_to(b_blocks, b)
+        self._write_s32_values_to_to(bl_blocks, bl)
         self._write_add_values_to_to(add_blocks, add)
-        self._write_values_to_to(add_generic_blocks, add_generic)
-        self._write_values_to_to(ldr_blocks, ldr)
+        self._write_s32_values_to_to(add_generic_blocks, add_generic)
+        self._write_s32_values_to_to(ldr_blocks, ldr)
         self._write_adrp_values_to_to(adrp_blocks, adrp)
-        self._write_values_to_to(str_blocks, str_)
-        self._write_values_to_to(str_imm_64_blocks, str_imm_64)
+        self._write_s32_values_to_to(str_blocks, str_)
+        self._write_s32_values_to_to(str_imm_64_blocks, str_imm_64)
 
         if data_pointers_blocks is not None:
-            self._write_data_values_to_to(data_pointers_blocks, data_pointers)
+            self._write_u64_values_to_to(data_pointers_blocks, data_pointers)
 
         if code_pointers_blocks is not None:
-            self._write_code_values_to_to(code_pointers_blocks, code_pointers)
+            self._write_u64_values_to_to(code_pointers_blocks, code_pointers)
 
         self._fdiff.seek(0)
 
@@ -74,16 +74,6 @@ class DiffReader(UtilsDiffReader):
 
     def _write_adrp_values_to_to(self, blocks, from_dict):
         self._write_values_to_to_with_callback(blocks, from_dict, self._pack_adrp)
-
-    def _write_data_values_to_to(self, blocks, from_dict):
-        self._write_values_to_to_with_callback(blocks,
-                                               from_dict,
-                                               self._pack_8_bytes)
-
-    def _write_code_values_to_to(self, blocks, from_dict):
-        self._write_values_to_to_with_callback(blocks,
-                                               from_dict,
-                                               self._pack_8_bytes)
 
     def _pack_add(self, value):
         imm12 = (value & 0xfff)
@@ -100,9 +90,6 @@ class DiffReader(UtilsDiffReader):
         value = self._CF_ADRP.pack(0b1, immlo, 0b10000, immhi, rd)
 
         return value[::-1]
-
-    def _pack_8_bytes(self, value):
-        return struct.pack('<Q', value)
 
 
 class FromReader(UtilsFromReader):

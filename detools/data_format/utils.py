@@ -108,11 +108,21 @@ class DiffReader(object):
                 self._fdiff.seek(to_address + from_address - from_address_base)
                 self._fdiff.write(pack_callback(from_value - value))
 
-    def _write_values_to_to(self, blocks, from_dict):
-        self._write_values_to_to_with_callback(blocks, from_dict, self._pack_bytes)
+    def _write_s32_values_to_to(self, blocks, from_dict):
+        self._write_values_to_to_with_callback(blocks,
+                                               from_dict,
+                                               self._pack_s32)
 
-    def _pack_bytes(self, value):
+    def _write_u64_values_to_to(self, blocks, from_dict):
+        self._write_values_to_to_with_callback(blocks,
+                                               from_dict,
+                                               self._pack_u64)
+
+    def _pack_s32(self, value):
         return struct.pack('<i', value)
+
+    def _pack_u64(self, value):
+        return struct.pack('<Q', value)
 
 
 class FromReader(object):
