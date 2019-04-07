@@ -501,7 +501,7 @@ class DetoolsTest(unittest.TestCase):
 
                 self.assertEqual(
                     str(cm.exception),
-                    "Expected compression crle, lzma or none, but got bad.")
+                    "Expected compression bz2, crle, lzma or none, but got bad.")
 
     def test_apply_patch_one_byte(self):
         fnew = BytesIO()
