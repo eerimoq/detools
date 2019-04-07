@@ -241,7 +241,8 @@ def disassemble_ldr_w(reader, address, ldr_w):
 
 
 def disassemble(reader,
-                data_offset,
+                data_offset_begin,
+                data_offset_end,
                 data_begin,
                 data_end,
                 code_begin,
@@ -258,12 +259,11 @@ def disassemble(reader,
     ldr_w = {}
     data_pointers = {}
     code_pointers = {}
-    data_offset_end = (data_offset + data_end - data_begin)
 
     while reader.tell() < length:
         address = reader.tell()
 
-        if data_offset <= address < data_offset_end:
+        if data_offset_begin <= address < data_offset_end:
             disassemble_data(reader,
                              address,
                              data_begin,
@@ -311,7 +311,8 @@ def encode(ffrom, fto, data_segment):
      from_ldr_w,
      from_data_pointers,
      from_code_pointers) = disassemble(ffrom,
-                                       data_segment.from_data_offset,
+                                       data_segment.from_data_offset_begin,
+                                       data_segment.from_data_offset_end,
                                        data_segment.from_data_begin,
                                        data_segment.from_data_end,
                                        data_segment.from_code_begin,
@@ -322,7 +323,8 @@ def encode(ffrom, fto, data_segment):
      to_ldr_w,
      to_data_pointers,
      to_code_pointers) = disassemble(fto,
-                                     data_segment.to_data_offset,
+                                     data_segment.to_data_offset_begin,
+                                     data_segment.to_data_offset_end,
                                      data_segment.to_data_begin,
                                      data_segment.to_data_end,
                                      data_segment.to_code_begin,
@@ -330,7 +332,7 @@ def encode(ffrom, fto, data_segment):
     data_pointers_header, data_pointers = create_data_pointers_patch_block(
         ffrom,
         fto,
-        data_segment.from_data_offset,
+        data_segment.from_data_offset_begin,
         data_segment.from_data_begin,
         data_segment.from_data_end,
         from_data_pointers,
@@ -392,12 +394,14 @@ def create_readers(ffrom, patch, to_size):
      ldr,
      ldr_w,
      data_pointers,
-     code_pointers) = disassemble(ffrom,
-                                  from_data_offset,
-                                  from_data_begin,
-                                  from_data_end,
-                                  from_code_begin,
-                                  from_code_end)
+     code_pointers) = disassemble(
+         ffrom,
+         from_data_offset,
+         from_data_offset + from_data_end - from_data_begin,
+         from_data_begin,
+         from_data_end,
+         from_code_begin,
+         from_code_end)
 
     # Diff and from readers.
     diff_reader = DiffReader(ffrom,

@@ -144,22 +144,26 @@ def unpack_usize(fin):
 class DataSegment(object):
 
     def __init__(self,
-                 from_data_offset,
+                 from_data_offset_begin,
+                 from_data_offset_end,
                  from_data_begin,
                  from_data_end,
                  from_code_begin,
                  from_code_end,
-                 to_data_offset,
+                 to_data_offset_begin,
+                 to_data_offset_end,
                  to_data_begin,
                  to_data_end,
                  to_code_begin,
                  to_code_end):
-        self.from_data_offset = from_data_offset
+        self.from_data_offset_begin = from_data_offset_begin
+        self.from_data_offset_end = from_data_offset_end
         self.from_data_begin = from_data_begin
         self.from_data_end = from_data_end
         self.from_code_begin = from_code_begin
         self.from_code_end = from_code_end
-        self.to_data_offset = to_data_offset
+        self.to_data_offset_begin = to_data_offset_begin
+        self.to_data_offset_end = to_data_offset_end
         self.to_data_begin = to_data_begin
         self.to_data_end = to_data_end
         self.to_code_begin = to_code_begin

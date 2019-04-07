@@ -45,12 +45,14 @@ def _do_create_patch(args):
                            args.segment_size,
                            args.minimum_shift_size,
                            args.data_format,
-                           args.from_data_offset,
+                           args.from_data_offset_begin,
+                           args.from_data_offset_end,
                            args.from_data_begin,
                            args.from_data_end,
                            args.from_code_begin,
                            args.from_code_end,
-                           args.to_data_offset,
+                           args.to_data_offset_begin,
+                           args.to_data_offset_end,
                            args.to_data_begin,
                            args.to_data_end,
                            args.to_code_begin,
@@ -304,10 +306,15 @@ def _main():
         choices=sorted(_DATA_FORMATS),
         help='Data format to often create smaller patches.')
     subparser.add_argument(
-        '--from-data-offset',
+        '--from-data-offset-begin',
         type=to_uint,
         default=0,
-        help='From file data section offset.')
+        help='From file data segment offset begin.')
+    subparser.add_argument(
+        '--from-data-offset-end',
+        type=to_uint,
+        default=0,
+        help='From file data segment offset end.')
     subparser.add_argument(
         '--from-data-begin',
         type=to_uint,
@@ -329,10 +336,15 @@ def _main():
         default=0,
         help='From file code address end.')
     subparser.add_argument(
-        '--to-data-offset',
+        '--to-data-offset-begin',
         type=to_uint,
         default=0,
-        help='To file data section offset.')
+        help='To file data segment offset begin.')
+    subparser.add_argument(
+        '--to-data-offset-end',
+        type=to_uint,
+        default=0,
+        help='To file data segment offset end.')
     subparser.add_argument(
         '--to-data-begin',
         type=to_uint,
