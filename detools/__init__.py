@@ -16,6 +16,7 @@ from .info import patch_info_filename
 from .errors import Error
 from .version import __version__
 from .common import DATA_FORMATS as _DATA_FORMATS
+from .common import COMPRESSIONS as _COMPRESSIONS
 
 
 def _do_create_patch(args):
@@ -284,7 +285,7 @@ def _main():
                            default='normal',
                            help='Patch type (default: normal).')
     subparser.add_argument('-c', '--compression',
-                           choices=('lzma', 'crle', 'none'),
+                           choices=sorted(_COMPRESSIONS),
                            default='lzma',
                            help='Compression algorithm (default: lzma).')
     subparser.add_argument('--memory-size',

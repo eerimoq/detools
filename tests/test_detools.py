@@ -163,11 +163,25 @@ class DetoolsTest(unittest.TestCase):
                                            'tests/files/shell/crle.patch',
                                            compression='crle')
 
+    def test_create_and_apply_patch_shell_bz2_compression(self):
+        self.assert_create_and_apply_patch('tests/files/shell/old',
+                                           'tests/files/shell/new',
+                                           'tests/files/shell/bz2.patch',
+                                           compression='bz2')
+
     def test_create_and_apply_patch_shell_arm_cortex_m4(self):
         self.assert_create_and_apply_patch('tests/files/shell/old',
                                            'tests/files/shell/new',
                                            'tests/files/shell/arm-cortex-m4.patch',
                                            data_format='arm-cortex-m4')
+
+    def test_create_and_apply_patch_shell_arm_cortex_m4_bz2_compression(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/shell/old',
+            'tests/files/shell/new',
+            'tests/files/shell/arm-cortex-m4-bz2.patch',
+            data_format='arm-cortex-m4',
+            compression='bz2')
 
     def test_create_and_apply_patch_shell_arm_cortex_m4_crle_compression(self):
         self.assert_create_and_apply_patch(
@@ -474,7 +488,8 @@ class DetoolsTest(unittest.TestCase):
 
                 self.assertEqual(
                     str(cm.exception),
-                    "Expected compression none(0), lzma(1) or crle(2), but got 15.")
+                    "Expected compression none(0), lzma(1), crle(2) or bz2(3), "
+                    "but got 15.")
 
     def test_create_patch_foo_bad_compression(self):
         fpatch = BytesIO()

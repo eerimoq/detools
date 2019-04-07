@@ -579,6 +579,39 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'Average extra size: 8 bytes\n'
             'Median extra size:  0 bytes\n')
 
+    def test_command_line_patch_info_shell_bz2(self):
+        argv = [
+            'detools',
+            'patch_info',
+            'tests/files/shell/bz2.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(
+            stdout.getvalue(),
+            'Type:               normal\n'
+            'Patch size:         1.55 KiB\n'
+            'To size:            138.48 KiB\n'
+            'Patch/to ratio:     1.1 % (lower is better)\n'
+            'Diff/extra ratio:   138919.6 % (higher is better)\n'
+            'Size/data ratio:    0.0 % (lower is better)\n'
+            'Compression:        bz2\n'
+            'Data format size:   0 bytes\n'
+            '\n'
+            'Number of diffs:    12\n'
+            'Total diff size:    138.38 KiB\n'
+            'Average diff size:  11.53 KiB\n'
+            'Median diff size:   176 bytes\n'
+            '\n'
+            'Number of extras:   12\n'
+            'Total extra size:   102 bytes\n'
+            'Average extra size: 8 bytes\n'
+            'Median extra size:  0 bytes\n')
+
     def test_command_line_create_patch_pybv11_data_sections(self):
         pybv11_patch = 'pybv11-data-format-with-data-sections.patch'
         argv = [

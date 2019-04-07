@@ -10,7 +10,7 @@ Binary `delta encoding`_ in Python 3 and C.
 Based on http://www.daemonology.net/bsdiff/, with the following
 differences:
 
-- LZMA or CRLE compression instead of BZ2.
+- BZ2, LZMA or CRLE compression.
 
 - Linear patch file access pattern to allow streaming and less RAM
   usage.
@@ -38,8 +38,6 @@ Planned functionality:
 - in-place patch type support in C.
 
 Ideas:
-
-- CRC of patched to-data.
 
 - Make the in-place patch type resumable.
 

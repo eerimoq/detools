@@ -1,4 +1,5 @@
 import lzma
+from bz2 import BZ2Compressor
 from io import BytesIO
 import bitstruct
 from .errors import Error
@@ -32,6 +33,8 @@ def pack_header(patch_type, compression):
 def create_compressor(compression):
     if compression == 'lzma':
         compressor = lzma.LZMACompressor(format=lzma.FORMAT_ALONE)
+    elif compression == 'bz2':
+        compressor = BZ2Compressor()
     elif compression == 'none':
         compressor = NoneCompressor()
     elif compression == 'crle':
@@ -210,7 +213,8 @@ def create_patch(ffrom,
     """Create a patch from `ffrom` to `fto` and write it to `fpatch`. All
     three arguments are file-like objects.
 
-    `compression` must be ``'crle'``, ``'lzma'`` or ``'none'``.
+    `compression` must be ``'bz2'``, ``'crle'``, ``'lzma'`` or
+    ``'none'``.
 
     `patch_type` must be ``'normal'`` or ``'in-place'``.
 

@@ -1,9 +1,14 @@
 import os
 from lzma import LZMADecompressor
+from bz2 import BZ2Decompressor
 import bitstruct
 from .errors import Error
 from .compression.crle import CrleDecompressor
 from .compression.none import NoneDecompressor
+from .common import COMPRESSION_NONE
+from .common import COMPRESSION_LZMA
+from .common import COMPRESSION_CRLE
+from .common import COMPRESSION_BZ2
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import format_bad_compression_string
@@ -18,6 +23,8 @@ class PatchReader(object):
     def __init__(self, fpatch, compression):
         if compression == 'lzma':
             self._decompressor = LZMADecompressor()
+        elif compression == 'bz2':
+            self._decompressor = BZ2Decompressor()
         elif compression == 'crle':
             self._decompressor = CrleDecompressor(patch_data_length(fpatch))
         elif compression == 'none':
@@ -70,12 +77,14 @@ def unpack_header(data):
 
 
 def convert_compression(compression):
-    if compression == 0:
+    if compression == COMPRESSION_NONE:
         compression = 'none'
-    elif compression == 1:
+    elif compression == COMPRESSION_LZMA:
         compression = 'lzma'
-    elif compression == 2:
+    elif compression == COMPRESSION_CRLE:
         compression = 'crle'
+    elif compression == COMPRESSION_BZ2:
+        compression = 'bz2'
     else:
         raise Error(format_bad_compression_number(compression))
 

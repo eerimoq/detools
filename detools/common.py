@@ -11,10 +11,16 @@ except ImportError:
 PATCH_TYPE_NORMAL    = 0
 PATCH_TYPE_IN_PLACE  = 1
 
+COMPRESSION_NONE = 0
+COMPRESSION_LZMA = 1
+COMPRESSION_CRLE = 2
+COMPRESSION_BZ2  = 3
+
 COMPRESSIONS = {
-    'none': 0,
-    'lzma': 1,
-    'crle': 2
+    'none': COMPRESSION_NONE,
+    'lzma': COMPRESSION_LZMA,
+    'crle': COMPRESSION_CRLE,
+    'bz2': COMPRESSION_BZ2
 }
 
 DATA_FORMAT_ARM_CORTEX_M4 = 0
