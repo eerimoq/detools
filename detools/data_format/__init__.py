@@ -7,19 +7,7 @@ from . import aarch64
 from . import arm_cortex_m4
 
 
-def encode(ffrom,
-           fto,
-           data_format,
-           from_data_offset,
-           from_data_begin,
-           from_data_end,
-           from_code_begin,
-           from_code_end,
-           to_data_offset,
-           to_data_begin,
-           to_data_end,
-           to_code_begin,
-           to_code_end):
+def encode(ffrom, fto, data_format, data_segment):
     """Returns the new from-data and to-data, along with a patch that can
     be used to convert the new from-data to the original to-data later
     (by the diff and from readers).
@@ -27,31 +15,9 @@ def encode(ffrom,
     """
 
     if data_format == 'aarch64':
-        return aarch64.encode(ffrom,
-                              fto,
-                              from_data_offset,
-                              from_data_begin,
-                              from_data_end,
-                              from_code_begin,
-                              from_code_end,
-                              to_data_offset,
-                              to_data_begin,
-                              to_data_end,
-                              to_code_begin,
-                              to_code_end)
+        return aarch64.encode(ffrom, fto, data_segment)
     elif data_format == 'arm-cortex-m4':
-        return arm_cortex_m4.encode(ffrom,
-                                    fto,
-                                    from_data_offset,
-                                    from_data_begin,
-                                    from_data_end,
-                                    from_code_begin,
-                                    from_code_end,
-                                    to_data_offset,
-                                    to_data_begin,
-                                    to_data_end,
-                                    to_code_begin,
-                                    to_code_end)
+        return arm_cortex_m4.encode(ffrom, fto, data_segment)
     else:
         raise Error(format_bad_data_format(data_format))
 

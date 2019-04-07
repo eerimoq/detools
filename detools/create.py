@@ -13,6 +13,7 @@ from .common import div_ceil
 from .common import file_size
 from .common import file_read
 from .common import pack_size
+from .common import DataSegment
 from .data_format import encode as data_format_encode
 
 try:
@@ -46,16 +47,7 @@ def create_patch_normal_data(ffrom,
                              fpatch,
                              compression,
                              data_format,
-                             from_data_address,
-                             from_data_offset,
-                             from_data_size,
-                             from_code_address,
-                             from_code_size,
-                             to_data_address,
-                             to_data_offset,
-                             to_data_size,
-                             to_code_address,
-                             to_code_size):
+                             data_segment):
     to_size = file_size(fto)
 
     if to_size == 0:
@@ -70,16 +62,7 @@ def create_patch_normal_data(ffrom,
             ffrom,
             fto,
             data_format,
-            from_data_address,
-            from_data_offset,
-            from_data_size,
-            from_code_address,
-            from_code_size,
-            to_data_address,
-            to_data_offset,
-            to_data_size,
-            to_code_address,
-            to_code_size)
+            data_segment)
 
         # with open('data-format-from.bin', 'wb') as fout:
         #     fout.write(file_read(ffrom))
@@ -107,16 +90,7 @@ def create_patch_normal(ffrom,
                         fpatch,
                         compression,
                         data_format,
-                        from_data_address,
-                        from_data_offset,
-                        from_data_size,
-                        from_code_address,
-                        from_code_size,
-                        to_data_address,
-                        to_data_offset,
-                        to_data_size,
-                        to_code_address,
-                        to_code_size):
+                        data_segment):
     fpatch.write(pack_header(PATCH_TYPE_NORMAL,
                              compression_string_to_number(compression)))
     fpatch.write(pack_size(file_size(fto)))
@@ -125,16 +99,7 @@ def create_patch_normal(ffrom,
                              fpatch,
                              compression,
                              data_format,
-                             from_data_address,
-                             from_data_offset,
-                             from_data_size,
-                             from_code_address,
-                             from_code_size,
-                             to_data_address,
-                             to_data_offset,
-                             to_data_size,
-                             to_code_address,
-                             to_code_size)
+                             data_segment)
 
 
 def calc_shift(memory_size, segment_size, minimum_shift_size, from_size):
@@ -161,7 +126,8 @@ def create_patch_in_place(ffrom,
                           memory_size,
                           segment_size,
                           minimum_shift_size,
-                          data_format):
+                          data_format,
+                          data_segment):
     if (memory_size % segment_size) != 0:
         raise Error(
             'Memory size {} is not a multiple of segment size {}.'.format(
@@ -202,16 +168,7 @@ def create_patch_in_place(ffrom,
             fsegment,
             'none',
             data_format,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0)
+            data_segment)
         fsegments.write(fsegment.getvalue())
 
     # Create the patch.
@@ -267,22 +224,24 @@ def create_patch(ffrom,
 
     """
 
+    data_segment = DataSegment(from_data_offset,
+                               from_data_begin,
+                               from_data_end,
+                               from_code_begin,
+                               from_code_end,
+                               to_data_offset,
+                               to_data_begin,
+                               to_data_end,
+                               to_code_begin,
+                               to_code_end)
+
     if patch_type == 'normal':
         create_patch_normal(ffrom,
                             fto,
                             fpatch,
                             compression,
                             data_format,
-                            from_data_offset,
-                            from_data_begin,
-                            from_data_end,
-                            from_code_begin,
-                            from_code_end,
-                            to_data_offset,
-                            to_data_begin,
-                            to_data_end,
-                            to_code_begin,
-                            to_code_end)
+                            data_segment)
     elif patch_type == 'in-place':
         create_patch_in_place(ffrom,
                               fto,
@@ -291,7 +250,8 @@ def create_patch(ffrom,
                               memory_size,
                               segment_size,
                               minimum_shift_size,
-                              data_format)
+                              data_format,
+                              data_segment)
     else:
         raise Error("Bad patch type '{}'.".format(patch_type))
 

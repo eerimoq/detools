@@ -302,18 +302,7 @@ def disassemble(reader,
     return bw, bl, ldr, ldr_w, data_pointers, code_pointers
 
 
-def encode(ffrom,
-           fto,
-           from_data_offset,
-           from_data_begin,
-           from_data_end,
-           from_code_begin,
-           from_code_end,
-           to_data_offset,
-           to_data_begin,
-           to_data_end,
-           to_code_begin,
-           to_code_end):
+def encode(ffrom, fto, data_segment):
     ffrom = BytesIO(file_read(ffrom))
     fto = BytesIO(file_read(fto))
     (from_bw,
@@ -322,35 +311,35 @@ def encode(ffrom,
      from_ldr_w,
      from_data_pointers,
      from_code_pointers) = disassemble(ffrom,
-                                       from_data_offset,
-                                       from_data_begin,
-                                       from_data_end,
-                                       from_code_begin,
-                                       from_code_end)
+                                       data_segment.from_data_offset,
+                                       data_segment.from_data_begin,
+                                       data_segment.from_data_end,
+                                       data_segment.from_code_begin,
+                                       data_segment.from_code_end)
     (to_bw,
      to_bl,
      to_ldr,
      to_ldr_w,
      to_data_pointers,
      to_code_pointers) = disassemble(fto,
-                                     to_data_offset,
-                                     to_data_begin,
-                                     to_data_end,
-                                     to_code_begin,
-                                     to_code_end)
+                                     data_segment.to_data_offset,
+                                     data_segment.to_data_begin,
+                                     data_segment.to_data_end,
+                                     data_segment.to_code_begin,
+                                     data_segment.to_code_end)
     data_pointers_header, data_pointers = create_data_pointers_patch_block(
         ffrom,
         fto,
-        from_data_offset,
-        from_data_begin,
-        from_data_end,
+        data_segment.from_data_offset,
+        data_segment.from_data_begin,
+        data_segment.from_data_end,
         from_data_pointers,
         to_data_pointers)
     code_pointers_header, code_pointers = create_code_pointers_patch_block(
         ffrom,
         fto,
-        from_code_begin,
-        from_code_end,
+        data_segment.from_code_begin,
+        data_segment.from_code_end,
         from_code_pointers,
         to_code_pointers)
     bw = create_patch_block(ffrom, fto, from_bw, to_bw)
