@@ -232,6 +232,41 @@ def format_blocks(blocks, blocks_size, fsize):
         print()
 
 
+def format_instruction(name, blocks, blocks_size, fsize):
+    print('Instruction:        {}'.format(name))
+    format_blocks(blocks, blocks_size, fsize)
+
+
+def format_pointers(data_pointers_blocks_present,
+                    from_data_offset,
+                    from_data_begin,
+                    from_data_end,
+                    data_pointers_blocks,
+                    data_pointers_blocks_size,
+                    code_pointers_blocks_present,
+                    from_code_begin,
+                    from_code_end,
+                    code_pointers_blocks,
+                    code_pointers_blocks_size,
+                    fsize):
+    if data_pointers_blocks_present:
+        print('Kind:               data-pointers')
+        print('From data offset:   0x{:x}'.format(from_data_offset))
+        print('From data begin:    0x{:x}'.format(from_data_begin))
+        print('From data end:      0x{:x}'.format(from_data_end))
+        format_blocks(data_pointers_blocks,
+                      data_pointers_blocks_size,
+                      fsize)
+
+    if code_pointers_blocks_present:
+        print('Kind:               code-pointers')
+        print('From code begin:    0x{:x}'.format(from_code_begin))
+        print('From code end:      0x{:x}'.format(from_code_end))
+        format_blocks(code_pointers_blocks,
+                      code_pointers_blocks_size,
+                      fsize)
+
+
 def create_data_pointers_patch_block(ffrom,
                                      fto,
                                      from_data_offset,

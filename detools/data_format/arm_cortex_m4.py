@@ -11,7 +11,8 @@ from .utils import DiffReader as UtilsDiffReader
 from .utils import FromReader as UtilsFromReader
 from .utils import create_patch_block
 from .utils import load_blocks
-from .utils import format_blocks
+from .utils import format_instruction
+from .utils import format_pointers
 from .utils import create_data_pointers_patch_block
 from .utils import create_code_pointers_patch_block
 from .utils import unpack_pointers_header
@@ -470,30 +471,21 @@ def info(patch, fsize):
     fout = StringIO()
 
     with redirect_stdout(fout):
-        print('Instruction:        b.w')
-        format_blocks(bw_blocks, bw_blocks_size, fsize)
-        print('Instruction:        bl')
-        format_blocks(bl_blocks, bl_blocks_size, fsize)
-        print('Instruction:        ldr')
-        format_blocks(ldr_blocks, ldr_blocks_size, fsize)
-        print('Instruction:        ldr.w')
-        format_blocks(ldr_w_blocks, ldr_w_blocks_size, fsize)
-
-        if data_pointers_blocks_present:
-            print('Kind:               data-pointers')
-            print('From data offset:   0x{:x}'.format(from_data_offset))
-            print('From data begin:    0x{:x}'.format(from_data_begin))
-            print('From data end:      0x{:x}'.format(from_data_end))
-            format_blocks(data_pointers_blocks,
-                          data_pointers_blocks_size,
-                          fsize)
-
-        if code_pointers_blocks_present:
-            print('Kind:               code-pointers')
-            print('From code begin:    0x{:x}'.format(from_code_begin))
-            print('From code end:      0x{:x}'.format(from_code_end))
-            format_blocks(code_pointers_blocks,
-                          code_pointers_blocks_size,
-                          fsize)
+        format_instruction('b.w', bw_blocks, bw_blocks_size, fsize)
+        format_instruction('bl', bl_blocks, bl_blocks_size, fsize)
+        format_instruction('ldr', ldr_blocks, ldr_blocks_size, fsize)
+        format_instruction('ldr.w', ldr_w_blocks, ldr_w_blocks_size, fsize)
+        format_pointers(data_pointers_blocks_present,
+                        from_data_offset,
+                        from_data_begin,
+                        from_data_end,
+                        data_pointers_blocks,
+                        data_pointers_blocks_size,
+                        code_pointers_blocks_present,
+                        from_code_begin,
+                        from_code_end,
+                        code_pointers_blocks,
+                        code_pointers_blocks_size,
+                        fsize)
 
     return fout.getvalue()
