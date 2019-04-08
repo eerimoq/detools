@@ -618,18 +618,12 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'detools',
             'create_patch',
             '--data-format', 'arm-cortex-m4',
-            '--from-data-offset-begin', '0x36f7c',
-            '--from-data-offset-end', '0x4e1f0',
-            '--from-data-begin', '0x8056f7c',
-            '--from-data-end', '0x806e1f0',
-            '--from-code-begin', '0x8020000',
-            '--from-code-end', '0x8056f7c',
-            '--to-data-offset-begin', '0x36f54',
-            '--to-data-offset-end', '0x4e1d4',
-            '--to-data-begin', '0x8056f54',
-            '--to-data-end', '0x806e1d4',
-            '--to-code-begin', '0x8020000',
-            '--to-code-end', '0x8056f54',
+            '--from-data-offsets', '0x36f7c-0x4e1f0',
+            '--from-code-addresses', '0x8020000-0x8056f7c',
+            '--from-data-addresses', '0x8056f7c-0x806e1f0',
+            '--to-data-offsets', '0x36f54-0x4e1d4',
+            '--to-code-addresses', '0x8020000-0x8056f54',
+            '--to-data-addresses', '0x8056f54-0x806e1d4',
             'tests/files/pybv11/1f5d945af/firmware1.bin',
             'tests/files/pybv11/1f5d945af-dirty/firmware1.bin',
             pybv11_patch
@@ -645,6 +639,44 @@ class DetoolsCommandLineTest(unittest.TestCase):
             read_file(pybv11_patch),
             read_file('tests/files/pybv11/1f5d945af--1f5d945af-dirty-'
                       'arm-cortex-m4-data-sections.patch'))
+
+    def test_command_line_parse_range_errors(self):
+        with self.assertRaises(detools.Error) as cm:
+            detools.parse_range('--option', '')
+
+        self.assertEqual(
+            str(cm.exception),
+            "--option: Expected a range on the form <integer>-<integer>, but "
+            "got ''.")
+
+        with self.assertRaises(detools.Error) as cm:
+            detools.parse_range('--option', '-1-3')
+
+        self.assertEqual(
+            str(cm.exception),
+            "--option: Expected a range on the form <integer>-<integer>, but "
+            "got '-1-3'.")
+
+        with self.assertRaises(detools.Error) as cm:
+            detools.parse_range('--option', '2-1')
+
+        self.assertEqual(
+            str(cm.exception),
+            "--option: End value 1 is less than begin value 2.")
+
+        with self.assertRaises(detools.Error) as cm:
+            detools.parse_range('--option', '1-b')
+
+        self.assertEqual(
+            str(cm.exception),
+            "--option: Expected an integer, but got 'b'.")
+
+        with self.assertRaises(detools.Error) as cm:
+            detools.parse_range('--option', 'a-1')
+
+        self.assertEqual(
+            str(cm.exception),
+            "--option: Expected an integer, but got 'a'.")
 
     def test_command_line_patch_info_pybv11_data_sections_detailed(self):
         argv = [

@@ -19,6 +19,37 @@ from .common import DATA_FORMATS as _DATA_FORMATS
 from .common import COMPRESSIONS as _COMPRESSIONS
 
 
+def parse_integer(option, value):
+    try:
+        return int(value, 0)
+    except ValueError:
+        raise Error(
+            "{}: Expected an integer, but got '{}'.".format(option, value))
+
+
+def parse_range(option, value):
+    values = value.split('-')
+
+    if len(values) != 2:
+        raise Error(
+            "{}: Expected a range on the form <integer>-<integer>, but "
+            "got '{}'.".format(
+                option,
+                value))
+
+    begin = parse_integer(option, values[0])
+    end = parse_integer(option, values[1])
+
+    if end < begin:
+        raise Error(
+            '{}: End value {} is less than begin value {}.'.format(
+                option,
+                values[1],
+                values[0]))
+
+    return begin, end
+
+
 def _do_create_patch(args):
     if args.type == 'in-place':
         if args.memory_size is None:
@@ -27,14 +58,37 @@ def _do_create_patch(args):
             raise Error('--segment-size is required for in-place patch.')
 
     if args.data_format is not None:
-        if args.from_data_begin > args.from_data_end:
-            raise Error('--from-data-begin greater than --from-data-end.')
-        elif args.from_code_begin > args.from_code_end:
-            raise Error('--from-code-begin greater than --from-code-end.')
-        elif args.to_data_begin > args.to_data_end:
-            raise Error('--to-data-begin greater than --to-data-end.')
-        elif args.to_code_begin > args.to_code_end:
-            raise Error('--to-code-begin greater than --to-code-end.')
+        from_data_offset_begin, from_data_offset_end = parse_range(
+            '--from-data-offsets',
+            args.from_data_offsets)
+        from_data_begin, from_data_end = parse_range(
+            '--from-data-addresses',
+            args.from_data_addresses)
+        from_code_begin, from_code_end = parse_range(
+            '--from-code-addresses',
+            args.from_code_addresses)
+        to_data_offset_begin, to_data_offset_end = parse_range(
+            '--from-data-offsets',
+            args.to_data_offsets)
+        to_data_begin, to_data_end = parse_range(
+            '--to-data-addresses',
+            args.to_data_addresses)
+        to_code_begin, to_code_end = parse_range(
+            '--to-code-addresses',
+            args.to_code_addresses)
+    else:
+        from_data_offset_begin = 0
+        from_data_offset_end = 0
+        from_data_begin = 0
+        from_data_end = 0
+        from_code_begin = 0
+        from_code_end = 0
+        to_data_offset_begin = 0
+        to_data_offset_end = 0
+        to_data_begin = 0
+        to_data_end = 0
+        to_code_begin = 0
+        to_code_end = 0
 
     create_patch_filenames(args.fromfile,
                            args.tofile,
@@ -45,18 +99,18 @@ def _do_create_patch(args):
                            args.segment_size,
                            args.minimum_shift_size,
                            args.data_format,
-                           args.from_data_offset_begin,
-                           args.from_data_offset_end,
-                           args.from_data_begin,
-                           args.from_data_end,
-                           args.from_code_begin,
-                           args.from_code_end,
-                           args.to_data_offset_begin,
-                           args.to_data_offset_end,
-                           args.to_data_begin,
-                           args.to_data_end,
-                           args.to_code_begin,
-                           args.to_code_end)
+                           from_data_offset_begin,
+                           from_data_offset_end,
+                           from_data_begin,
+                           from_data_end,
+                           from_code_begin,
+                           from_code_end,
+                           to_data_offset_begin,
+                           to_data_offset_end,
+                           to_data_begin,
+                           to_data_end,
+                           to_code_begin,
+                           to_code_end)
 
 
 def _do_apply_patch(args):
@@ -255,16 +309,6 @@ def to_binary_size(value):
     return parse_size(value, binary=True)
 
 
-def to_uint(value):
-    value = int(value, 0)
-
-    if value < 0:
-        raise Error(
-            'Expected a non-negative integer, but got {}.'.format(value))
-
-    return value
-
-
 def _main():
     parser = argparse.ArgumentParser(description='Binary delta encoding utility.')
 
@@ -306,65 +350,23 @@ def _main():
         choices=sorted(_DATA_FORMATS),
         help='Data format to often create smaller patches.')
     subparser.add_argument(
-        '--from-data-offset-begin',
-        type=to_uint,
-        default=0,
-        help='From file data segment offset begin.')
+        '--from-data-offsets',
+        help='From file data segment offset ranges.')
     subparser.add_argument(
-        '--from-data-offset-end',
-        type=to_uint,
-        default=0,
-        help='From file data segment offset end.')
+        '--from-data-addresses',
+        help='From file data address ranges.')
     subparser.add_argument(
-        '--from-data-begin',
-        type=to_uint,
-        default=0,
-        help='From file data address begin.')
+        '--from-code-addresses',
+        help='From file code address ranges.')
     subparser.add_argument(
-        '--from-data-end',
-        type=to_uint,
-        default=0,
-        help='From file data address end.')
+        '--to-data-offsets',
+        help='To file data segment offset ranges.')
     subparser.add_argument(
-        '--from-code-begin',
-        type=to_uint,
-        default=0,
-        help='From file code address begin.')
+        '--to-data-addresses',
+        help='To file data address ranges.')
     subparser.add_argument(
-        '--from-code-end',
-        type=to_uint,
-        default=0,
-        help='From file code address end.')
-    subparser.add_argument(
-        '--to-data-offset-begin',
-        type=to_uint,
-        default=0,
-        help='To file data segment offset begin.')
-    subparser.add_argument(
-        '--to-data-offset-end',
-        type=to_uint,
-        default=0,
-        help='To file data segment offset end.')
-    subparser.add_argument(
-        '--to-data-begin',
-        type=to_uint,
-        default=0,
-        help='To file data address begin.')
-    subparser.add_argument(
-        '--to-data-end',
-        type=to_uint,
-        default=0,
-        help='To file data address end.')
-    subparser.add_argument(
-        '--to-code-begin',
-        type=to_uint,
-        default=0,
-        help='To file code address begin.')
-    subparser.add_argument(
-        '--to-code-end',
-        type=to_uint,
-        default=0,
-        help='To file code address end.')
+        '--to-code-addresses',
+        help='To file code address ranges.')
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
     subparser.add_argument('patchfile', help='Created patch file.')
