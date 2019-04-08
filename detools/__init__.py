@@ -28,6 +28,9 @@ def parse_integer(option, value):
 
 
 def parse_range(option, value):
+    if value is None:
+        return 0, 0
+
     values = value.split('-')
 
     if len(values) != 2:
@@ -57,38 +60,24 @@ def _do_create_patch(args):
         elif args.segment_size is None:
             raise Error('--segment-size is required for in-place patch.')
 
-    if args.data_format is not None:
-        from_data_offset_begin, from_data_offset_end = parse_range(
-            '--from-data-offsets',
-            args.from_data_offsets)
-        from_data_begin, from_data_end = parse_range(
-            '--from-data-addresses',
-            args.from_data_addresses)
-        from_code_begin, from_code_end = parse_range(
-            '--from-code-addresses',
-            args.from_code_addresses)
-        to_data_offset_begin, to_data_offset_end = parse_range(
-            '--from-data-offsets',
-            args.to_data_offsets)
-        to_data_begin, to_data_end = parse_range(
-            '--to-data-addresses',
-            args.to_data_addresses)
-        to_code_begin, to_code_end = parse_range(
-            '--to-code-addresses',
-            args.to_code_addresses)
-    else:
-        from_data_offset_begin = 0
-        from_data_offset_end = 0
-        from_data_begin = 0
-        from_data_end = 0
-        from_code_begin = 0
-        from_code_end = 0
-        to_data_offset_begin = 0
-        to_data_offset_end = 0
-        to_data_begin = 0
-        to_data_end = 0
-        to_code_begin = 0
-        to_code_end = 0
+    from_data_offset_begin, from_data_offset_end = parse_range(
+        '--from-data-offsets',
+        args.from_data_offsets)
+    from_data_begin, from_data_end = parse_range(
+        '--from-data-addresses',
+        args.from_data_addresses)
+    from_code_begin, from_code_end = parse_range(
+        '--from-code-addresses',
+        args.from_code_addresses)
+    to_data_offset_begin, to_data_offset_end = parse_range(
+        '--from-data-offsets',
+        args.to_data_offsets)
+    to_data_begin, to_data_end = parse_range(
+        '--to-data-addresses',
+        args.to_data_addresses)
+    to_code_begin, to_code_end = parse_range(
+        '--to-code-addresses',
+        args.to_code_addresses)
 
     create_patch_filenames(args.fromfile,
                            args.tofile,

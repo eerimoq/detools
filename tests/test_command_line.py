@@ -612,6 +612,28 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'Average extra size: 8 bytes\n'
             'Median extra size:  0 bytes\n')
 
+    def test_command_line_create_patch_pybv11_arm_cortex_m4(self):
+        pybv11_patch = 'pybv11-aarch64.patch'
+        argv = [
+            'detools',
+            'create_patch',
+            '--data-format', 'arm-cortex-m4',
+            'tests/files/pybv11/1f5d945af/firmware1.bin',
+            'tests/files/pybv11/1f5d945af-dirty/firmware1.bin',
+            pybv11_patch
+        ]
+
+        if os.path.exists(pybv11_patch):
+            os.remove(pybv11_patch)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(
+            read_file(pybv11_patch),
+            read_file('tests/files/pybv11/1f5d945af--1f5d945af-dirty-'
+                      'arm-cortex-m4.patch'))
+
     def test_command_line_create_patch_pybv11_data_sections(self):
         pybv11_patch = 'pybv11-data-format-with-data-sections.patch'
         argv = [
