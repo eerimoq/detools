@@ -105,7 +105,7 @@ with line 209 in ``vm.c`` deleted.
        tests/files/pybv11/1f5d945af--1f5d945af-dirty-arm-cortex-m4.patch
 
 (3): ARM Cortex-M4 aware algorithm with data segments to efficiently
-     compress function and data pointers.
+compress function and data pointers.
 
 .. code-block:: text
 
