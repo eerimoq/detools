@@ -82,6 +82,11 @@ def create_patch_normal_data(ffrom,
     suffix_array = sais.sais(from_data)
     chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
 
+    # with open('data-to.patch', 'wb') as fout:
+    #     for i in range(0, len(chunks), 5):
+    #         fout.write(chunks[i + 1])
+    #         fout.write(b'\xff' * len(chunks[i + 3]))
+
     for chunk in chunks:
         fpatch.write(compressor.compress(chunk))
 
