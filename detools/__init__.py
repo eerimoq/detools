@@ -2,8 +2,11 @@ import sys
 import argparse
 from statistics import mean
 from statistics import median
+import binascii
+
 from humanfriendly import format_size
 from humanfriendly import parse_size
+from elftools.elf.elffile import ELFFile
 
 from .create import create_patch
 from .create import create_patch_filenames
@@ -17,6 +20,7 @@ from .errors import Error
 from .version import __version__
 from .common import DATA_FORMATS as _DATA_FORMATS
 from .common import COMPRESSIONS as _COMPRESSIONS
+from .data_format.elf import from_file as _data_format_elf_from_file
 
 
 def parse_integer(option, value):
@@ -25,6 +29,13 @@ def parse_integer(option, value):
     except ValueError:
         raise Error(
             "{}: Expected an integer, but got '{}'.".format(option, value))
+
+
+def parse_integer_default(value, default=None):
+    try:
+        return int(value, 0)
+    except Exception:
+        return default
 
 
 def parse_range(option, value):
@@ -53,6 +64,71 @@ def parse_range(option, value):
     return begin, end
 
 
+def find_data_offset_into_binfile(option, elffile, binfile, data_range):
+    """Find given data range data in the binary file and return its
+    offset.
+
+    """
+
+    section = elffile.get_section(data_range.section_index)
+    offset = data_range.begin - section['sh_addr']
+    data = section.data()[offset:offset + data_range.size]
+
+    with open(binfile, 'rb') as fin:
+        try:
+            return fin.read().index(data)
+        except ValueError:
+            data_string = binascii.hexlify(data[:16]).decode('ascii')
+
+            if len(data) > 16:
+                data_string += '...'
+
+            raise Error(
+                "Failed to calculate ELF offset. Use {} to manually give the "
+                "offset. Data segment 0x{:x}-0x{:x} (data: {}) not found "
+                "in '{}'.".format(option,
+                                  data_range.begin,
+                                  data_range.end,
+                                  data_string,
+                                  binfile))
+
+
+def find_offset_for_address(elffile, address):
+    sections = []
+
+    for section in elffile.iter_sections():
+        sections.append((section['sh_addr'],
+                         section['sh_offset'],
+                         section['sh_size']))
+
+    for begin, offset, size in sorted(sections):
+        if begin <= address < begin + size:
+            return address - begin + offset
+
+    raise Error('Symbol not part of any section.')
+
+
+def data_format_from_files(option, elffile, binfile, offset):
+    with open(elffile, 'rb') as fin:
+        elffile = ELFFile(fin)
+        code_range, data_range = _data_format_elf_from_file(elffile)
+
+        if offset is None:
+            offset = find_data_offset_into_binfile(option,
+                                                   elffile,
+                                                   binfile,
+                                                   data_range)
+        else:
+            offset = find_offset_for_address(elffile, data_range.begin) - offset
+
+    return (offset,
+            offset + data_range.size,
+            code_range.begin,
+            code_range.end,
+            data_range.begin,
+            data_range.end)
+
+
 def _do_create_patch(args):
     if args.type == 'in-place':
         if args.memory_size is None:
@@ -63,21 +139,65 @@ def _do_create_patch(args):
     from_data_offset_begin, from_data_offset_end = parse_range(
         '--from-data-offsets',
         args.from_data_offsets)
-    from_data_begin, from_data_end = parse_range(
-        '--from-data-addresses',
-        args.from_data_addresses)
     from_code_begin, from_code_end = parse_range(
         '--from-code-addresses',
         args.from_code_addresses)
+    from_data_begin, from_data_end = parse_range(
+        '--from-data-addresses',
+        args.from_data_addresses)
     to_data_offset_begin, to_data_offset_end = parse_range(
         '--from-data-offsets',
         args.to_data_offsets)
-    to_data_begin, to_data_end = parse_range(
-        '--to-data-addresses',
-        args.to_data_addresses)
     to_code_begin, to_code_end = parse_range(
         '--to-code-addresses',
         args.to_code_addresses)
+    to_data_begin, to_data_end = parse_range(
+        '--to-data-addresses',
+        args.to_data_addresses)
+
+    if args.from_elf_file is not None:
+        (from_data_offset_begin,
+         from_data_offset_end,
+         from_code_begin,
+         from_code_end,
+         from_data_begin,
+         from_data_end) = data_format_from_files(
+             '--from-elf-offset',
+             args.from_elf_file,
+             args.fromfile,
+             parse_integer_default(args.from_elf_offset))
+
+    if args.to_elf_file is not None:
+        (to_data_offset_begin,
+         to_data_offset_end,
+         to_code_begin,
+         to_code_end,
+         to_data_begin,
+         to_data_end) = data_format_from_files(
+             '--to-elf-offset',
+             args.to_elf_file,
+             args.tofile,
+             parse_integer_default(args.to_elf_offset))
+
+    if args.data_format is not None:
+        print('From data offsets:   0x{:08x}-0x{:08x}'.format(
+            from_data_offset_begin,
+            from_data_offset_end))
+        print('From code addresses: 0x{:08x}-0x{:08x}'.format(
+            from_code_begin,
+            from_code_end))
+        print('From data addresses: 0x{:08x}-0x{:08x}'.format(
+            from_data_begin,
+            from_data_end))
+        print('To data offsets:     0x{:08x}-0x{:08x}'.format(
+            to_data_offset_begin,
+            to_data_offset_end))
+        print('To code addresses:   0x{:08x}-0x{:08x}'.format(
+            to_code_begin,
+            to_code_end))
+        print('To data addresses:   0x{:08x}-0x{:08x}'.format(
+            to_data_begin,
+            to_data_end))
 
     create_patch_filenames(args.fromfile,
                            args.tofile,
@@ -100,6 +220,8 @@ def _do_create_patch(args):
                            to_data_end,
                            to_code_begin,
                            to_code_end)
+
+    print("Successfully created patch '{}'!".format(args.patchfile))
 
 
 def _do_apply_patch(args):
@@ -339,23 +461,35 @@ def _main():
         choices=sorted(_DATA_FORMATS),
         help='Data format to often create smaller patches.')
     subparser.add_argument(
+        '--from-elf-file',
+        help='From ELF file.')
+    subparser.add_argument(
+        '--from-elf-offset',
+        help='From ELF offset.')
+    subparser.add_argument(
         '--from-data-offsets',
         help='From file data segment offset ranges.')
-    subparser.add_argument(
-        '--from-data-addresses',
-        help='From file data address ranges.')
     subparser.add_argument(
         '--from-code-addresses',
         help='From file code address ranges.')
     subparser.add_argument(
+        '--from-data-addresses',
+        help='From file data address ranges.')
+    subparser.add_argument(
+        '--to-elf-file',
+        help='To ELF file.')
+    subparser.add_argument(
+        '--to-elf-offset',
+        help='To ELF offset.')
+    subparser.add_argument(
         '--to-data-offsets',
         help='To file data segment offset ranges.')
     subparser.add_argument(
-        '--to-data-addresses',
-        help='To file data address ranges.')
-    subparser.add_argument(
         '--to-code-addresses',
         help='To file code address ranges.')
+    subparser.add_argument(
+        '--to-data-addresses',
+        help='To file data address ranges.')
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
     subparser.add_argument('patchfile', help='Created patch file.')

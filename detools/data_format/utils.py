@@ -190,9 +190,17 @@ def create_patch_block(ffrom, fto, from_dict, to_dict, overwrite_size=4):
         size += 1
         from_slice = from_values[from_offset:from_offset + size]
         to_slice = to_values[to_offset:to_offset + size]
+        diffs = [fv - tv for fv, tv in zip(from_slice, to_slice)]
+
+        # Skip similar blocks as the block overhead is too big.
+        number_of_non_zero_elements = len(diffs) - diffs.count(0)
+
+        if number_of_non_zero_elements < 8:
+            continue
+
         blocks.append(from_offset,
                       to_addresses[to_offset],
-                      [fv - tv for fv, tv in zip(from_slice, to_slice)])
+                      diffs)
 
         # Overwrite blocks with zeros.
         for address in from_addresses[from_offset:from_offset + size]:

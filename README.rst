@@ -22,8 +22,12 @@ differences:
 - `Incremental apply patch`_ implemented in C, suitable for memory
   constrained embedded devices.
 
-- Optional data format aware algorithm for potentially smaller
-  patches. There is a risk this functionality uses patent
+- Optional experimental data format aware algorithm for potentially
+  smaller patches. I don't recommend anyone to use this functionality
+  as the gain is small in relation to memory usage and code
+  complexity!
+
+  There is a risk this functionality uses patent
   https://patents.google.com/patent/EP1988455B1/en. Anyway, this
   patent expires in August 2019 as I understand it.
 
@@ -112,11 +116,11 @@ compress function and data pointers.
    detools create_patch \
        --data-format arm-cortex-m4 \
        --from-data-offsets 0x36f7c-0x4e1f0 \
+       --from-code-addresses 0x8020000-0x8056deb \
        --from-data-addresses 0x8056f7c-0x806e1f0 \
-       --from-code-addresses 0x8020000-0x8056f7c \
        --to-data-offsets 0x36f54-0x4e1d4 \
+       --to-code-addresses 0x8020000-0x8056dc3 \
        --to-data-addresses 0x8056f54-0x806e1d4 \
-       --to-code-addresses 0x8020000-0x8056f54 \
        tests/files/pybv11/1f5d945af/firmware1.bin \
        tests/files/pybv11/1f5d945af-dirty/firmware1.bin \
        tests/files/pybv11/1f5d945af--1f5d945af-dirty-arm-cortex-m4-data-sections.patch

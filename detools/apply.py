@@ -68,6 +68,36 @@ class PatchReader(object):
         return self._decompressor.eof
 
 
+def iter_chunks(patch_reader, to_pos, to_size, message):
+    size = unpack_size(patch_reader)
+
+    if to_pos + size > to_size:
+        raise Error(message)
+
+    offset = 0
+
+    while offset < size:
+        chunk_size = min(size - offset, 4096)
+        offset += chunk_size
+        patch_data = patch_reader.decompress(chunk_size)
+
+        yield chunk_size, patch_data
+
+
+def iter_diff_chunks(patch_reader, to_pos, to_size):
+    return iter_chunks(patch_reader,
+                       to_pos,
+                       to_size,
+                       "Patch diff data too long.")
+
+
+def iter_extra_chunks(patch_reader, to_pos, to_size):
+    return iter_chunks(patch_reader,
+                       to_pos,
+                       to_size,
+                       "Patch extra data too long.")
+
+
 def patch_data_length(fpatch):
     return file_size(fpatch) - fpatch.tell()
 
@@ -174,17 +204,9 @@ def apply_patch_in_place_segment(fmem,
 
     while to_pos < to_size:
         # Diff data.
-        size = unpack_size(patch_reader)
-
-        if to_pos + size > to_size:
-            raise Error("Patch diff data too long.")
-
-        offset = 0
-
-        while offset < size:
-            chunk_size = min(size - offset, 4096)
-            offset += chunk_size
-            patch_data = patch_reader.decompress(chunk_size)
+        for chunk_size, patch_data in iter_diff_chunks(patch_reader,
+                                                       to_pos,
+                                                       to_size):
             fmem.seek(from_offset, os.SEEK_SET)
             from_data = fmem.read(chunk_size)
             from_offset += chunk_size
@@ -195,17 +217,34 @@ def apply_patch_in_place_segment(fmem,
             to_pos += chunk_size
 
         # Extra data.
-        size = unpack_size(patch_reader)
-
-        if to_pos + size > to_size:
-            raise Error("Patch extra data too long.")
-
         fmem.seek(to_offset + to_pos, os.SEEK_SET)
-        fmem.write(patch_reader.decompress(size))
-        to_pos += size
+
+        for chunk_size, patch_data in iter_extra_chunks(patch_reader,
+                                                        to_pos,
+                                                        to_size):
+            fmem.write(patch_data)
+            to_pos += chunk_size
 
         # Adjustment.
         from_offset += unpack_size(patch_reader)
+
+
+def create_data_format_readers(patch_reader, ffrom, to_size):
+    dfpatch_size = unpack_size(patch_reader)
+
+    if dfpatch_size > 0:
+        data_format = unpack_size(patch_reader)
+        patch = patch_reader.decompress(dfpatch_size)
+        dfdiff, ffrom = create_readers(data_format, ffrom, patch, to_size)
+
+        # with open('data-format-from-apply.bin', 'wb') as fout:
+        #     fout.write(file_read(ffrom))
+
+        ffrom.seek(0)
+    else:
+        dfdiff = None
+
+    return dfdiff, ffrom
 
 
 def apply_patch(ffrom, fpatch, fto):
@@ -228,36 +267,17 @@ def apply_patch(ffrom, fpatch, fto):
         return to_size
 
     patch_reader = PatchReader(fpatch, compression)
-    dfpatch_size = unpack_size(patch_reader)
-
-    if dfpatch_size > 0:
-        data_format = unpack_size(patch_reader)
-        patch = patch_reader.decompress(dfpatch_size)
-        dfdiff, ffrom = create_readers(data_format, ffrom, patch, to_size)
-
-        # with open('data-format-from-apply.bin', 'wb') as fout:
-        #     fout.write(file_read(ffrom))
-
-        ffrom.seek(0)
-
+    dfdiff, ffrom = create_data_format_readers(patch_reader, ffrom, to_size)
     to_pos = 0
 
     while to_pos < to_size:
         # Diff data.
-        size = unpack_size(patch_reader)
-
-        if to_pos + size > to_size:
-            raise Error("Patch diff data too long.")
-
-        offset = 0
-
-        while offset < size:
-            chunk_size = min(size - offset, 4096)
-            offset += chunk_size
-            patch_data = patch_reader.decompress(chunk_size)
+        for chunk_size, patch_data in iter_diff_chunks(patch_reader,
+                                                       to_pos,
+                                                       to_size):
             from_data = ffrom.read(chunk_size)
 
-            if dfpatch_size > 0:
+            if dfdiff is not None:
                 dfdiff_data = dfdiff.read(chunk_size)
                 data = bytearray(
                     (pb + fb + db) & 0xff for pb, fb, db in zip(patch_data,
@@ -270,25 +290,22 @@ def apply_patch(ffrom, fpatch, fto):
                 )
 
             fto.write(data)
-
-        to_pos += size
+            to_pos += chunk_size
 
         # Extra data.
-        size = unpack_size(patch_reader)
+        for chunk_size, patch_data in iter_extra_chunks(patch_reader,
+                                                        to_pos,
+                                                        to_size):
+            if dfdiff is not None:
+                dfdiff_data = dfdiff.read(chunk_size)
+                data = bytearray(
+                    (dd + db) & 0xff for dd, db in zip(patch_data, dfdiff_data)
+                )
+            else:
+                data = patch_data
 
-        if to_pos + size > to_size:
-            raise Error("Patch extra data too long.")
-
-        data = patch_reader.decompress(size)
-
-        if dfpatch_size > 0:
-            dfdiff_data = dfdiff.read(size)
-            data = bytearray(
-                (dd + db) & 0xff for dd, db in zip(data, dfdiff_data)
-            )
-
-        fto.write(data)
-        to_pos += size
+            fto.write(data)
+            to_pos += chunk_size
 
         # Adjustment.
         size = unpack_size(patch_reader)

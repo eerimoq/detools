@@ -143,16 +143,16 @@ class DetoolsTest(unittest.TestCase):
             data_format='arm-cortex-m4',
             from_data_offset_begin=0x36f7c,
             from_data_offset_end=0x4e1f0,
+            from_code_begin=0x8020000,
+            from_code_end=0x08056deb,
             from_data_begin=0x8056f7c,
             from_data_end=0x806e1f0,
-            from_code_begin=0x8020000,
-            from_code_end=0x8056f7c,
             to_data_offset_begin=0x36f54,
             to_data_offset_end=0x4e1d4,
-            to_data_begin=0x8056f54,
-            to_data_end=0x806e1d4,
             to_code_begin=0x8020000,
-            to_code_end=0x8056f54)
+            to_code_end=0x08056dc3,
+            to_data_begin=0x8056f54,
+            to_data_end=0x806e1d4)
 
     def test_create_and_apply_patch_shell(self):
         self.assert_create_and_apply_patch('tests/files/shell/old',
@@ -253,6 +253,34 @@ class DetoolsTest(unittest.TestCase):
             patch_type='in-place',
             memory_size=2097152,
             segment_size=65536)
+
+    def test_create_and_apply_patch_micropython_xtensa_lx106(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython/esp8266-20190125-v1.10.bin',
+            'tests/files/micropython/esp8266-20180511-v1.9.4--'
+            '20190125-v1.10-xtensa-lx106.patch',
+            data_format='xtensa-lx106')
+
+    def test_create_and_apply_patch_micropython_data_and_code_sections(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython/esp8266-20190125-v1.10.bin',
+            'tests/files/micropython/esp8266-20180511-v1.9.4--'
+            '20190125-v1.10-xtensa-lx106-data-sections.patch',
+            data_format='xtensa-lx106',
+            from_data_offset_begin=0x7b368,
+            from_data_offset_end=0x93ab8,
+            from_code_begin=0x40209040,
+            from_code_end=0x4027b365,
+            from_data_begin=0x4027b368,
+            from_data_end=0x40293ab8,
+            to_data_offset_begin=0x7d084,
+            to_data_offset_end=0x963c4,
+            to_code_begin=0x40209040,
+            to_code_end=0x4027cffc,
+            to_data_begin=0x4027d084,
+            to_data_end=0x402963c4)
 
     def test_create_and_apply_patch_foo_in_place_3000_1500(self):
         self.assert_create_and_apply_patch(
@@ -629,16 +657,16 @@ class DetoolsTest(unittest.TestCase):
             data_format='aarch64',
             from_data_offset_begin=0x15300,
             from_data_offset_end=0x30ab8,
-            from_data_begin=0x40000000,
-            from_data_end=0x4001b7b8,
             from_code_begin=0x0,
             from_code_end=0xd2e0,
+            from_data_begin=0x40000000,
+            from_data_end=0x4001b7b8,
             to_data_offset_begin=0x15300,
             to_data_offset_end=0x30ab8,
-            to_data_begin=0x40000000,
-            to_data_end=0x4001b7b8,
             to_code_begin=0x0,
-            to_code_end=0xd2f0)
+            to_code_end=0xd2f0,
+            to_data_begin=0x40000000,
+            to_data_end=0x4001b7b8)
 
     def test_create_and_apply_patch_python3(self):
         self.assert_create_and_apply_patch(
