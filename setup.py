@@ -29,7 +29,8 @@ def setup(ext_modules):
         packages=find_packages(exclude=['tests']),
         install_requires=[
             'humanfriendly',
-            'bitstruct'
+            'bitstruct',
+            'pyelftools'
         ],
         ext_modules=ext_modules,
         test_suite="tests",
