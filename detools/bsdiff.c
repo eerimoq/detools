@@ -48,39 +48,45 @@ static int64_t matchlen(uint8_t *from_p,
     return (i);
 }
 
-static int64_t search(int64_t *i_p,
+static int64_t search(int64_t *sa_p,
                       uint8_t *from_p,
                       int64_t from_size,
                       uint8_t *to_p,
                       int64_t to_size,
-                      int64_t st,
-                      int64_t en,
+                      int64_t from_begin,
+                      int64_t from_end,
                       int64_t *pos_p)
 {
     int64_t x;
     int64_t y;
 
-    if (en - st < 2) {
-        x = matchlen(from_p + i_p[st], from_size - i_p[st], to_p, to_size);
-        y = matchlen(from_p + i_p[en], from_size - i_p[en], to_p, to_size);
+    if (from_end - from_begin < 2) {
+        x = matchlen(from_p + sa_p[from_begin],
+                     from_size - sa_p[from_begin],
+                     to_p,
+                     to_size);
+        y = matchlen(from_p + sa_p[from_end],
+                     from_size - sa_p[from_end],
+                     to_p,
+                     to_size);
 
         if (x > y) {
-            *pos_p = i_p[st];
+            *pos_p = sa_p[from_begin];
 
             return (x);
         } else {
-            *pos_p = i_p[en];
+            *pos_p = sa_p[from_end];
 
             return (y);
         }
     }
 
-    x = (st + (en - st) / 2);
+    x = (from_begin + (from_end - from_begin) / 2);
 
-    if (memcmp(from_p + i_p[x], to_p, MIN(from_size - i_p[x], to_size)) < 0) {
-        return search(i_p, from_p, from_size, to_p, to_size, x, en, pos_p);
+    if (memcmp(from_p + sa_p[x], to_p, MIN(from_size - sa_p[x], to_size)) < 0) {
+        return search(sa_p, from_p, from_size, to_p, to_size, x, from_end, pos_p);
     } else {
-        return search(i_p, from_p, from_size, to_p, to_size, st, x, pos_p);
+        return search(sa_p, from_p, from_size, to_p, to_size, from_begin, x, pos_p);
     }
 }
 
@@ -168,21 +174,21 @@ static int append_buffer(PyObject *list_p, uint8_t *buf_p, int64_t size)
 
 static int parse_args(PyObject *args_p,
                       Py_ssize_t *suffix_array_length_p,
-                      int64_t **i_pp,
+                      int64_t **sa_pp,
                       char **from_pp,
                       char **to_pp,
                       Py_ssize_t *from_size_p,
                       Py_ssize_t *to_size_p)
 {
     int res;
-    PyObject *suffix_array_p;
+    PyObject *sa_p;
     PyObject *from_bytes_p;
     PyObject *to_bytes_p;
     int i;
 
     res = PyArg_ParseTuple(args_p,
                            "OOO",
-                           &suffix_array_p,
+                           &sa_p,
                            &from_bytes_p,
                            &to_bytes_p);
 
@@ -190,20 +196,20 @@ static int parse_args(PyObject *args_p,
         return (-1);
     }
 
-    *suffix_array_length_p = PyList_Size(suffix_array_p);
+    *suffix_array_length_p = PyList_Size(sa_p);
 
     if (*suffix_array_length_p <= 0) {
         return (-1);
     }
 
-    *i_pp = PyMem_Malloc(*suffix_array_length_p * sizeof(**i_pp));
+    *sa_pp = PyMem_Malloc(*suffix_array_length_p * sizeof(**sa_pp));
 
-    if (*i_pp == NULL) {
+    if (*sa_pp == NULL) {
         return (-1);
     }
 
     for (i = 0; i < *suffix_array_length_p; i++) {
-        (*i_pp)[i] = PyLong_AsLong(PyList_GET_ITEM(suffix_array_p, i));
+        (*sa_pp)[i] = PyLong_AsLong(PyList_GET_ITEM(sa_p, i));
     }
 
     res = PyBytes_AsStringAndSize(from_bytes_p, from_pp, from_size_p);
@@ -221,13 +227,145 @@ static int parse_args(PyObject *args_p,
     return (res);
 
  err1:
-    PyMem_Free(*i_pp);
+    PyMem_Free(*sa_pp);
 
     return (-1);
 }
 
+static int write_diff_extra_and_adjustment(PyObject *list_p,
+                                           uint8_t *from_p,
+                                           Py_ssize_t from_size,
+                                           uint8_t *to_p,
+                                           Py_ssize_t to_size,
+                                           uint8_t *db_p,
+                                           uint8_t *eb_p,
+                                           int64_t scan,
+                                           int64_t pos,
+                                           int64_t len,
+                                           int64_t *last_scan_p,
+                                           int64_t *last_pos_p,
+                                           int64_t *last_offset_p)
+{
+    int res;
+    int64_t s;
+    int64_t sf;
+    int64_t diff_size;
+    int64_t extra_pos;
+    int64_t extra_size;
+    int64_t sb;
+    int64_t lenb;
+    int64_t overlap;
+    int64_t ss;
+    int64_t lens;
+    int64_t i;
+    int64_t last_scan;
+    int64_t last_pos;
+
+    last_scan = *last_scan_p;
+    last_pos = *last_pos_p;
+    s = 0;
+    sf = 0;
+    diff_size = 0;
+
+    for (i = 0; (last_scan + i < scan) && (last_pos + i < from_size);) {
+        if (from_p[last_pos + i] == to_p[last_scan + i]) {
+            s++;
+        }
+
+        i++;
+
+        if (s * 2 - i > sf * 2 - diff_size) {
+            sf = s;
+            diff_size = i;
+        }
+    }
+
+    lenb = 0;
+
+    if (scan < to_size) {
+        s = 0;
+        sb = 0;
+
+        for (i = 1; (scan >= last_scan + i) && (pos >= i); i++) {
+            if (from_p[pos - i] == to_p[scan - i]) {
+                s++;
+            }
+
+            if (s * 2 - i > sb * 2 - lenb) {
+                sb = s;
+                lenb = i;
+            }
+        }
+    }
+
+    overlap = (last_scan + diff_size) - (scan - lenb);
+
+    if (overlap > 0) {
+        s = 0;
+        ss = 0;
+        lens = 0;
+
+        for (i = 0; i < overlap; i++) {
+            if (to_p[last_scan + diff_size - overlap + i]
+                == from_p[last_pos + diff_size - overlap + i]) {
+                s++;
+            }
+
+            if (to_p[scan - lenb + i] == from_p[pos - lenb + i]) {
+                s--;
+            }
+
+            if (s > ss) {
+                ss = s;
+                lens = (i + 1);
+            }
+        }
+
+        diff_size += (lens - overlap);
+        lenb -= lens;
+    }
+
+    /* Diff data. */
+    for (i = 0; i < diff_size; i++) {
+        db_p[i] = (to_p[last_scan + i] - from_p[last_pos + i]);
+    }
+
+    res = append_buffer(list_p, &db_p[0], diff_size);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    /* Extra data. */
+    extra_pos = (last_scan + diff_size);
+    extra_size = (scan - lenb - extra_pos);
+
+    for (i = 0; i < extra_size; i++) {
+        eb_p[i] = to_p[extra_pos + i];
+    }
+
+    res = append_buffer(list_p, &eb_p[0], extra_size);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    /* Adjustment. */
+    res = append_size(list_p, (pos - lenb) - (last_pos + diff_size));
+
+    if (res != 0) {
+        return (res);
+    }
+
+    *last_scan_p = (scan - lenb);
+    *last_pos_p = (pos - lenb);
+    *last_offset_p = (pos - scan);
+
+    return (0);
+}
+
 static int create_patch_loop(PyObject *list_p,
-                             int64_t *i_p,
+                             int64_t *sa_p,
                              uint8_t *from_p,
                              Py_ssize_t from_size,
                              uint8_t *to_p,
@@ -244,15 +382,6 @@ static int create_patch_loop(PyObject *list_p,
     int64_t last_offset;
     int64_t from_score;
     int64_t scsc;
-    int64_t s;
-    int64_t sf;
-    int64_t lenf;
-    int64_t sb;
-    int64_t lenb;
-    int64_t overlap;
-    int64_t ss;
-    int64_t lens;
-    int64_t i;
 
     scan = 0;
     len = 0;
@@ -263,9 +392,10 @@ static int create_patch_loop(PyObject *list_p,
 
     while (scan < to_size) {
         from_score = 0;
+        scan += len;
 
-        for (scsc = scan += len; scan < to_size; scan++) {
-            len = search(i_p,
+        for (scsc = scan; scan < to_size; scan++) {
+            len = search(sa_p,
                          from_p,
                          from_size,
                          to_p + scan,
@@ -292,101 +422,23 @@ static int create_patch_loop(PyObject *list_p,
         }
 
         if ((len != from_score) || (scan == to_size)) {
-            s = 0;
-            sf = 0;
-            lenf = 0;
-
-            for (i = 0; (last_scan + i < scan) && (last_pos + i < from_size);) {
-                if (from_p[last_pos + i] == to_p[last_scan + i]) {
-                    s++;
-                }
-
-                i++;
-
-                if (s * 2 - i > sf * 2 - lenf) {
-                    sf = s;
-                    lenf = i;
-                }
-            }
-
-            lenb = 0;
-
-            if (scan < to_size) {
-                s = 0;
-                sb = 0;
-
-                for (i = 1; (scan >= last_scan + i) && (pos >= i); i++) {
-                    if (from_p[pos - i] == to_p[scan - i]) {
-                        s++;
-                    }
-
-                    if (s * 2 - i > sb * 2 - lenb) {
-                        sb = s;
-                        lenb = i;
-                    }
-                }
-            }
-
-            if (last_scan + lenf > scan - lenb) {
-                overlap = (last_scan + lenf) - (scan - lenb);
-                s = 0;
-                ss = 0;
-                lens = 0;
-
-                for (i = 0; i < overlap; i++) {
-                    if (to_p[last_scan + lenf - overlap + i]
-                        == from_p[last_pos + lenf - overlap + i]) {
-                        s++;
-                    }
-
-                    if (to_p[scan - lenb + i] == from_p[pos - lenb + i]) {
-                        s--;
-                    }
-
-                    if (s > ss) {
-                        ss = s;
-                        lens = (i + 1);
-                    }
-                }
-
-                lenf += (lens - overlap);
-                lenb -= lens;
-            }
-
-            for (i = 0; i < lenf; i++) {
-                db_p[i] = (to_p[last_scan + i] - from_p[last_pos + i]);
-            }
-
-            for (i = 0; i < (scan - lenb) - (last_scan + lenf); i++) {
-                eb_p[i] = to_p[last_scan + lenf + i];
-            }
-
-            /* Diff data. */
-            res = append_buffer(list_p, &db_p[0], lenf);
+            res = write_diff_extra_and_adjustment(list_p,
+                                                  from_p,
+                                                  from_size,
+                                                  to_p,
+                                                  to_size,
+                                                  db_p,
+                                                  eb_p,
+                                                  scan,
+                                                  pos,
+                                                  len,
+                                                  &last_scan,
+                                                  &last_pos,
+                                                  &last_offset);
 
             if (res != 0) {
                 return (res);
             }
-
-            /* Extra data. */
-            res = append_buffer(list_p,
-                                &eb_p[0],
-                                (scan - lenb) - (last_scan + lenf));
-
-            if (res != 0) {
-                return (res);
-            }
-
-            /* Adjustment. */
-            res = append_size(list_p, (pos - lenb) - (last_pos + lenf));
-
-            if (res != 0) {
-                return (res);
-            }
-
-            last_scan = (scan - lenb);
-            last_pos = (pos - lenb);
-            last_offset = (pos - scan);
         }
     }
 
@@ -430,7 +482,7 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
     uint8_t *to_p;
     Py_ssize_t from_size;
     Py_ssize_t to_size;
-    int64_t *i_p;
+    int64_t *sa_p;
     uint8_t *db_p;
     uint8_t *eb_p;
     PyObject *list_p;
@@ -438,7 +490,7 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
 
     res = parse_args(args_p,
                      &suffix_array_length,
-                     &i_p,
+                     &sa_p,
                      (char **)&from_p,
                      (char **)&to_p,
                      &from_size,
@@ -467,7 +519,7 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
     }
 
     res = create_patch_loop(list_p,
-                            i_p,
+                            sa_p,
                             from_p,
                             from_size,
                             to_p,
@@ -481,7 +533,7 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
 
     PyMem_Free(eb_p);
     PyMem_Free(db_p);
-    PyMem_Free(i_p);
+    PyMem_Free(sa_p);
 
     return (list_p);
 
@@ -495,7 +547,7 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
     Py_DECREF(list_p);
 
  err1:
-    PyMem_Free(i_p);
+    PyMem_Free(sa_p);
 
     return (NULL);
 }
