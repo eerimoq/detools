@@ -237,8 +237,7 @@ static int write_diff_extra_and_adjustment(PyObject *list_p,
                                            Py_ssize_t from_size,
                                            uint8_t *to_p,
                                            Py_ssize_t to_size,
-                                           uint8_t *db_p,
-                                           uint8_t *eb_p,
+                                           uint8_t *debuf_p,
                                            int64_t scan,
                                            int64_t pos,
                                            int64_t *last_scan_p,
@@ -326,10 +325,10 @@ static int write_diff_extra_and_adjustment(PyObject *list_p,
 
     /* Diff data. */
     for (i = 0; i < diff_size; i++) {
-        db_p[i] = (to_p[last_scan + i] - from_p[last_pos + i]);
+        debuf_p[i] = (to_p[last_scan + i] - from_p[last_pos + i]);
     }
 
-    res = append_buffer(list_p, &db_p[0], diff_size);
+    res = append_buffer(list_p, &debuf_p[0], diff_size);
 
     if (res != 0) {
         return (res);
@@ -340,10 +339,10 @@ static int write_diff_extra_and_adjustment(PyObject *list_p,
     extra_size = (scan - lenb - extra_pos);
 
     for (i = 0; i < extra_size; i++) {
-        eb_p[i] = to_p[extra_pos + i];
+        debuf_p[i] = to_p[extra_pos + i];
     }
 
-    res = append_buffer(list_p, &eb_p[0], extra_size);
+    res = append_buffer(list_p, &debuf_p[0], extra_size);
 
     if (res != 0) {
         return (res);
@@ -369,8 +368,7 @@ static int create_patch_loop(PyObject *list_p,
                              Py_ssize_t from_size,
                              uint8_t *to_p,
                              Py_ssize_t to_size,
-                             uint8_t *db_p,
-                             uint8_t *eb_p)
+                             uint8_t *debuf_p)
 {
     int res;
     int64_t scan;
@@ -426,8 +424,7 @@ static int create_patch_loop(PyObject *list_p,
                                                   from_size,
                                                   to_p,
                                                   to_size,
-                                                  db_p,
-                                                  eb_p,
+                                                  debuf_p,
                                                   scan,
                                                   pos,
                                                   &last_scan,
@@ -481,8 +478,7 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
     Py_ssize_t from_size;
     Py_ssize_t to_size;
     int64_t *sa_p;
-    uint8_t *db_p;
-    uint8_t *eb_p;
+    uint8_t *debuf_p;
     PyObject *list_p;
     Py_ssize_t suffix_array_length;
 
@@ -498,22 +494,16 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
         return (NULL);
     }
 
-    list_p = PyList_New(0);
+    debuf_p = PyMem_Malloc(to_size + 1);
 
-    if (list_p == NULL) {
+    if (debuf_p == NULL) {
         goto err1;
     }
 
-    db_p = PyMem_Malloc(to_size + 1);
+    list_p = PyList_New(0);
 
-    if (db_p == NULL) {
+    if (list_p == NULL) {
         goto err2;
-    }
-
-    eb_p = PyMem_Malloc(to_size + 1);
-
-    if (eb_p == NULL) {
-        goto err3;
     }
 
     res = create_patch_loop(list_p,
@@ -522,27 +512,22 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
                             from_size,
                             to_p,
                             to_size,
-                            db_p,
-                            eb_p);
+                            debuf_p);
 
     if (res != 0) {
-        goto err4;
+        goto err3;
     }
 
-    PyMem_Free(eb_p);
-    PyMem_Free(db_p);
+    PyMem_Free(debuf_p);
     PyMem_Free(sa_p);
 
     return (list_p);
 
- err4:
-    PyMem_Free(eb_p);
-
  err3:
-    PyMem_Free(db_p);
+    Py_DECREF(list_p);
 
  err2:
-    Py_DECREF(list_p);
+    PyMem_Free(debuf_p);
 
  err1:
     PyMem_Free(sa_p);
