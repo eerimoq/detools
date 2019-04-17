@@ -55,7 +55,7 @@ static int64_t search(int64_t *i_p,
                       int64_t to_size,
                       int64_t st,
                       int64_t en,
-                      int64_t *pos)
+                      int64_t *pos_p)
 {
     int64_t x;
     int64_t y;
@@ -65,11 +65,11 @@ static int64_t search(int64_t *i_p,
         y = matchlen(from_p + i_p[en], from_size - i_p[en], to_p, to_size);
 
         if (x > y) {
-            *pos = i_p[st];
+            *pos_p = i_p[st];
 
             return (x);
         } else {
-            *pos = i_p[en];
+            *pos_p = i_p[en];
 
             return (y);
         }
@@ -78,9 +78,9 @@ static int64_t search(int64_t *i_p,
     x = (st + (en - st) / 2);
 
     if (memcmp(from_p + i_p[x], to_p, MIN(from_size - i_p[x], to_size)) < 0) {
-        return search(i_p, from_p, from_size, to_p, to_size, x, en, pos);
+        return search(i_p, from_p, from_size, to_p, to_size, x, en, pos_p);
     } else {
-        return search(i_p, from_p, from_size, to_p, to_size, st, x, pos);
+        return search(i_p, from_p, from_size, to_p, to_size, st, x, pos_p);
     }
 }
 
@@ -339,7 +339,7 @@ static int create_patch_loop(PyObject *list_p,
                         s++;
                     }
 
-                    if(to_p[scan - lenb + i] == from_p[pos - lenb + i]) {
+                    if (to_p[scan - lenb + i] == from_p[pos - lenb + i]) {
                         s--;
                     }
 
@@ -357,7 +357,7 @@ static int create_patch_loop(PyObject *list_p,
                 db_p[i] = (to_p[last_scan + i] - from_p[last_pos + i]);
             }
 
-            for(i = 0; i < (scan - lenb) - (last_scan + lenf); i++) {
+            for (i = 0; i < (scan - lenb) - (last_scan + lenf); i++) {
                 eb_p[i] = to_p[last_scan + lenf + i];
             }
 
