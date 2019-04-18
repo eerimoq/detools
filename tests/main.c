@@ -311,11 +311,12 @@ static void test_apply_patch_micropython_crle_compression(void)
 
 static void test_apply_patch_micropython_in_place(void)
 {
-    assert_apply_patch_error(
+    assert_apply_patch_in_place(
         "tests/files/micropython/esp8266-20180511-v1.9.4.bin",
         "tests/files/micropython/esp8266-20180511-v1.9.4--"
         "20190125-v1.10-in-place.patch",
-        -DETOOLS_BAD_PATCH_TYPE);
+        "tests/files/micropython/esp8266-20190125-v1.10.bin",
+        2097152);
 }
 
 static void test_apply_patch_foo_in_place_3000_1500(void)
@@ -328,37 +329,42 @@ static void test_apply_patch_foo_in_place_3000_1500(void)
 
 static void test_apply_patch_foo_in_place_3k_1_5k(void)
 {
-    assert_apply_patch_error("tests/files/foo/old",
-                             "tests/files/foo/in-place-3k-1.5k.patch",
-                             -DETOOLS_BAD_PATCH_TYPE);
+    assert_apply_patch_in_place("tests/files/foo/old",
+                                "tests/files/foo/in-place-3k-1.5k.patch",
+                                "tests/files/foo/new",
+                                3072);
 }
 
 static void test_apply_patch_foo_in_place_3000_1500_1500(void)
 {
-    assert_apply_patch_error("tests/files/foo/old",
-                             "tests/files/foo/in-place-3000-1500-1500.patch",
-                             -DETOOLS_BAD_PATCH_TYPE);
+    assert_apply_patch_in_place("tests/files/foo/old",
+                                "tests/files/foo/in-place-3000-1500-1500.patch",
+                                "tests/files/foo/new",
+                                3000);
 }
 
 static void test_apply_patch_foo_in_place_3000_500(void)
 {
-    assert_apply_patch_error("tests/files/foo/old",
-                             "tests/files/foo/in-place-3000-500.patch",
-                             -DETOOLS_BAD_PATCH_TYPE);
+    assert_apply_patch_in_place("tests/files/foo/old",
+                                "tests/files/foo/in-place-3000-500.patch",
+                                "tests/files/foo/new",
+                                3000);
 }
 
 static void test_apply_patch_foo_in_place_3000_500_crle(void)
 {
-    assert_apply_patch_error("tests/files/foo/old",
-                             "tests/files/foo/in-place-3000-500-crle.patch",
-                             -DETOOLS_BAD_PATCH_TYPE);
+    assert_apply_patch_in_place("tests/files/foo/old",
+                                "tests/files/foo/in-place-3000-500-crle.patch",
+                                "tests/files/foo/new",
+                                3000);
 }
 
 static void test_apply_patch_foo_in_place_6000_1000_crle(void)
 {
-    assert_apply_patch_error("tests/files/foo/old",
-                             "tests/files/foo/in-place-6000-1000-crle.patch",
-                             -DETOOLS_BAD_PATCH_TYPE);
+    assert_apply_patch_in_place("tests/files/foo/old",
+                                "tests/files/foo/in-place-6000-1000-crle.patch",
+                                "tests/files/foo/new",
+                                6000);
 }
 
 static void test_apply_patch_bsdiff(void)
