@@ -1112,22 +1112,18 @@ static int in_place_shift_memory(struct detools_apply_patch_in_place_t *self_p,
                                  size_t from_size)
 {
     size_t i;
-    size_t j;
     size_t number_of_segments;
-    uint8_t byte;
     int res;
     size_t read_address;
     size_t write_address;
+    uint8_t buf[128];
+    size_t offset;
+    size_t size;
 
     number_of_segments = DIV_CEIL(MIN(from_size, memory_size - self_p->shift_size),
                                   self_p->segment_size);
     read_address = ((number_of_segments - 1) * self_p->segment_size);
     write_address = (read_address + self_p->shift_size);
-
-    printf("number_of_segments=%lu, read_address=%lu, write_address=%lu\n",
-           number_of_segments,
-           read_address,
-           write_address);
 
     for (i = 0; i < number_of_segments; i++) {
         /* Erase segment to write to. */
@@ -1140,24 +1136,29 @@ static int in_place_shift_memory(struct detools_apply_patch_in_place_t *self_p,
         }
 
         /* Copy data to erased segment. */
-        for (j = 0; j < self_p->segment_size; j++) {
+        offset = 0;
+
+        while (offset < self_p->segment_size) {
+            size = MIN(sizeof(buf), self_p->segment_size - offset);
             res = self_p->mem_read(self_p->arg_p,
-                                   &byte,
-                                   read_address + j,
-                                   sizeof(byte));
+                                   &buf[0],
+                                   read_address + offset,
+                                   size);
 
             if (res != 0) {
                 return (res);
             }
 
             res = self_p->mem_write(self_p->arg_p,
-                                    write_address + j,
-                                    &byte,
-                                    sizeof(byte));
+                                    write_address + offset,
+                                    &buf[0],
+                                    size);
 
             if (res != 0) {
                 return (res);
             }
+
+            offset += size;
         }
 
         write_address -= self_p->segment_size;
@@ -1220,15 +1221,6 @@ static int in_place_process_init(struct detools_apply_patch_in_place_t *self_p)
         return (res);
     }
 
-    printf("compression=%d, memory_size=%d, segment_size=%d, shift_size=%d, "
-           "from_size=%d, to_size=%d\n",
-           compression,
-           memory_size,
-           segment_size,
-           shift_size,
-           from_size,
-           to_size);
-
     res = patch_reader_init(&self_p->patch_reader,
                             &self_p->chunk,
                             self_p->patch_size - self_p->chunk.offset,
@@ -1289,11 +1281,6 @@ static int in_place_process_dfpatch_size(
     self_p->segment.to_pos = 0;
     self_p->segment.index++;
 
-    printf("from_offset=%d, to_offset=%lu, to_size=%lu\n",
-           self_p->segment.from_offset,
-           self_p->segment.to_offset,
-           self_p->segment.to_size);
-
     return (self_p->mem_erase(self_p->arg_p,
                               self_p->segment.to_offset,
                               self_p->segment.to_size));
@@ -1318,8 +1305,6 @@ static int in_place_process_size(struct detools_apply_patch_in_place_t *self_p,
     self_p->state = next_state;
     self_p->chunk_size = (size_t)size;
 
-    printf("size: chunk_size=%lu\n", self_p->chunk_size);
-
     return (res);
 }
 
@@ -1331,8 +1316,6 @@ static int in_place_process_data(struct detools_apply_patch_in_place_t *self_p,
     uint8_t to[128];
     size_t to_size;
     uint8_t from[128];
-
-    printf("chunk_size=%lu\n", self_p->chunk_size);
 
     to_size = MIN(sizeof(to), self_p->chunk_size);
 
@@ -1351,7 +1334,11 @@ static int in_place_process_data(struct detools_apply_patch_in_place_t *self_p,
     }
 
     if (next_state == detools_apply_patch_state_extra_size_t) {
-        res = self_p->mem_read(self_p->arg_p, &from[0], 0, to_size);
+        res = self_p->mem_read(self_p->arg_p,
+                               &from[0],
+                               (size_t)self_p->segment.from_offset,
+                               to_size);
+        self_p->segment.from_offset += (int)to_size;
 
         if (res != 0) {
             return (-DETOOLS_IO_FAILED);
@@ -1414,6 +1401,7 @@ static int in_place_process_adjustment(struct detools_apply_patch_in_place_t *se
     } else if (self_p->segment.to_pos == self_p->segment.to_size) {
         self_p->state = detools_apply_patch_state_dfpatch_size_t;
     } else {
+        self_p->segment.from_offset += offset;
         self_p->state = detools_apply_patch_state_diff_size_t;
     }
 
@@ -1921,8 +1909,6 @@ static int in_place_file_io_mem_read(void *arg_p,
     int res;
     struct in_place_file_io_t *self_p;
 
-    printf("mem_read: src=%lu, size=%lu\n", src, size);
-
     self_p = (struct in_place_file_io_t *)arg_p;
     res = 0;
 
@@ -1949,8 +1935,6 @@ static int in_place_file_io_mem_write(void *arg_p,
     int res;
     struct in_place_file_io_t *self_p;
 
-    printf("mem_write: dst=%lu, size=%lu\n", dst, size);
-
     self_p = (struct in_place_file_io_t *)arg_p;
     res = 0;
 
@@ -1974,8 +1958,6 @@ static int in_place_file_io_mem_erase(void *arg_p, uintptr_t addr, size_t size)
     (void)arg_p;
     (void)addr;
     (void)size;
-
-    printf("mem_erase: addr=%lu, size=%lu\n", addr, size);
 
     return (0);
 }

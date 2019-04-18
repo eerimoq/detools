@@ -191,8 +191,9 @@ static void assert_apply_patch_in_place(const char *from_p,
     int expected_byte;
     struct stat statbuf;
     int to_size;
-    int value;
-    size_t i;
+    size_t offset;
+    size_t size;
+    uint8_t buf[512];
 
     assert(stat(to_p, &statbuf) == 0);
     to_size = (int)statbuf.st_size;
@@ -200,14 +201,18 @@ static void assert_apply_patch_in_place(const char *from_p,
     fmem_p = myfopen(memory_p, "wb");
     ffrom_p = myfopen(from_p, "rb");
 
-    for (i = 0; i < memory_size; i++) {
-        value = fgetc(ffrom_p);
+    offset = 0;
 
-        if (value == EOF) {
-            value = -1;
+    while (offset < memory_size) {
+        size = fread(&buf[0], 1, sizeof(buf), ffrom_p);
+
+        if (size == 0) {
+            memset(&buf[0], -1, sizeof(buf));
+            size = MIN(sizeof(buf), memory_size - offset);
         }
 
-        assert(fputc(value, fmem_p) != EOF);
+        assert(fwrite(&buf[0], 1, size, fmem_p) == size);
+        offset += size;
     }
 
     assert(fgetc(ffrom_p) == EOF);
@@ -641,16 +646,13 @@ int main()
     test_apply_patch_micropython_none_compression();
     test_apply_patch_foo_crle_compression();
     test_apply_patch_micropython_crle_compression();
+    test_apply_patch_micropython_in_place();
     test_apply_patch_foo_in_place_3000_1500();
     test_apply_patch_foo_in_place_3k_1_5k();
-
-    if (0) {
-        test_apply_patch_micropython_in_place();
-        test_apply_patch_foo_in_place_3000_1500_1500();
-        test_apply_patch_foo_in_place_3000_500();
-        test_apply_patch_foo_in_place_3000_500_crle();
-        test_apply_patch_foo_in_place_6000_1000_crle();
-    }
+    test_apply_patch_foo_in_place_3000_1500_1500();
+    test_apply_patch_foo_in_place_3000_500();
+    test_apply_patch_foo_in_place_3000_500_crle();
+    test_apply_patch_foo_in_place_6000_1000_crle();
 
     test_apply_patch_bsdiff();
     test_apply_patch_sais();
