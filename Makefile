@@ -60,6 +60,10 @@ test-c:
 	$(MAKE) -C src/c
 	src/c/detools apply_patch tests/files/foo/old tests/files/foo/patch foo.new
 	cmp foo.new tests/files/foo/new
+	rm foo.new
+	cp tests/files/foo/old foo.mem
+	src/c/detools apply_patch_in_place foo.mem tests/files/foo/in-place-3000-500.patch
+	cmp foo.mem tests/files/foo/in-place-3000-500.mem
 	! src/c/detools
 	! src/c/detools apply_patch
 	! src/c/detools apply_patch tests/files/foo/old tests/files/foo/patch
