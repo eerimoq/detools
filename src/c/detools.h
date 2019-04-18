@@ -184,7 +184,7 @@ struct detools_apply_patch_patch_reader_crle_t {
 };
 
 struct detools_apply_patch_patch_reader_t {
-    struct detools_apply_patch_t *apply_patch_p;
+    struct detools_apply_patch_chunk_t *patch_chunk_p;
     struct {
         int state;
         int value;
@@ -243,6 +243,8 @@ struct detools_apply_patch_in_place_t {
     int state;
     size_t to_pos;
     size_t to_size;
+    size_t segment_size;
+    size_t shift_size;
     size_t chunk_size;
     struct detools_apply_patch_patch_reader_t patch_reader;
     struct detools_apply_patch_chunk_t chunk;

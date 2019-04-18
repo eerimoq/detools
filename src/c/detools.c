@@ -57,6 +57,7 @@
 #define SIZE_STATE_CONSECUTIVE                              1
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define DIV_CEIL(n, d) (((n) + (d) - 1) / (d))
 
 /*
  * Utility functions.
@@ -116,6 +117,36 @@ static int chunk_read(struct detools_apply_patch_chunk_t *self_p,
     return (0);
 }
 
+static int chunk_unpack_header_size(struct detools_apply_patch_chunk_t *self_p,
+                                    int *size_p)
+{
+    uint8_t byte;
+    int offset;
+    int res;
+
+    res = chunk_get(self_p, &byte);
+
+    if (res != 0) {
+        return (-DETOOLS_SHORT_HEADER);
+    }
+
+    *size_p = (byte & 0x3f);
+    offset = 6;
+
+    while ((byte & 0x80) != 0) {
+        res = chunk_get(self_p, &byte);
+
+        if (res != 0) {
+            return (-DETOOLS_SHORT_HEADER);
+        }
+
+        *size_p |= ((byte & 0x7f) << offset);
+        offset += 7;
+    }
+
+    return (0);
+}
+
 static void unpack_unsigned_size_init(
     struct detools_unpack_unsigned_size_t *self_p)
 {
@@ -125,7 +156,7 @@ static void unpack_unsigned_size_init(
 }
 
 static int unpack_unsigned_size(struct detools_unpack_unsigned_size_t *self_p,
-                                struct detools_apply_patch_t *apply_patch_p,
+                                struct detools_apply_patch_chunk_t *patch_chunk_p,
                                 int *size_p)
 {
     int res;
@@ -135,7 +166,7 @@ static int unpack_unsigned_size(struct detools_unpack_unsigned_size_t *self_p,
         switch (self_p->state) {
 
         case SIZE_STATE_FIRST:
-            res = chunk_get(&apply_patch_p->chunk, &byte);
+            res = chunk_get(patch_chunk_p, &byte);
 
             if (res != 0) {
                 return (res);
@@ -147,7 +178,7 @@ static int unpack_unsigned_size(struct detools_unpack_unsigned_size_t *self_p,
             break;
 
         case SIZE_STATE_CONSECUTIVE:
-            res = chunk_get(&apply_patch_p->chunk, &byte);
+            res = chunk_get(patch_chunk_p, &byte);
 
             if (res != 0) {
                 return (res);
@@ -163,35 +194,6 @@ static int unpack_unsigned_size(struct detools_unpack_unsigned_size_t *self_p,
     } while ((byte & 0x80) != 0);
 
     *size_p = self_p->value;
-
-    return (0);
-}
-
-static int unpack_header_size(struct detools_apply_patch_t *self_p, int *size_p)
-{
-    uint8_t byte;
-    int offset;
-    int res;
-
-    res = chunk_get(&self_p->chunk, &byte);
-
-    if (res != 0) {
-        return (-DETOOLS_SHORT_HEADER);
-    }
-
-    *size_p = (byte & 0x3f);
-    offset = 6;
-
-    while ((byte & 0x80) != 0) {
-        res = chunk_get(&self_p->chunk, &byte);
-
-        if (res != 0) {
-            return (-DETOOLS_SHORT_HEADER);
-        }
-
-        *size_p |= ((byte & 0x7f) << offset);
-        offset += 7;
-    }
 
     return (0);
 }
@@ -216,7 +218,7 @@ static int patch_reader_none_decompress(
         return (-DETOOLS_CORRUPT_PATCH);
     }
 
-    res = chunk_read(&self_p->apply_patch_p->chunk,
+    res = chunk_read(self_p->patch_chunk_p,
                      buf_p,
                      size_p);
 
@@ -293,7 +295,7 @@ static int prepare_input_buffer(struct detools_apply_patch_patch_reader_t *self_
     size_t left;
 
     lzma_p = &self_p->compression.lzma;
-    left = chunk_left(&self_p->apply_patch_p->chunk);
+    left = chunk_left(self_p->patch_chunk_p);
 
     if (left == 0) {
         return (1);
@@ -311,7 +313,7 @@ static int prepare_input_buffer(struct detools_apply_patch_patch_reader_t *self_
     }
 
     lzma_p->input_p = next_p;
-    chunk_read_all_no_check(&self_p->apply_patch_p->chunk,
+    chunk_read_all_no_check(self_p->patch_chunk_p,
                             &lzma_p->input_p[lzma_p->stream.avail_in],
                             left);
     lzma_p->stream.next_in = next_p;
@@ -466,7 +468,7 @@ static int patch_reader_crle_decompress_idle(
     int res;
     uint8_t kind;
 
-    res = chunk_get(&self_p->apply_patch_p->chunk, &kind);
+    res = chunk_get(self_p->patch_chunk_p, &kind);
 
     if (res != 0) {
         return (res);
@@ -502,7 +504,7 @@ static int patch_reader_crle_decompress_scattered_size(
     int size;
 
     res = unpack_unsigned_size(&crle_p->kind.scattered.size,
-                               self_p->apply_patch_p,
+                               self_p->patch_chunk_p,
                                &size);
 
     if (res != 0) {
@@ -525,7 +527,7 @@ static int patch_reader_crle_decompress_scattered_data(
 
     *size_p = MIN(*size_p, crle_p->kind.scattered.number_of_bytes_left);
 
-    res = chunk_read(&self_p->apply_patch_p->chunk, buf_p, size_p);
+    res = chunk_read(self_p->patch_chunk_p, buf_p, size_p);
 
     if (res != 0) {
         return (res);
@@ -548,7 +550,7 @@ static int patch_reader_crle_decompress_repeated_repetitions(
     int repetitions;
 
     res = unpack_unsigned_size(&crle_p->kind.repeated.size,
-                               self_p->apply_patch_p,
+                               self_p->patch_chunk_p,
                                &repetitions);
 
     if (res != 0) {
@@ -567,7 +569,7 @@ static int patch_reader_crle_decompress_repeated_data(
 {
     int res;
 
-    res = chunk_get(&self_p->apply_patch_p->chunk,
+    res = chunk_get(self_p->patch_chunk_p,
                     &crle_p->kind.repeated.value);
 
     if (res != 0) {
@@ -686,7 +688,7 @@ static int patch_reader_crle_init(struct detools_apply_patch_patch_reader_t *sel
  * Initialize given patch reader.
  */
 static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
-                             struct detools_apply_patch_t *apply_patch_p,
+                             struct detools_apply_patch_chunk_t *patch_chunk_p,
                              size_t patch_size,
                              int compression)
 {
@@ -696,7 +698,7 @@ static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
     (void)patch_size;
 #endif
 
-    self_p->apply_patch_p = apply_patch_p;
+    self_p->patch_chunk_p = patch_chunk_p;
     self_p->size.state = SIZE_STATE_FIRST;
 
     switch (compression) {
@@ -821,15 +823,14 @@ static int process_init(struct detools_apply_patch_t *self_p)
         return (-DETOOLS_BAD_PATCH_TYPE);
     }
 
-
-    res = unpack_header_size(self_p, &to_size);
+    res = chunk_unpack_header_size(&self_p->chunk, &to_size);
 
     if (res != 0) {
         return (res);
     }
 
     res = patch_reader_init(&self_p->patch_reader,
-                            self_p,
+                            &self_p->chunk,
                             self_p->patch_size - self_p->chunk.offset,
                             compression);
 
@@ -1120,14 +1121,259 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
                                         self_p->to_size));
 }
 
-static int apply_patch_in_place_process_once(
-    struct detools_apply_patch_in_place_t *self_p)
+static int in_place_shift_memory(struct detools_apply_patch_in_place_t *self_p,
+                                 size_t memory_size,
+                                 size_t from_size)
+{
+    size_t i;
+    size_t j;
+    size_t number_of_segments;
+    uint8_t byte;
+    int res;
+    size_t read_address;
+    size_t write_address;
+
+    number_of_segments = DIV_CEIL(MIN(from_size, memory_size - self_p->shift_size),
+                                  self_p->segment_size);
+    read_address = ((number_of_segments - 1) * self_p->segment_size);
+    write_address = (read_address + self_p->shift_size);
+
+    printf("number_of_segments=%lu, read_address=%lu, write_address=%lu\n",
+           number_of_segments,
+           read_address,
+           write_address);
+
+    for (i = 0; i < number_of_segments; i++) {
+        /* Erase segment to write to. */
+        res = self_p->mem_erase(self_p->arg_p,
+                                write_address,
+                                self_p->segment_size);
+
+        if (res != 0) {
+            return (res);
+        }
+
+        /* Copy data to erased segment. */
+        for (j = 0; j < self_p->segment_size; j++) {
+            res = self_p->mem_read(self_p->arg_p,
+                                   &byte,
+                                   read_address + j,
+                                   sizeof(byte));
+
+            if (res != 0) {
+                return (res);
+            }
+
+            res = self_p->mem_write(self_p->arg_p,
+                                    write_address + j,
+                                    &byte,
+                                    sizeof(byte));
+
+            if (res != 0) {
+                return (res);
+            }
+        }
+
+        write_address -= self_p->segment_size;
+        read_address -= self_p->segment_size;
+    }
+
+    return (0);
+}
+
+static int in_place_process_init(struct detools_apply_patch_in_place_t *self_p)
+{
+    int patch_type;
+    int compression;
+    uint8_t byte;
+    int res;
+    int memory_size;
+    int segment_size;
+    int shift_size;
+    int from_size;
+    int to_size;
+
+    if (chunk_get(&self_p->chunk, &byte) != 0) {
+        return (-DETOOLS_SHORT_HEADER);
+    }
+
+    patch_type = ((byte >> 4) & 0x7);
+    compression = (byte & 0xf);
+
+    if (patch_type != PATCH_TYPE_IN_PLACE) {
+        return (-DETOOLS_BAD_PATCH_TYPE);
+    }
+
+    res = chunk_unpack_header_size(&self_p->chunk, &memory_size);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    res = chunk_unpack_header_size(&self_p->chunk, &segment_size);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    res = chunk_unpack_header_size(&self_p->chunk, &shift_size);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    res = chunk_unpack_header_size(&self_p->chunk, &from_size);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    res = chunk_unpack_header_size(&self_p->chunk, &to_size);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    printf("compression=%d, memory_size=%d, segment_size=%d, shift_size=%d, "
+           "from_size=%d, to_size=%d\n",
+           compression,
+           memory_size,
+           segment_size,
+           shift_size,
+           from_size,
+           to_size);
+
+    res = patch_reader_init(&self_p->patch_reader,
+                            &self_p->chunk,
+                            self_p->patch_size - self_p->chunk.offset,
+                            compression);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    if (to_size < 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+
+    self_p->to_pos = 0;
+    self_p->segment_size = (size_t)segment_size;
+    self_p->shift_size = (size_t)shift_size;
+    self_p->to_size = (size_t)to_size;
+
+    if (to_size > 0) {
+        res = in_place_shift_memory(self_p, (size_t)memory_size, (size_t)from_size);
+
+        if (res != 0) {
+            return (res);
+        }
+
+        self_p->state = STATE_DFPATCH_SIZE;
+    } else {
+        self_p->state = STATE_DONE;
+    }
+
+    return (res);
+}
+
+static int in_place_process_dfpatch_size(struct detools_apply_patch_in_place_t *self_p)
+{
+    int res;
+    int size;
+
+    res = patch_reader_unpack_size(&self_p->patch_reader, &size);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    if (size > 0) {
+        return (-DETOOLS_NOT_IMPLEMENTED);
+    }
+
+    self_p->state = STATE_DIFF_SIZE;
+
+    return (0);
+}
+
+static int in_place_process_diff_size(struct detools_apply_patch_in_place_t *self_p)
 {
     (void)self_p;
 
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+static int in_place_process_diff_data(struct detools_apply_patch_in_place_t *self_p)
+{
+    (void)self_p;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+static int in_place_process_extra_size(struct detools_apply_patch_in_place_t *self_p)
+{
+    (void)self_p;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+static int in_place_process_extra_data(struct detools_apply_patch_in_place_t *self_p)
+{
+    (void)self_p;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+static int in_place_process_adjustment(struct detools_apply_patch_in_place_t *self_p)
+{
+    (void)self_p;
+
+    return (-DETOOLS_NOT_IMPLEMENTED);
+}
+
+static int apply_patch_in_place_process_once(
+    struct detools_apply_patch_in_place_t *self_p)
+{
     int res;
 
-    res = -DETOOLS_NOT_IMPLEMENTED;
+    switch (self_p->state) {
+
+    case STATE_INIT:
+        res = in_place_process_init(self_p);
+        break;
+
+    case STATE_DFPATCH_SIZE:
+        res = in_place_process_dfpatch_size(self_p);
+        break;
+
+    case STATE_DIFF_SIZE:
+        res = in_place_process_diff_size(self_p);
+        break;
+
+    case STATE_DIFF_DATA:
+        res = in_place_process_diff_data(self_p);
+        break;
+
+    case STATE_EXTRA_SIZE:
+        res = in_place_process_extra_size(self_p);
+        break;
+
+    case STATE_EXTRA_DATA:
+        res = in_place_process_extra_data(self_p);
+        break;
+
+    case STATE_ADJUSTMENT:
+        res = in_place_process_adjustment(self_p);
+        break;
+
+    case STATE_DONE:
+        res = -DETOOLS_ALREADY_DONE;
+        break;
+
+    default:
+        res = -DETOOLS_INTERNAL_ERROR;
+        break;
+    }
 
     return (res);
 }
