@@ -223,11 +223,8 @@ static void assert_apply_patch_in_place(const char *from_p,
                to_p,
                detools_error_as_string(-res),
                res);
-        //exit(1);
-        return;
+        exit(1);
     }
-
-    exit(1);
 
     assert(truncate(memory_p, to_size) == 0);
     fmem_p = myfopen(memory_p, "rb");
@@ -644,13 +641,17 @@ int main()
     test_apply_patch_micropython_none_compression();
     test_apply_patch_foo_crle_compression();
     test_apply_patch_micropython_crle_compression();
-    test_apply_patch_micropython_in_place();
     test_apply_patch_foo_in_place_3000_1500();
     test_apply_patch_foo_in_place_3k_1_5k();
-    test_apply_patch_foo_in_place_3000_1500_1500();
-    test_apply_patch_foo_in_place_3000_500();
-    test_apply_patch_foo_in_place_3000_500_crle();
-    test_apply_patch_foo_in_place_6000_1000_crle();
+
+    if (0) {
+        test_apply_patch_micropython_in_place();
+        test_apply_patch_foo_in_place_3000_1500_1500();
+        test_apply_patch_foo_in_place_3000_500();
+        test_apply_patch_foo_in_place_3000_500_crle();
+        test_apply_patch_foo_in_place_6000_1000_crle();
+    }
+
     test_apply_patch_bsdiff();
     test_apply_patch_sais();
     test_apply_patch_3f5531ba56182a807a5c358f04678b3b026d3a();

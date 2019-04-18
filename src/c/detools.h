@@ -264,6 +264,13 @@ struct detools_apply_patch_in_place_t {
     size_t segment_size;
     size_t shift_size;
     size_t chunk_size;
+    struct {
+        size_t index;
+        int from_offset;
+        size_t to_offset;
+        size_t to_size;
+        size_t to_pos;
+    } segment;
     struct detools_apply_patch_patch_reader_t patch_reader;
     struct detools_apply_patch_chunk_t chunk;
 };
