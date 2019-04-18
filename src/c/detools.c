@@ -42,20 +42,6 @@
 #define COMPRESSION_LZMA                                    1
 #define COMPRESSION_CRLE                                    2
 
-/* Apply patch states. */
-#define STATE_INIT                                          0
-#define STATE_DFPATCH_SIZE                                  1
-#define STATE_DIFF_SIZE                                     2
-#define STATE_DIFF_DATA                                     3
-#define STATE_EXTRA_SIZE                                    4
-#define STATE_EXTRA_DATA                                    5
-#define STATE_ADJUSTMENT                                    6
-#define STATE_DONE                                          7
-
-/* Size states. */
-#define SIZE_STATE_FIRST                                    0
-#define SIZE_STATE_CONSECUTIVE                              1
-
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define DIV_CEIL(n, d) (((n) + (d) - 1) / (d))
 
@@ -147,17 +133,16 @@ static int chunk_unpack_header_size(struct detools_apply_patch_chunk_t *self_p,
     return (0);
 }
 
-static void unpack_unsigned_size_init(
-    struct detools_unpack_unsigned_size_t *self_p)
+static void unpack_usize_init(struct detools_unpack_usize_t *self_p)
 {
-    self_p->state = SIZE_STATE_FIRST;
+    self_p->state = detools_unpack_usize_state_first_t;
     self_p->value = 0;
     self_p->offset = 0;
 }
 
-static int unpack_unsigned_size(struct detools_unpack_unsigned_size_t *self_p,
-                                struct detools_apply_patch_chunk_t *patch_chunk_p,
-                                int *size_p)
+static int unpack_usize(struct detools_unpack_usize_t *self_p,
+                        struct detools_apply_patch_chunk_t *patch_chunk_p,
+                        int *size_p)
 {
     int res;
     uint8_t byte;
@@ -165,7 +150,7 @@ static int unpack_unsigned_size(struct detools_unpack_unsigned_size_t *self_p,
     do {
         switch (self_p->state) {
 
-        case SIZE_STATE_FIRST:
+        case detools_unpack_usize_state_first_t:
             res = chunk_get(patch_chunk_p, &byte);
 
             if (res != 0) {
@@ -174,10 +159,10 @@ static int unpack_unsigned_size(struct detools_unpack_unsigned_size_t *self_p,
 
             self_p->value = (byte & 0x7f);
             self_p->offset = 7;
-            self_p->state = SIZE_STATE_CONSECUTIVE;
+            self_p->state = detools_unpack_usize_state_consecutive_t;
             break;
 
-        case SIZE_STATE_CONSECUTIVE:
+        case detools_unpack_usize_state_consecutive_t:
             res = chunk_get(patch_chunk_p, &byte);
 
             if (res != 0) {
@@ -479,13 +464,13 @@ static int patch_reader_crle_decompress_idle(
     switch (kind) {
 
     case 0:
-        crle_p->state = DETOOLS_CRLE_STATE_SCATTERED_SIZE;
-        unpack_unsigned_size_init(&crle_p->kind.scattered.size);
+        crle_p->state = detools_crle_state_scattered_size_t;
+        unpack_usize_init(&crle_p->kind.scattered.size);
         break;
 
     case 1:
-        crle_p->state = DETOOLS_CRLE_STATE_REPEATED_REPETITIONS;
-        unpack_unsigned_size_init(&crle_p->kind.repeated.size);
+        crle_p->state = detools_crle_state_repeated_repetitions_t;
+        unpack_usize_init(&crle_p->kind.repeated.size);
         break;
 
     default:
@@ -503,7 +488,7 @@ static int patch_reader_crle_decompress_scattered_size(
     int res;
     int size;
 
-    res = unpack_unsigned_size(&crle_p->kind.scattered.size,
+    res = unpack_usize(&crle_p->kind.scattered.size,
                                self_p->patch_chunk_p,
                                &size);
 
@@ -511,7 +496,7 @@ static int patch_reader_crle_decompress_scattered_size(
         return (res);
     }
 
-    crle_p->state = DETOOLS_CRLE_STATE_SCATTERED_DATA;
+    crle_p->state = detools_crle_state_scattered_data_t;
     crle_p->kind.scattered.number_of_bytes_left = (size_t)size;
 
     return (2);
@@ -536,7 +521,7 @@ static int patch_reader_crle_decompress_scattered_data(
     crle_p->kind.scattered.number_of_bytes_left -= *size_p;
 
     if (crle_p->kind.scattered.number_of_bytes_left == 0) {
-        crle_p->state = DETOOLS_CRLE_STATE_IDLE;
+        crle_p->state = detools_crle_state_idle_t;
     }
 
     return (0);
@@ -549,7 +534,7 @@ static int patch_reader_crle_decompress_repeated_repetitions(
     int res;
     int repetitions;
 
-    res = unpack_unsigned_size(&crle_p->kind.repeated.size,
+    res = unpack_usize(&crle_p->kind.repeated.size,
                                self_p->patch_chunk_p,
                                &repetitions);
 
@@ -557,7 +542,7 @@ static int patch_reader_crle_decompress_repeated_repetitions(
         return (res);
     }
 
-    crle_p->state = DETOOLS_CRLE_STATE_REPEATED_DATA;
+    crle_p->state = detools_crle_state_repeated_data_t;
     crle_p->kind.repeated.number_of_bytes_left = (size_t)repetitions;
 
     return (2);
@@ -576,7 +561,7 @@ static int patch_reader_crle_decompress_repeated_data(
         return (res);
     }
 
-    crle_p->state = DETOOLS_CRLE_STATE_REPEATED_DATA_READ;
+    crle_p->state = detools_crle_state_repeated_data_read_t;
 
     return (2);
 }
@@ -599,7 +584,7 @@ static int patch_reader_crle_decompress_repeated_data_read(
     crle_p->kind.repeated.number_of_bytes_left -= size;
 
     if (crle_p->kind.repeated.number_of_bytes_left == 0) {
-        crle_p->state = DETOOLS_CRLE_STATE_IDLE;
+        crle_p->state = detools_crle_state_idle_t;
     }
 
     return (0);
@@ -618,31 +603,31 @@ static int patch_reader_crle_decompress(
     do {
         switch (crle_p->state) {
 
-        case DETOOLS_CRLE_STATE_IDLE:
+        case detools_crle_state_idle_t:
             res = patch_reader_crle_decompress_idle(self_p, crle_p);
             break;
 
-        case DETOOLS_CRLE_STATE_SCATTERED_SIZE:
+        case detools_crle_state_scattered_size_t:
             res = patch_reader_crle_decompress_scattered_size(self_p, crle_p);
             break;
 
-        case DETOOLS_CRLE_STATE_SCATTERED_DATA:
+        case detools_crle_state_scattered_data_t:
             res = patch_reader_crle_decompress_scattered_data(self_p,
                                                               crle_p,
                                                               buf_p,
                                                               size_p);
             break;
 
-        case DETOOLS_CRLE_STATE_REPEATED_REPETITIONS:
+        case detools_crle_state_repeated_repetitions_t:
             res = patch_reader_crle_decompress_repeated_repetitions(self_p,
                                                                     crle_p);
             break;
 
-        case DETOOLS_CRLE_STATE_REPEATED_DATA:
+        case detools_crle_state_repeated_data_t:
             res = patch_reader_crle_decompress_repeated_data(self_p, crle_p);
             break;
 
-        case DETOOLS_CRLE_STATE_REPEATED_DATA_READ:
+        case detools_crle_state_repeated_data_read_t:
             res = patch_reader_crle_decompress_repeated_data_read(crle_p,
                                                                   buf_p,
                                                                   size_p);
@@ -671,7 +656,7 @@ static int patch_reader_crle_init(struct detools_apply_patch_patch_reader_t *sel
     struct detools_apply_patch_patch_reader_crle_t *crle_p;
 
     crle_p = &self_p->compression.crle;
-    crle_p->state = DETOOLS_CRLE_STATE_IDLE;
+    crle_p->state = detools_crle_state_idle_t;
     self_p->destroy = patch_reader_crle_destroy;
     self_p->decompress = patch_reader_crle_decompress;
 
@@ -699,7 +684,7 @@ static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
 #endif
 
     self_p->patch_chunk_p = patch_chunk_p;
-    self_p->size.state = SIZE_STATE_FIRST;
+    self_p->size.state = detools_unpack_usize_state_first_t;
 
     switch (compression) {
 
@@ -760,7 +745,7 @@ static int patch_reader_unpack_size(
     do {
         switch (self_p->size.state) {
 
-        case SIZE_STATE_FIRST:
+        case detools_unpack_usize_state_first_t:
             res = patch_reader_decompress(self_p, &byte, &size);
 
             if (res != 0) {
@@ -770,11 +755,11 @@ static int patch_reader_unpack_size(
             self_p->size.is_signed = ((byte & 0x40) == 0x40);
             self_p->size.value = (byte & 0x3f);
             self_p->size.offset = 6;
-            self_p->size.state = SIZE_STATE_CONSECUTIVE;
+            self_p->size.state = detools_unpack_usize_state_consecutive_t;
 
             break;
 
-        case SIZE_STATE_CONSECUTIVE:
+        case detools_unpack_usize_state_consecutive_t:
             res = patch_reader_decompress(self_p, &byte, &size);
 
             if (res != 0) {
@@ -791,7 +776,7 @@ static int patch_reader_unpack_size(
         }
 
         if ((byte & 0x80) == 0) {
-            self_p->size.state = SIZE_STATE_FIRST;
+            self_p->size.state = detools_unpack_usize_state_first_t;
 
             if (self_p->size.is_signed) {
                 self_p->size.value *= -1;
@@ -846,9 +831,9 @@ static int process_init(struct detools_apply_patch_t *self_p)
     self_p->to_size = (size_t)to_size;
 
     if (to_size > 0) {
-        self_p->state = STATE_DFPATCH_SIZE;
+        self_p->state = detools_apply_patch_state_dfpatch_size_t;
     } else {
-        self_p->state = STATE_DONE;
+        self_p->state = detools_apply_patch_state_done_t;
     }
 
     return (res);
@@ -869,7 +854,7 @@ static int process_dfpatch_size(struct detools_apply_patch_t *self_p)
         return (-DETOOLS_NOT_IMPLEMENTED);
     }
 
-    self_p->state = STATE_DIFF_SIZE;
+    self_p->state = detools_apply_patch_state_diff_size_t;
 
     return (0);
 }
@@ -921,7 +906,7 @@ static int process_data(struct detools_apply_patch_t *self_p,
         return (res);
     }
 
-    if (next_state == STATE_EXTRA_SIZE) {
+    if (next_state == detools_apply_patch_state_extra_size_t) {
         res = self_p->from_read(self_p->arg_p, &from[0], to_size);
 
         if (res != 0) {
@@ -947,22 +932,22 @@ static int process_data(struct detools_apply_patch_t *self_p,
 
 static int process_diff_size(struct detools_apply_patch_t *self_p)
 {
-    return (process_size(self_p, STATE_DIFF_DATA));
+    return (process_size(self_p, detools_apply_patch_state_diff_data_t));
 }
 
 static int process_diff_data(struct detools_apply_patch_t *self_p)
 {
-    return (process_data(self_p, STATE_EXTRA_SIZE));
+    return (process_data(self_p, detools_apply_patch_state_extra_size_t));
 }
 
 static int process_extra_size(struct detools_apply_patch_t *self_p)
 {
-    return (process_size(self_p, STATE_EXTRA_DATA));
+    return (process_size(self_p, detools_apply_patch_state_extra_data_t));
 }
 
 static int process_extra_data(struct detools_apply_patch_t *self_p)
 {
-    return (process_data(self_p, STATE_ADJUSTMENT));
+    return (process_data(self_p, detools_apply_patch_state_adjustment_t));
 }
 
 static int process_adjustment(struct detools_apply_patch_t *self_p)
@@ -983,9 +968,9 @@ static int process_adjustment(struct detools_apply_patch_t *self_p)
     }
 
     if (self_p->to_pos == self_p->to_size) {
-        self_p->state = STATE_DONE;
+        self_p->state = detools_apply_patch_state_done_t;
     } else {
-        self_p->state = STATE_DIFF_SIZE;
+        self_p->state = detools_apply_patch_state_diff_size_t;
     }
 
     return (res);
@@ -997,35 +982,35 @@ static int apply_patch_process_once(struct detools_apply_patch_t *self_p)
 
     switch (self_p->state) {
 
-    case STATE_INIT:
+    case detools_apply_patch_state_init_t:
         res = process_init(self_p);
         break;
 
-    case STATE_DFPATCH_SIZE:
+    case detools_apply_patch_state_dfpatch_size_t:
         res = process_dfpatch_size(self_p);
         break;
 
-    case STATE_DIFF_SIZE:
+    case detools_apply_patch_state_diff_size_t:
         res = process_diff_size(self_p);
         break;
 
-    case STATE_DIFF_DATA:
+    case detools_apply_patch_state_diff_data_t:
         res = process_diff_data(self_p);
         break;
 
-    case STATE_EXTRA_SIZE:
+    case detools_apply_patch_state_extra_size_t:
         res = process_extra_size(self_p);
         break;
 
-    case STATE_EXTRA_DATA:
+    case detools_apply_patch_state_extra_data_t:
         res = process_extra_data(self_p);
         break;
 
-    case STATE_ADJUSTMENT:
+    case detools_apply_patch_state_adjustment_t:
         res = process_adjustment(self_p);
         break;
 
-    case STATE_DONE:
+    case detools_apply_patch_state_done_t:
         res = -DETOOLS_ALREADY_DONE;
         break;
 
@@ -1077,7 +1062,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
     self_p->patch_size = patch_size;
     self_p->to_write = to_write;
     self_p->arg_p = arg_p;
-    self_p->state = STATE_INIT;
+    self_p->state = detools_apply_patch_state_init_t;
     self_p->patch_reader.destroy = NULL;
 
     return (0);
@@ -1268,9 +1253,9 @@ static int in_place_process_init(struct detools_apply_patch_in_place_t *self_p)
             return (res);
         }
 
-        self_p->state = STATE_DFPATCH_SIZE;
+        self_p->state = detools_apply_patch_state_dfpatch_size_t;
     } else {
-        self_p->state = STATE_DONE;
+        self_p->state = detools_apply_patch_state_done_t;
     }
 
     return (res);
@@ -1291,7 +1276,7 @@ static int in_place_process_dfpatch_size(struct detools_apply_patch_in_place_t *
         return (-DETOOLS_NOT_IMPLEMENTED);
     }
 
-    self_p->state = STATE_DIFF_SIZE;
+    self_p->state = detools_apply_patch_state_diff_size_t;
 
     return (0);
 }
@@ -1338,35 +1323,35 @@ static int apply_patch_in_place_process_once(
 
     switch (self_p->state) {
 
-    case STATE_INIT:
+    case detools_apply_patch_state_init_t:
         res = in_place_process_init(self_p);
         break;
 
-    case STATE_DFPATCH_SIZE:
+    case detools_apply_patch_state_dfpatch_size_t:
         res = in_place_process_dfpatch_size(self_p);
         break;
 
-    case STATE_DIFF_SIZE:
+    case detools_apply_patch_state_diff_size_t:
         res = in_place_process_diff_size(self_p);
         break;
 
-    case STATE_DIFF_DATA:
+    case detools_apply_patch_state_diff_data_t:
         res = in_place_process_diff_data(self_p);
         break;
 
-    case STATE_EXTRA_SIZE:
+    case detools_apply_patch_state_extra_size_t:
         res = in_place_process_extra_size(self_p);
         break;
 
-    case STATE_EXTRA_DATA:
+    case detools_apply_patch_state_extra_data_t:
         res = in_place_process_extra_data(self_p);
         break;
 
-    case STATE_ADJUSTMENT:
+    case detools_apply_patch_state_adjustment_t:
         res = in_place_process_adjustment(self_p);
         break;
 
-    case STATE_DONE:
+    case detools_apply_patch_state_done_t:
         res = -DETOOLS_ALREADY_DONE;
         break;
 
@@ -1391,7 +1376,7 @@ int detools_apply_patch_in_place_init(
     self_p->mem_erase = mem_erase;
     self_p->patch_size = patch_size;
     self_p->arg_p = arg_p;
-    self_p->state = STATE_INIT;
+    self_p->state = detools_apply_patch_state_init_t;
     self_p->patch_reader.destroy = NULL;
 
     return (0);

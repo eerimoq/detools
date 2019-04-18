@@ -155,30 +155,37 @@ struct detools_apply_patch_patch_reader_lzma_t {
 
 #endif
 
-#define DETOOLS_CRLE_STATE_IDLE                              0
-#define DETOOLS_CRLE_STATE_SCATTERED_SIZE                    1
-#define DETOOLS_CRLE_STATE_SCATTERED_DATA                    2
-#define DETOOLS_CRLE_STATE_REPEATED_REPETITIONS              3
-#define DETOOLS_CRLE_STATE_REPEATED_DATA                     4
-#define DETOOLS_CRLE_STATE_REPEATED_DATA_READ                5
+enum detools_unpack_usize_state_t {
+    detools_unpack_usize_state_first_t = 0,
+    detools_unpack_usize_state_consecutive_t
+};
 
-struct detools_unpack_unsigned_size_t {
-    int state;
+struct detools_unpack_usize_t {
+    enum detools_unpack_usize_state_t state;
     int value;
     int offset;
 };
 
+enum detools_crle_state_t {
+    detools_crle_state_idle_t = 0,
+    detools_crle_state_scattered_size_t,
+    detools_crle_state_scattered_data_t,
+    detools_crle_state_repeated_repetitions_t,
+    detools_crle_state_repeated_data_t,
+    detools_crle_state_repeated_data_read_t
+};
+
 struct detools_apply_patch_patch_reader_crle_t {
-    int state;
+    enum detools_crle_state_t state;
     union {
         struct {
             size_t number_of_bytes_left;
-            struct detools_unpack_unsigned_size_t size;
+            struct detools_unpack_usize_t size;
         } scattered;
         struct {
             uint8_t value;
             size_t number_of_bytes_left;
-            struct detools_unpack_unsigned_size_t size;
+            struct detools_unpack_usize_t size;
         } repeated;
     } kind;
 };
@@ -214,6 +221,17 @@ struct detools_apply_patch_chunk_t {
     size_t offset;
 };
 
+enum detools_apply_patch_state_t {
+    detools_apply_patch_state_init_t = 0,
+    detools_apply_patch_state_dfpatch_size_t,
+    detools_apply_patch_state_diff_size_t,
+    detools_apply_patch_state_diff_data_t,
+    detools_apply_patch_state_extra_size_t,
+    detools_apply_patch_state_extra_data_t,
+    detools_apply_patch_state_adjustment_t,
+    detools_apply_patch_state_done_t
+};
+
 /**
  * The apply patch data structure.
  */
@@ -223,7 +241,7 @@ struct detools_apply_patch_t {
     size_t patch_size;
     detools_write_t to_write;
     void *arg_p;
-    int state;
+    enum detools_apply_patch_state_t state;
     size_t to_pos;
     size_t to_size;
     size_t chunk_size;
@@ -240,7 +258,7 @@ struct detools_apply_patch_in_place_t {
     detools_mem_erase_t mem_erase;
     size_t patch_size;
     void *arg_p;
-    int state;
+    enum detools_apply_patch_state_t state;
     size_t to_pos;
     size_t to_size;
     size_t segment_size;
