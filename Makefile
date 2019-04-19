@@ -4,7 +4,8 @@ endif
 
 C_SOURCES := \
 	tests/main.c \
-	src/c/detools.c
+	src/c/detools.c \
+	src/c/heatshrink/heatshrink_decoder.c
 
 CFLAGS := \
 	-Wall \
@@ -14,7 +15,6 @@ CFLAGS := \
 	-Wformat=2 \
 	-Wshadow \
 	-Werror \
-	-Wconversion \
 	-Wpedantic \
 	-std=c99 \
 	-g \
@@ -55,6 +55,8 @@ test-c:
 	    -o detools.no-lzma.o
 	$(CC) -DDETOOLS_CONFIG_COMPRESSION_CRLE=0 -c src/c/detools.c \
 	    -o detools.no-crle.o
+	$(CC) -DDETOOLS_CONFIG_COMPRESSION_HEATSHRINK=0 -c src/c/detools.c \
+	    -o detools.no-crle.o
 	$(CC) $(CFLAGS) $(C_SOURCES) -llzma -o main
 	./main
 	$(MAKE) -C src/c
@@ -64,6 +66,9 @@ test-c:
 	cp tests/files/foo/old foo.mem
 	src/c/detools apply_patch_in_place foo.mem tests/files/foo/in-place-3000-500.patch
 	cmp foo.mem tests/files/foo/in-place-3000-500.mem
+	src/c/detools apply_patch \
+	    tests/files/foo/old tests/files/foo/heatshrink.patch foo.new
+	cmp foo.new tests/files/foo/new
 	! src/c/detools
 	! src/c/detools apply_patch
 	! src/c/detools apply_patch tests/files/foo/old tests/files/foo/patch
@@ -71,7 +76,11 @@ test-c:
 	! src/c/detools apply_patch_in_place tests/files/foo/old
 
 test-c-fuzzer:
-	clang $(FUZZER_CFLAGS) src/c/detools.c tests/fuzzer.c -l lzma -o fuzzer
+	clang $(FUZZER_CFLAGS) \
+	    src/c/detools.c \
+	    src/c/heatshrink/heatshrink_decoder.c \
+	    tests/fuzzer.c \
+	    -l lzma -o fuzzer
 	rm -f fuzzer.profraw
 	LLVM_PROFILE_FILE="fuzzer.profraw" \
 	    ./fuzzer \

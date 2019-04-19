@@ -10,9 +10,13 @@ CFLAGS := \
 	-Wformat=2 \
 	-Wshadow \
 	-Werror \
-	-Wconversion \
 	-Wpedantic \
 	-std=c99
 
+SRC := \
+	heatshrink/heatshrink_decoder.c \
+	detools.c \
+	main.c
+
 all:
-	$(CC) $(CFLAGS) detools.c main.c -llzma -o detools
+	$(CC) $(CFLAGS) $(SRC) -llzma -o detools

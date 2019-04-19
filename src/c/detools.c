@@ -41,6 +41,7 @@
 #define COMPRESSION_NONE                                    0
 #define COMPRESSION_LZMA                                    1
 #define COMPRESSION_CRLE                                    2
+#define COMPRESSION_HEATSHRINK                              4
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
@@ -241,6 +242,92 @@ static int patch_reader_none_init(struct detools_apply_patch_patch_reader_t *sel
     none_p->patch_offset = 0;
     self_p->destroy = patch_reader_none_destroy;
     self_p->decompress = patch_reader_none_decompress;
+
+    return (0);
+}
+
+#endif
+
+/*
+ * Heatshrink patch reader.
+ */
+
+#if DETOOLS_CONFIG_COMPRESSION_HEATSHRINK == 1
+
+static int patch_reader_heatshrink_decompress(
+    struct detools_apply_patch_patch_reader_t *self_p,
+    uint8_t *buf_p,
+    size_t *size_p)
+{
+    int res;
+    struct detools_apply_patch_patch_reader_heatshrink_t *heatshrink_p;
+    size_t size;
+    size_t left;
+    HSD_poll_res pres;
+    HSD_sink_res sres;
+    uint8_t byte;
+
+    heatshrink_p = &self_p->compression.heatshrink;
+    left = *size_p;
+
+    while (1) {
+        /* Get available data. */
+        pres = heatshrink_decoder_poll(&heatshrink_p->decoder,
+                                       buf_p,
+                                       left,
+                                       &size);
+
+        if (pres < 0) {
+            return (-DETOOLS_HEATSHRINK_POLL);
+        }
+
+        buf_p += size;
+        left -= size;
+
+        if (left == 0) {
+            return (0);
+        }
+
+        /* Input (sink) more data if available. */
+        res = chunk_get(self_p->patch_chunk_p, &byte);
+
+        if (res == 0) {
+            sres = heatshrink_decoder_sink(&heatshrink_p->decoder,
+                                           &byte,
+                                           sizeof(byte),
+                                           &size);
+
+            if ((sres < 0) || (size != sizeof(byte))) {
+                return (-DETOOLS_HEATSHRINK_SINK);
+            }
+        } else {
+            if (left != *size_p) {
+                *size_p -= left;
+
+                return (0);
+            } else {
+                return (1);
+            }
+        }
+    }
+
+    return (res);
+}
+
+static int patch_reader_heatshrink_destroy(
+    struct detools_apply_patch_patch_reader_t *self_p)
+{
+    (void)self_p;
+
+    return (0);
+}
+
+static int patch_reader_heatshrink_init(
+    struct detools_apply_patch_patch_reader_t *self_p)
+{
+    heatshrink_decoder_reset(&self_p->compression.heatshrink.decoder);
+    self_p->destroy = patch_reader_heatshrink_destroy;
+    self_p->decompress = patch_reader_heatshrink_decompress;
 
     return (0);
 }
@@ -680,7 +767,8 @@ static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
 {
     int res;
 
-#if DETOOLS_CONFIG_COMPRESSION_NONE != 1
+#if ((DETOOLS_CONFIG_COMPRESSION_NONE != 1) \
+     && (DETOOLS_CONFIG_COMPRESSION_HEATSHRINK != 1))
     (void)patch_size;
 #endif
 
@@ -704,6 +792,12 @@ static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
 #if DETOOLS_CONFIG_COMPRESSION_CRLE == 1
     case COMPRESSION_CRLE:
         res = patch_reader_crle_init(self_p);
+        break;
+#endif
+
+#if DETOOLS_CONFIG_COMPRESSION_HEATSHRINK == 1
+    case COMPRESSION_HEATSHRINK:
+        res = patch_reader_heatshrink_init(self_p);
         break;
 #endif
 

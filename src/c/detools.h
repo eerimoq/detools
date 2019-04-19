@@ -36,19 +36,23 @@
  */
 
 #ifndef DETOOLS_CONFIG_FILE_IO
-#    define DETOOLS_CONFIG_FILE_IO              1
+#    define DETOOLS_CONFIG_FILE_IO                 1
 #endif
 
 #ifndef DETOOLS_CONFIG_COMPRESSION_NONE
-#    define DETOOLS_CONFIG_COMPRESSION_NONE     1
+#    define DETOOLS_CONFIG_COMPRESSION_NONE        1
 #endif
 
 #ifndef DETOOLS_CONFIG_COMPRESSION_LZMA
-#    define DETOOLS_CONFIG_COMPRESSION_LZMA     1
+#    define DETOOLS_CONFIG_COMPRESSION_LZMA        1
 #endif
 
 #ifndef DETOOLS_CONFIG_COMPRESSION_CRLE
-#    define DETOOLS_CONFIG_COMPRESSION_CRLE     1
+#    define DETOOLS_CONFIG_COMPRESSION_CRLE        1
+#endif
+
+#ifndef DETOOLS_CONFIG_COMPRESSION_HEATSHRINK
+#    define DETOOLS_CONFIG_COMPRESSION_HEATSHRINK  1
 #endif
 
 #include <stdint.h>
@@ -77,6 +81,8 @@
 #define DETOOLS_FILE_TELL_FAILED               17
 #define DETOOLS_SHORT_HEADER                   18
 #define DETOOLS_NOT_ENOUGH_PATCH_DATA          19
+#define DETOOLS_HEATSHRINK_SINK                20
+#define DETOOLS_HEATSHRINK_POLL                21
 
 /**
  * Read callback.
@@ -155,6 +161,16 @@ struct detools_apply_patch_patch_reader_lzma_t {
 
 #endif
 
+#if DETOOLS_CONFIG_COMPRESSION_HEATSHRINK == 1
+
+#include "heatshrink/heatshrink_decoder.h"
+
+struct detools_apply_patch_patch_reader_heatshrink_t {
+    heatshrink_decoder decoder;
+};
+
+#endif
+
 enum detools_unpack_usize_state_t {
     detools_unpack_usize_state_first_t = 0,
     detools_unpack_usize_state_consecutive_t
@@ -207,6 +223,9 @@ struct detools_apply_patch_patch_reader_t {
 #endif
 #if DETOOLS_CONFIG_COMPRESSION_CRLE == 1
         struct detools_apply_patch_patch_reader_crle_t crle;
+#endif
+#if DETOOLS_CONFIG_COMPRESSION_HEATSHRINK == 1
+        struct detools_apply_patch_patch_reader_heatshrink_t heatshrink;
 #endif
     } compression;
     int (*destroy)(struct detools_apply_patch_patch_reader_t *self_p);
