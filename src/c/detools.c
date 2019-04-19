@@ -317,9 +317,18 @@ static int patch_reader_heatshrink_decompress(
 static int patch_reader_heatshrink_destroy(
     struct detools_apply_patch_patch_reader_t *self_p)
 {
-    (void)self_p;
+    struct detools_apply_patch_patch_reader_heatshrink_t *heatshrink_p;
+    HSD_finish_res fres;
 
-    return (0);
+    heatshrink_p = &self_p->compression.heatshrink;
+
+    fres = heatshrink_decoder_finish(&heatshrink_p->decoder);
+
+    if (fres == HSDR_FINISH_DONE) {
+        return (0);
+    } else {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
 }
 
 static int patch_reader_heatshrink_init(
