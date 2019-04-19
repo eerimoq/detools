@@ -22,6 +22,8 @@ differences:
 - `Incremental apply patch`_ implemented in C, suitable for memory
   constrained embedded devices.
 
+- Normal or in-place update.
+
 - Optional experimental data format aware algorithm for potentially
   smaller patches. I don't recommend anyone to use this functionality
   as the gain is small in relation to memory usage and code
