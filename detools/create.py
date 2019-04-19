@@ -5,6 +5,7 @@ import bitstruct
 from .errors import Error
 from .compression.crle import CrleCompressor
 from .compression.none import NoneCompressor
+from .compression.heatshrink import HeatshrinkCompressor
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import DATA_FORMATS
@@ -39,6 +40,8 @@ def create_compressor(compression):
         compressor = NoneCompressor()
     elif compression == 'crle':
         compressor = CrleCompressor()
+    elif compression == 'heatshrink':
+        compressor = HeatshrinkCompressor()
     else:
         raise Error(format_bad_compression_string(compression))
 

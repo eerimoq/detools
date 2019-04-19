@@ -518,8 +518,8 @@ class DetoolsTest(unittest.TestCase):
 
                 self.assertEqual(
                     str(cm.exception),
-                    "Expected compression none(0), lzma(1), crle(2) or bz2(3), "
-                    "but got 15.")
+                    "Expected compression none(0), lzma(1), crle(2), bz2(3) or "
+                    "heatshrink(4), but got 15.")
 
     def test_create_patch_foo_bad_compression(self):
         fpatch = BytesIO()
@@ -531,7 +531,8 @@ class DetoolsTest(unittest.TestCase):
 
                 self.assertEqual(
                     str(cm.exception),
-                    "Expected compression bz2, crle, lzma or none, but got bad.")
+                    "Expected compression bz2, crle, heatshrink, lzma or none, "
+                    "but got bad.")
 
     def test_apply_patch_one_byte(self):
         fnew = BytesIO()
