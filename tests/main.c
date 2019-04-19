@@ -369,6 +369,14 @@ static void test_apply_patch_foo_in_place_6000_1000_crle(void)
                                 6000);
 }
 
+static void test_create_and_apply_patch_empty_in_place(void)
+{
+    assert_apply_patch_in_place("tests/files/empty/old",
+                                "tests/files/empty/in-place.patch",
+                                "tests/files/empty/new",
+                                6000);
+}
+
 static void test_apply_patch_bsdiff(void)
 {
     assert_apply_patch("tests/files/bsdiff.py",
@@ -633,6 +641,8 @@ static void test_error_as_string(void)
                   "File seek failed.") == 0);
     assert(strcmp(detools_error_as_string(DETOOLS_FILE_TELL_FAILED),
                   "File tell failed.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_NOT_ENOUGH_PATCH_DATA),
+                  "Not enough patch data.") == 0);
     assert(strcmp(detools_error_as_string(-1),
                   "Unknown error.") == 0);
 }
@@ -653,6 +663,7 @@ int main()
     test_apply_patch_foo_in_place_3000_500();
     test_apply_patch_foo_in_place_3000_500_crle();
     test_apply_patch_foo_in_place_6000_1000_crle();
+    test_create_and_apply_patch_empty_in_place();
 
     test_apply_patch_bsdiff();
     test_apply_patch_sais();
