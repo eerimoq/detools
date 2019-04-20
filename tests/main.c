@@ -650,6 +650,10 @@ static void test_error_as_string(void)
                   "File tell failed.") == 0);
     assert(strcmp(detools_error_as_string(DETOOLS_NOT_ENOUGH_PATCH_DATA),
                   "Not enough patch data.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_HEATSHRINK_SINK),
+                  "Heatshrink sink.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_HEATSHRINK_POLL),
+                  "Heatshrink poll.") == 0);
     assert(strcmp(detools_error_as_string(-1),
                   "Unknown error.") == 0);
 }

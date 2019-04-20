@@ -2222,6 +2222,12 @@ const char *detools_error_as_string(int error)
     case DETOOLS_NOT_ENOUGH_PATCH_DATA:
         return "Not enough patch data.";
 
+    case DETOOLS_HEATSHRINK_SINK:
+        return "Heatshrink sink.";
+
+    case DETOOLS_HEATSHRINK_POLL:
+        return "Heatshrink poll.";
+
     default:
         return "Unknown error.";
     }
