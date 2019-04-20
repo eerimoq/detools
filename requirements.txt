@@ -1,3 +1,4 @@
 humanfriendly
 bitstruct
 pyelftools
+heatshrink

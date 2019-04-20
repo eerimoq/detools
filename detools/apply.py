@@ -32,7 +32,7 @@ class PatchReader(object):
         elif compression == 'none':
             self._decompressor = NoneDecompressor(patch_data_length(fpatch))
         elif compression == 'heatshrink':
-            self._decompressor = HeatshrinkDecompressor()
+            self._decompressor = HeatshrinkDecompressor(patch_data_length(fpatch))
         else:
             raise Error(format_bad_compression_string(compression))
 

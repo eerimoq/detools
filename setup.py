@@ -30,7 +30,8 @@ def setup(ext_modules):
         install_requires=[
             'humanfriendly',
             'bitstruct',
-            'pyelftools'
+            'pyelftools',
+            'heatshrink'
         ],
         ext_modules=ext_modules,
         test_suite="tests",

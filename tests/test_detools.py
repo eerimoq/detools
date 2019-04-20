@@ -237,12 +237,26 @@ class DetoolsTest(unittest.TestCase):
                                            'tests/files/foo/crle.patch',
                                            compression='crle')
 
+    def test_create_and_apply_patch_foo_heatshrink_compression(self):
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/heatshrink.patch',
+                                           compression='heatshrink')
+
     def test_create_and_apply_patch_micropython_crle_compression(self):
         self.assert_create_and_apply_patch(
             'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
             'tests/files/micropython/esp8266-20190125-v1.10.bin',
             'tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-crle.patch',
             compression='crle')
+
+    def test_create_and_apply_patch_micropython_heatshrink_compression(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython/esp8266-20190125-v1.10.bin',
+            'tests/files/micropython/esp8266-20180511-v1.9.4--'
+            '20190125-v1.10-heatshrink.patch',
+            compression='heatshrink')
 
     def test_create_and_apply_patch_micropython_in_place(self):
         self.assert_create_and_apply_patch(
@@ -412,6 +426,12 @@ class DetoolsTest(unittest.TestCase):
                                            'tests/files/empty/new',
                                            'tests/files/empty/crle.patch',
                                            compression='crle')
+
+    def test_create_and_apply_patch_empty_heatshrink_compression(self):
+        self.assert_create_and_apply_patch('tests/files/empty/old',
+                                           'tests/files/empty/new',
+                                           'tests/files/empty/heatshrink.patch',
+                                           compression='heatshrink')
 
     def test_create_and_apply_patch_empty_in_place(self):
         self.assert_create_and_apply_patch('tests/files/empty/old',
