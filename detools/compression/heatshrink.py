@@ -2,9 +2,12 @@
 
 """
 
-from heatshrink.core import Writer
-from heatshrink.core import Reader
-from heatshrink.core import Encoder
+try:
+    from heatshrink.core import Writer
+    from heatshrink.core import Reader
+    from heatshrink.core import Encoder
+except ImportError:
+    print('Failed to import heatshrink.')
 
 
 class HeatshrinkCompressor(object):
