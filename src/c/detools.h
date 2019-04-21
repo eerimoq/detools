@@ -83,6 +83,9 @@
 #define DETOOLS_NOT_ENOUGH_PATCH_DATA          19
 #define DETOOLS_HEATSHRINK_SINK                20
 #define DETOOLS_HEATSHRINK_POLL                21
+#define DETOOLS_STEP_SET_FAILED                22
+#define DETOOLS_STEP_GET_FAILED                23
+#define DETOOLS_ALREADY_FAILED                 24
 
 /**
  * Read callback.
@@ -262,7 +265,8 @@ enum detools_apply_patch_state_t {
     detools_apply_patch_state_extra_size_t,
     detools_apply_patch_state_extra_data_t,
     detools_apply_patch_state_adjustment_t,
-    detools_apply_patch_state_done_t
+    detools_apply_patch_state_done_t,
+    detools_apply_patch_state_failed_t
 };
 
 /**

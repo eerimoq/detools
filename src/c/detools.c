@@ -1142,9 +1142,17 @@ static int apply_patch_process_once(struct detools_apply_patch_t *self_p)
         res = -DETOOLS_ALREADY_DONE;
         break;
 
+    case detools_apply_patch_state_failed_t:
+        res = -DETOOLS_ALREADY_FAILED;
+        break;
+
     default:
         res = -DETOOLS_INTERNAL_ERROR;
         break;
+    }
+
+    if (res < 0) {
+        self_p->state = detools_apply_patch_state_failed_t;
     }
 
     return (res);
@@ -1238,27 +1246,21 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
  * Low level in-place patch type functionality.
  */
 
-static int in_place_next_step(struct detools_apply_patch_in_place_t *self_p)
-{
-    int completed_step;
-
-    completed_step = self_p->ongoing_step;
-    self_p->ongoing_step++;
-
-    if (self_p->step_set != NULL) {
-        return (self_p->step_set(self_p->arg_p, completed_step));
-    } else {
-        return (0);
-    }
-}
-
 static int in_place_all_steps_completed(struct detools_apply_patch_in_place_t *self_p)
 {
+    int res;
+
+    res = 0;
+
     if (self_p->step_set != NULL) {
-        return (self_p->step_set(self_p->arg_p, 0));
-    } else {
-        return (0);
+        res = self_p->step_set(self_p->arg_p, 0);
+
+        if (res != 0) {
+            res = -DETOOLS_STEP_SET_FAILED;
+        }
     }
+
+    return (res);
 }
 
 static int in_place_is_step_completed(struct detools_apply_patch_in_place_t *self_p,
@@ -1271,7 +1273,7 @@ static int in_place_is_step_completed(struct detools_apply_patch_in_place_t *sel
         res = self_p->step_get(self_p->arg_p, &completed_step);
 
         if (res != 0) {
-            return (res);
+            return (-DETOOLS_STEP_GET_FAILED);
         }
 
         *res_p = (self_p->ongoing_step <= completed_step);
@@ -1280,6 +1282,34 @@ static int in_place_is_step_completed(struct detools_apply_patch_in_place_t *sel
     }
 
     return (0);
+}
+
+static int in_place_next_step(struct detools_apply_patch_in_place_t *self_p)
+{
+    int res;
+    bool is_step_completed;
+
+    res = 0;
+
+    if (self_p->step_set != NULL) {
+        res = in_place_is_step_completed(self_p, &is_step_completed);
+
+        if (res != 0) {
+            return (res);
+        }
+
+        if (!is_step_completed) {
+            res = self_p->step_set(self_p->arg_p, self_p->ongoing_step);
+
+            if (res != 0) {
+                res = -DETOOLS_STEP_SET_FAILED;
+            }
+        }
+    }
+
+    self_p->ongoing_step++;
+
+    return (res);
 }
 
 static int in_place_mem_read(struct detools_apply_patch_in_place_t *self_p,
@@ -1715,9 +1745,17 @@ static int apply_patch_in_place_process_once(
         res = -DETOOLS_ALREADY_DONE;
         break;
 
+    case detools_apply_patch_state_failed_t:
+        res = -DETOOLS_ALREADY_FAILED;
+        break;
+
     default:
         res = -DETOOLS_INTERNAL_ERROR;
         break;
+    }
+
+    if (res < 0) {
+        self_p->state = detools_apply_patch_state_failed_t;
     }
 
     return (res);
@@ -2358,6 +2396,12 @@ const char *detools_error_as_string(int error)
 
     case DETOOLS_HEATSHRINK_POLL:
         return "Heatshrink poll.";
+
+    case DETOOLS_STEP_SET_FAILED:
+        return "Step set failed.";
+
+    case DETOOLS_STEP_GET_FAILED:
+        return "Step get failed.";
 
     default:
         return "Unknown error.";
