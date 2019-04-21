@@ -837,6 +837,10 @@ static void test_error_as_string(void)
                   "Heatshrink sink.") == 0);
     assert(strcmp(detools_error_as_string(DETOOLS_HEATSHRINK_POLL),
                   "Heatshrink poll.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_STEP_SET_FAILED),
+                  "Step set failed.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_STEP_GET_FAILED),
+                  "Step get failed.") == 0);
     assert(strcmp(detools_error_as_string(-1),
                   "Unknown error.") == 0);
 }
