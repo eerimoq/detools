@@ -137,6 +137,26 @@ static uint8_t *patch_init(const char *patch_p, size_t *patch_size_p)
     return (read_init(patch_p, patch_size_p));
 }
 
+static int stored_step = 0;
+
+static int step_set_ok(void *arg_p, int step)
+{
+    (void)arg_p;
+
+    stored_step = step;
+
+    return (0);
+}
+
+static int step_get_ok(void *arg_p, int *step_p)
+{
+    (void)arg_p;
+
+    *step_p = stored_step;
+
+    return (0);
+}
+
 static void assert_apply_patch(const char *from_p,
                                const char *patch_p,
                                const char *to_p)
@@ -177,10 +197,13 @@ static void assert_apply_patch(const char *from_p,
     } while (actual_byte != EOF);
 }
 
-static void assert_apply_patch_in_place(const char *from_p,
-                                        const char *patch_p,
-                                        const char *to_p,
-                                        size_t memory_size)
+static void assert_apply_patch_in_place_resumable(const char *from_p,
+                                                  const char *patch_p,
+                                                  const char *to_p,
+                                                  bool resume,
+                                                  detools_step_set_t step_set,
+                                                  detools_step_get_t step_get,
+                                                  size_t memory_size)
 {
     int res;
     const char *memory_p = "assert-apply-patch-in-place.mem";
@@ -198,28 +221,33 @@ static void assert_apply_patch_in_place(const char *from_p,
     assert(stat(to_p, &statbuf) == 0);
     to_size = (int)statbuf.st_size;
 
-    fmem_p = myfopen(memory_p, "wb");
-    ffrom_p = myfopen(from_p, "rb");
+    if (!resume) {
+        fmem_p = myfopen(memory_p, "wb");
+        ffrom_p = myfopen(from_p, "rb");
 
-    offset = 0;
+        offset = 0;
 
-    while (offset < memory_size) {
-        size = fread(&buf[0], 1, sizeof(buf), ffrom_p);
+        while (offset < memory_size) {
+            size = fread(&buf[0], 1, sizeof(buf), ffrom_p);
 
-        if (size == 0) {
-            memset(&buf[0], -1, sizeof(buf));
-            size = MIN(sizeof(buf), memory_size - offset);
+            if (size == 0) {
+                memset(&buf[0], -1, sizeof(buf));
+                size = MIN(sizeof(buf), memory_size - offset);
+            }
+
+            assert(fwrite(&buf[0], 1, size, fmem_p) == size);
+            offset += size;
         }
 
-        assert(fwrite(&buf[0], 1, size, fmem_p) == size);
-        offset += size;
+        assert(fgetc(ffrom_p) == EOF);
+        assert(fclose(fmem_p) == 0);
+        assert(fclose(ffrom_p) == 0);
     }
 
-    assert(fgetc(ffrom_p) == EOF);
-    assert(fclose(fmem_p) == 0);
-    assert(fclose(ffrom_p) == 0);
-
-    res = detools_apply_patch_in_place_filenames(memory_p, patch_p);
+    res = detools_apply_patch_in_place_filenames(memory_p,
+                                                 patch_p,
+                                                 step_set,
+                                                 step_get);
 
     if (res != to_size) {
         printf("FAIL: apply of '%s' to '%s' to '%s' failed with '%s' (%d)\n",
@@ -240,6 +268,20 @@ static void assert_apply_patch_in_place(const char *from_p,
         expected_byte = fgetc(fto_p);
         assert(actual_byte == expected_byte);
     } while (actual_byte != EOF);
+}
+
+static void assert_apply_patch_in_place(const char *from_p,
+                                        const char *patch_p,
+                                        const char *to_p,
+                                        size_t memory_size)
+{
+    assert_apply_patch_in_place_resumable(from_p,
+                                          patch_p,
+                                          to_p,
+                                          false,
+                                          NULL,
+                                          NULL,
+                                          memory_size);
 }
 
 static void assert_apply_patch_error(const char *from_p,
@@ -374,6 +416,18 @@ static void test_apply_patch_foo_in_place_6000_1000_crle(void)
                                 "tests/files/foo/in-place-6000-1000-crle.patch",
                                 "tests/files/foo/new",
                                 6000);
+}
+
+static void test_apply_patch_foo_in_place_resumable_3000_500(void)
+{
+    stored_step = 0;
+    assert_apply_patch_in_place_resumable("tests/files/foo/old",
+                                          "tests/files/foo/in-place-3000-500.patch",
+                                          "tests/files/foo/new",
+                                          false,
+                                          step_set_ok,
+                                          step_get_ok,
+                                          3000);
 }
 
 static void test_create_and_apply_patch_empty_in_place(void)
@@ -675,6 +729,7 @@ int main()
     test_apply_patch_foo_in_place_3000_500();
     test_apply_patch_foo_in_place_3000_500_crle();
     test_apply_patch_foo_in_place_6000_1000_crle();
+    test_apply_patch_foo_in_place_resumable_3000_500();
     test_create_and_apply_patch_empty_in_place();
 
     test_apply_patch_bsdiff();

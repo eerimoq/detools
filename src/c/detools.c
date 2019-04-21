@@ -776,7 +776,7 @@ static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
 {
     int res;
 
-#if ((DETOOLS_CONFIG_COMPRESSION_NONE != 1) \
+#if ((DETOOLS_CONFIG_COMPRESSION_NONE != 1)             \
      && (DETOOLS_CONFIG_COMPRESSION_HEATSHRINK != 1))
     (void)patch_size;
 #endif
@@ -1238,6 +1238,114 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p)
  * Low level in-place patch type functionality.
  */
 
+static int in_place_next_step(struct detools_apply_patch_in_place_t *self_p)
+{
+    int completed_step;
+
+    completed_step = self_p->ongoing_step;
+    self_p->ongoing_step++;
+
+    if (self_p->step_set != NULL) {
+        return (self_p->step_set(self_p->arg_p, completed_step));
+    } else {
+        return (0);
+    }
+}
+
+static int in_place_all_steps_completed(struct detools_apply_patch_in_place_t *self_p)
+{
+    if (self_p->step_set != NULL) {
+        return (self_p->step_set(self_p->arg_p, 0));
+    } else {
+        return (0);
+    }
+}
+
+static int in_place_is_step_completed(struct detools_apply_patch_in_place_t *self_p,
+                                      bool *res_p)
+{
+    int res;
+    int completed_step;
+
+    if (self_p->step_get != NULL) {
+        res = self_p->step_get(self_p->arg_p, &completed_step);
+
+        if (res != 0) {
+            return (res);
+        }
+
+        *res_p = (self_p->ongoing_step <= completed_step);
+    } else {
+        *res_p = false;
+    }
+
+    return (0);
+}
+
+static int in_place_mem_read(struct detools_apply_patch_in_place_t *self_p,
+                             void *dst_p,
+                             uintptr_t src,
+                             size_t size)
+{
+    int res;
+    bool is_step_completed;
+
+    res = in_place_is_step_completed(self_p, &is_step_completed);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    if (!is_step_completed) {
+        return (self_p->mem_read(self_p->arg_p, dst_p, src, size));
+    } else {
+        memset(dst_p, 0, size);
+
+        return (0);
+    }
+}
+
+static int in_place_mem_write(struct detools_apply_patch_in_place_t *self_p,
+                              uintptr_t dst,
+                              void *src_p,
+                              size_t size)
+{
+    int res;
+    bool is_step_completed;
+
+    res = in_place_is_step_completed(self_p, &is_step_completed);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    if (!is_step_completed) {
+        return (self_p->mem_write(self_p->arg_p, dst, src_p, size));
+    } else {
+        return (0);
+    }
+}
+
+static int in_place_mem_erase(struct detools_apply_patch_in_place_t *self_p,
+                              uintptr_t addr,
+                              size_t size)
+{
+    int res;
+    bool is_step_completed;
+
+    res = in_place_is_step_completed(self_p, &is_step_completed);
+
+    if (res != 0) {
+        return (res);
+    }
+
+    if (!is_step_completed) {
+        return (self_p->mem_erase(self_p->arg_p, addr, size));
+    } else {
+        return (0);
+    }
+}
+
 static int in_place_shift_memory(struct detools_apply_patch_in_place_t *self_p,
                                  size_t memory_size,
                                  size_t from_size)
@@ -1258,9 +1366,9 @@ static int in_place_shift_memory(struct detools_apply_patch_in_place_t *self_p,
 
     for (i = 0; i < number_of_segments; i++) {
         /* Erase segment to write to. */
-        res = self_p->mem_erase(self_p->arg_p,
-                                write_address,
-                                self_p->segment_size);
+        res = in_place_mem_erase(self_p,
+                                 write_address,
+                                 self_p->segment_size);
 
         if (res != 0) {
             return (res);
@@ -1271,25 +1379,31 @@ static int in_place_shift_memory(struct detools_apply_patch_in_place_t *self_p,
 
         while (offset < self_p->segment_size) {
             size = MIN(sizeof(buf), self_p->segment_size - offset);
-            res = self_p->mem_read(self_p->arg_p,
-                                   &buf[0],
-                                   read_address + offset,
-                                   size);
-
-            if (res != 0) {
-                return (res);
-            }
-
-            res = self_p->mem_write(self_p->arg_p,
-                                    write_address + offset,
+            res = in_place_mem_read(self_p,
                                     &buf[0],
+                                    read_address + offset,
                                     size);
 
             if (res != 0) {
                 return (res);
             }
 
+            res = in_place_mem_write(self_p,
+                                     write_address + offset,
+                                     &buf[0],
+                                     size);
+
+            if (res != 0) {
+                return (res);
+            }
+
             offset += size;
+        }
+
+        res = in_place_next_step(self_p);
+
+        if (res != 0) {
+            return (res);
         }
 
         write_address -= self_p->segment_size;
@@ -1391,7 +1505,9 @@ static int in_place_process_init(struct detools_apply_patch_in_place_t *self_p)
     self_p->segment.index = 0;
 
     if (to_size > 0) {
-        res = in_place_shift_memory(self_p, (size_t)memory_size, (size_t)from_size);
+        res = in_place_shift_memory(self_p,
+                                    (size_t)memory_size,
+                                    (size_t)from_size);
 
         if (res != 0) {
             return (res);
@@ -1431,9 +1547,9 @@ static int in_place_process_dfpatch_size(
     self_p->segment.to_pos = 0;
     self_p->segment.index++;
 
-    return (self_p->mem_erase(self_p->arg_p,
-                              self_p->segment.to_offset,
-                              self_p->segment.to_size));
+    return (in_place_mem_erase(self_p,
+                               self_p->segment.to_offset,
+                               self_p->segment.to_size));
 }
 
 static int in_place_process_size(struct detools_apply_patch_in_place_t *self_p,
@@ -1483,10 +1599,10 @@ static int in_place_process_data(struct detools_apply_patch_in_place_t *self_p,
     }
 
     if (next_state == detools_apply_patch_state_extra_size_t) {
-        res = self_p->mem_read(self_p->arg_p,
-                               &from[0],
-                               (size_t)self_p->segment.from_offset,
-                               to_size);
+        res = in_place_mem_read(self_p,
+                                &from[0],
+                                (size_t)self_p->segment.from_offset,
+                                to_size);
 
         if (res != 0) {
             return (-DETOOLS_IO_FAILED);
@@ -1499,10 +1615,10 @@ static int in_place_process_data(struct detools_apply_patch_in_place_t *self_p,
         }
     }
 
-    res = self_p->mem_write(self_p->arg_p,
-                            self_p->segment.to_pos + self_p->segment.to_offset,
-                            &to[0],
-                            to_size);
+    res = in_place_mem_write(self_p,
+                             self_p->segment.to_pos + self_p->segment.to_offset,
+                             &to[0],
+                             to_size);
 
     if (res != 0) {
         return (-DETOOLS_IO_FAILED);
@@ -1547,8 +1663,10 @@ static int in_place_process_adjustment(struct detools_apply_patch_in_place_t *se
     }
 
     if (self_p->to_pos == self_p->to_size) {
+        res = in_place_all_steps_completed(self_p);
         self_p->state = detools_apply_patch_state_done_t;
     } else if (self_p->segment.to_pos == self_p->segment.to_size) {
+        res = in_place_next_step(self_p);
         self_p->state = detools_apply_patch_state_dfpatch_size_t;
     } else {
         self_p->segment.from_offset += offset;
@@ -1610,15 +1728,20 @@ int detools_apply_patch_in_place_init(
     detools_mem_read_t mem_read,
     detools_mem_write_t mem_write,
     detools_mem_erase_t mem_erase,
+    detools_step_set_t step_set,
+    detools_step_get_t step_get,
     size_t patch_size,
     void *arg_p)
 {
     self_p->mem_read = mem_read;
     self_p->mem_write = mem_write;
     self_p->mem_erase = mem_erase;
+    self_p->step_set = step_set;
+    self_p->step_get = step_get;
     self_p->patch_size = patch_size;
     self_p->arg_p = arg_p;
     self_p->state = detools_apply_patch_state_init_t;
+    self_p->ongoing_step = 1;
     self_p->patch_reader.destroy = NULL;
 
     return (0);
@@ -1768,6 +1891,8 @@ static int in_place_callbacks_process(
 int detools_apply_patch_in_place_callbacks(detools_mem_read_t mem_read,
                                            detools_mem_write_t mem_write,
                                            detools_mem_erase_t mem_erase,
+                                           detools_step_set_t step_set,
+                                           detools_step_get_t step_get,
                                            detools_read_t patch_read,
                                            size_t patch_size,
                                            void *arg_p)
@@ -1779,6 +1904,8 @@ int detools_apply_patch_in_place_callbacks(detools_mem_read_t mem_read,
                                             mem_read,
                                             mem_write,
                                             mem_erase,
+                                            step_set,
+                                            step_get,
                                             patch_size,
                                             arg_p);
 
@@ -2128,7 +2255,9 @@ static int in_place_file_io_cleanup(struct in_place_file_io_t *self_p)
 }
 
 int detools_apply_patch_in_place_filenames(const char *memory_p,
-                                           const char *patch_p)
+                                           const char *patch_p,
+                                           detools_step_set_t step_set,
+                                           detools_step_get_t step_get)
 {
     int res;
     struct in_place_file_io_t file_io;
@@ -2146,6 +2275,8 @@ int detools_apply_patch_in_place_filenames(const char *memory_p,
     res = detools_apply_patch_in_place_callbacks(in_place_file_io_mem_read,
                                                  in_place_file_io_mem_write,
                                                  in_place_file_io_mem_erase,
+                                                 step_set,
+                                                 step_get,
                                                  file_io_patch_read,
                                                  patch_size,
                                                  &file_io);

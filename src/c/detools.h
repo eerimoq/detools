@@ -143,6 +143,20 @@ typedef int (*detools_mem_write_t)(void *arg_p,
  */
 typedef int (*detools_mem_erase_t)(void *arg_p, uintptr_t addr, size_t size);
 
+/**
+ * Step set callback.
+ *
+ * @return zero(0) or negative error code.
+ */
+typedef int (*detools_step_set_t)(void *arg_p, int step);
+
+/**
+ * Step get callback.
+ *
+ * @return zero(0) or negative error code.
+ */
+typedef int (*detools_step_get_t)(void *arg_p, int *step_p);
+
 struct detools_apply_patch_patch_reader_none_t {
     size_t patch_size;
     size_t patch_offset;
@@ -275,9 +289,12 @@ struct detools_apply_patch_in_place_t {
     detools_mem_read_t mem_read;
     detools_mem_write_t mem_write;
     detools_mem_erase_t mem_erase;
+    detools_step_set_t step_set;
+    detools_step_get_t step_get;
     size_t patch_size;
     void *arg_p;
     enum detools_apply_patch_state_t state;
+    int ongoing_step;
     size_t to_pos;
     size_t to_size;
     size_t segment_size;
@@ -347,6 +364,8 @@ int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p);
  * @param[in] mem_read Callback to read data.
  * @param[in] mem_write Callback to write data.
  * @param[in] mem_erase Callback to erase data.
+ * @param[in] step_set Callback to set the step.
+ * @param[in] step_get Callback to get the step.
  * @param[in] patch_size Patch size in bytes.
  * @param[in] arg_p Argument passed to the callbacks.
  *
@@ -357,6 +376,8 @@ int detools_apply_patch_in_place_init(
     detools_mem_read_t mem_read,
     detools_mem_write_t mem_write,
     detools_mem_erase_t mem_erase,
+    detools_step_set_t step_set,
+    detools_step_get_t step_get,
     size_t patch_size,
     void *arg_p);
 
@@ -415,6 +436,8 @@ int detools_apply_patch_callbacks(detools_read_t from_read,
  * @param[in] mem_read Callback to read data.
  * @param[in] mem_write Callback to write data.
  * @param[in] mem_erase Callback to erase data.
+ * @param[in] step_set Callback to set the step.
+ * @param[in] step_get Callback to get the step.
  * @param[in] patch_read Patch read callback.
  * @param[in] patch_size Patch size in bytes.
  * @param[in] arg_p Argument passed to the callbacks.
@@ -424,6 +447,8 @@ int detools_apply_patch_callbacks(detools_read_t from_read,
 int detools_apply_patch_in_place_callbacks(detools_mem_read_t mem_read,
                                            detools_mem_write_t mem_write,
                                            detools_mem_erase_t mem_erase,
+                                           detools_step_set_t step_set,
+                                           detools_step_get_t step_get,
                                            detools_read_t patch_read,
                                            size_t patch_size,
                                            void *arg_p);
@@ -449,11 +474,15 @@ int detools_apply_patch_filenames(const char *from_p,
  *
  * @param[in] memory_p Memory file name.
  * @param[in] patch_p Patch file name.
+ * @param[in] step_set Callback to set the step.
+ * @param[in] step_get Callback to get the step.
  *
  * @return Size of to-data in bytes or negative error code.
  */
 int detools_apply_patch_in_place_filenames(const char *memory_p,
-                                           const char *patch_p);
+                                           const char *patch_p,
+                                           detools_step_set_t step_set,
+                                           detools_step_get_t step_get);
 
 #endif
 

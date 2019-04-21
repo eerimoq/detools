@@ -72,7 +72,10 @@ int main(int argc, const char *argv[])
             print_apply_patch_in_place_usage_and_exit(argv[0]);
         }
 
-        res = detools_apply_patch_in_place_filenames(argv[2], argv[3]);
+        res = detools_apply_patch_in_place_filenames(argv[2],
+                                                     argv[3],
+                                                     NULL,
+                                                     NULL);
     } else {
         print_usage_and_exit(argv[0]);
     }
