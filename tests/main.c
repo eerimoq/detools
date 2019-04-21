@@ -634,6 +634,13 @@ static void test_apply_patch_empty_crle_compression(void)
                        "tests/files/empty/new");
 }
 
+static void test_apply_patch_empty_heatshrink_compression(void)
+{
+    assert_apply_patch("tests/files/empty/old",
+                       "tests/files/empty/heatshrink.patch",
+                       "tests/files/empty/new");
+}
+
 static void test_apply_patch_foo_short(void)
 {
     assert_apply_patch_error("tests/files/foo/old",
@@ -868,6 +875,7 @@ int main()
     test_apply_patch_empty();
     test_apply_patch_empty_none_compression();
     test_apply_patch_empty_crle_compression();
+    test_apply_patch_empty_heatshrink_compression();
 
     test_apply_patch_foo_short();
     test_apply_patch_foo_short_none_compression();
