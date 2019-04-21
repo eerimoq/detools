@@ -241,6 +241,6 @@ Contributing
 
 .. _heatshrink: https://github.com/atomicobject/heatshrink
 
-.. _Normal: https://detools.readthedocs.io/en/latest/#normal
+.. _Normal: https://detools.readthedocs.io/en/latest/#id1
 
-.. _in-place: https://detools.readthedocs.io/en/latest/#in-place
+.. _in-place: https://detools.readthedocs.io/en/latest/#id2
