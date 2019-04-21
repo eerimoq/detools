@@ -7,7 +7,7 @@ try:
     from heatshrink.core import Reader
     from heatshrink.core import Encoder
 except ImportError:
-    print('Failed to import heatshrink.')
+    print('detools: Failed to import heatshrink.')
 
 
 class HeatshrinkCompressor(object):
