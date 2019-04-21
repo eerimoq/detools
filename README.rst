@@ -22,7 +22,7 @@ differences:
 - `Incremental apply patch`_ implemented in C, suitable for memory
   constrained embedded devices.
 
-- Normal or in-place (resumable) update.
+- `Normal`_ or `in-place`_ (resumable) updates.
 
 - Optional experimental data format aware algorithm for potentially
   smaller patches. I don't recommend anyone to use this functionality
@@ -240,3 +240,7 @@ Contributing
 .. _delta encoding: https://en.wikipedia.org/wiki/Delta_encoding
 
 .. _heatshrink: https://github.com/atomicobject/heatshrink
+
+.. _Normal: https://detools.readthedocs.io/en/latest/#normal
+
+.. _in-place: https://detools.readthedocs.io/en/latest/#in-place
