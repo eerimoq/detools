@@ -376,7 +376,17 @@ static void test_apply_patch_micropython_none_compression(void)
 {
     assert_apply_patch(
         "tests/files/micropython/esp8266-20180511-v1.9.4.bin",
-        "tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-none.patch",
+        "tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-"
+        "none.patch",
+        "tests/files/micropython/esp8266-20190125-v1.10.bin");
+}
+
+static void test_apply_patch_micropython_heatshrink_compression(void)
+{
+    assert_apply_patch(
+        "tests/files/micropython/esp8266-20180511-v1.9.4.bin",
+        "tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-"
+        "heatshrink.patch",
         "tests/files/micropython/esp8266-20190125-v1.10.bin");
 }
 
@@ -832,6 +842,7 @@ int main()
     test_apply_patch_foo_none_compression();
     test_apply_patch_foo_heatshrink_compression();
     test_apply_patch_micropython_none_compression();
+    test_apply_patch_micropython_heatshrink_compression();
     test_apply_patch_foo_crle_compression();
     test_apply_patch_micropython_crle_compression();
     test_apply_patch_micropython_in_place();
