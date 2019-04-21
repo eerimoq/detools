@@ -37,7 +37,7 @@ def setup(ext_modules):
         },
         ext_modules=ext_modules,
         test_suite="tests",
-        entry_points = {
+        entry_points={
             'console_scripts': ['detools=detools.__init__:_main']
         })
 
