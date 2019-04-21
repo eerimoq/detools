@@ -45,6 +45,8 @@ Below is an example of how to incrementally apply an in-place patch.
    static int flash_read(void *arg_p, void *dst_p, uintptr_t src, size_t size);
    static int flash_write(void *arg_p, uintptr_t dst, void *src_p, size_t size);
    static int flash_erase(void *arg_p, uintptr_t addr, size_t size);
+   static int step_set(void *arg_p, int step);
+   static int step_get(void *arg_p, int *step_p);
    static int serial_read(uint8_t *buf_p, size_t size);
    static int verify_written_data(int to_size, uint32_t to_crc);
 
@@ -61,8 +63,8 @@ Below is an example of how to incrementally apply an in-place patch.
                                                flash_read,
                                                flash_write,
                                                flash_erase,
-                                               NULL,
-                                               NULL,
+                                               step_set,
+                                               step_get,
                                                patch_size,
                                                NULL);
 
