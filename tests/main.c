@@ -275,7 +275,10 @@ static void assert_apply_patch_in_place_resumable(const char *from_p,
                                                  step_get);
 
     if (expected_res != 0) {
-        assert(res == expected_res);
+        if (expected_res != res) {
+            printf("FAIL: Expected result %d, but got %d\n", expected_res, res);
+            exit(1);
+        }
 
         return;
     }
@@ -517,7 +520,7 @@ static void test_apply_patch_foo_in_place_resume_3000_500_fail_set_step_5(void)
 static void test_apply_patch_foo_in_place_resume_3000_500_fail_set_last_step(void)
 {
     stored_step = 0;
-    fail_set_step = 9;
+    fail_set_step = 0;
     assert_apply_patch_in_place_resumable("tests/files/foo/old",
                                           "tests/files/foo/in-place-3000-500.patch",
                                           "tests/files/foo/new",
@@ -526,7 +529,7 @@ static void test_apply_patch_foo_in_place_resume_3000_500_fail_set_last_step(voi
                                           step_get_ok,
                                           3000,
                                           -DETOOLS_STEP_SET_FAILED);
-    assert(stored_step == 8);
+    assert(stored_step == 9);
 
     /* Resume the aborted update. */
     assert_apply_patch_in_place_resumable("tests/files/foo/old",
