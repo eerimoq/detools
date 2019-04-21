@@ -122,6 +122,11 @@ typedef int (*detools_seek_t)(void *arg_p, int offset);
 /**
  * Memory read callback.
  *
+ * @param[in] arg_p User data passed to detools_apply_patch_init().
+ * @param[out] dst_p Buffer to read into.
+ * @param[in] src Address to read from.
+ * @param[in] size Number of bytes to read.
+ *
  * @return zero(0) or negative error code.
  */
 typedef int (*detools_mem_read_t)(void *arg_p,
@@ -131,6 +136,11 @@ typedef int (*detools_mem_read_t)(void *arg_p,
 
 /**
  * Memory write callback.
+ *
+ * @param[in] arg_p User data passed to detools_apply_patch_init().
+ * @param[in] dst Address to write to.
+ * @param[in] addr src_p Buffer to write from.
+ * @param[in] size Number of bytes to write.
  *
  * @return zero(0) or negative error code.
  */
@@ -142,6 +152,10 @@ typedef int (*detools_mem_write_t)(void *arg_p,
 /**
  * Memory erase callback.
  *
+ * @param[in] arg_p User data passed to detools_apply_patch_init().
+ * @param[in] addr Address to erase from.
+ * @param[in] size Number of bytes to erase.
+ *
  * @return zero(0) or negative error code.
  */
 typedef int (*detools_mem_erase_t)(void *arg_p, uintptr_t addr, size_t size);
@@ -149,12 +163,19 @@ typedef int (*detools_mem_erase_t)(void *arg_p, uintptr_t addr, size_t size);
 /**
  * Step set callback.
  *
+ * @param[in] arg_p User data passed to detools_apply_patch_init().
+ * @param[in] step Step to set. Later read by the step get callback.
+ *
  * @return zero(0) or negative error code.
  */
 typedef int (*detools_step_set_t)(void *arg_p, int step);
 
 /**
  * Step get callback.
+ *
+ * @param[in] arg_p User data passed to detools_apply_patch_init().
+ * @param[out] step_p Outputs the most recently set step by the set
+ *                    callback, or zero(0) if not yet set.
  *
  * @return zero(0) or negative error code.
  */
