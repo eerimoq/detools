@@ -61,6 +61,8 @@ Below is an example of how to incrementally apply an in-place patch.
                                                flash_read,
                                                flash_write,
                                                flash_erase,
+                                               NULL,
+                                               NULL,
                                                patch_size,
                                                NULL);
 

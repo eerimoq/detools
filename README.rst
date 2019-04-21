@@ -22,7 +22,7 @@ differences:
 - `Incremental apply patch`_ implemented in C, suitable for memory
   constrained embedded devices.
 
-- Normal or in-place update.
+- Normal or in-place (resumable) update.
 
 - Optional experimental data format aware algorithm for potentially
   smaller patches. I don't recommend anyone to use this functionality
@@ -38,10 +38,6 @@ differences:
   - ARM Cortex-M4
 
   - AArch64
-
-Ideas:
-
-- Make the in-place patch type resumable.
 
 Project homepage: https://github.com/eerimoq/detools
 
