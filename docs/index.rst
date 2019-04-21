@@ -17,7 +17,8 @@ Patch types
 Normal
 ------
 
-ToDo
+A normal patch uses two memory regions or files. One contains the
+from-data and the to-data is written to the other.
 
 .. code-block:: text
 
