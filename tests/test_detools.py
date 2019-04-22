@@ -652,6 +652,56 @@ class DetoolsTest(unittest.TestCase):
         self.assertEqual(len(data), 3003)
         self.assertEqual(data[-3:], b'\x01\x02\x03')
 
+    def test_apply_patch_in_place_foo_bad_patch_type(self):
+        with self.assertRaises(detools.Error) as cm:
+            detools.apply_patch_in_place_filenames(
+                'tests/files/foo/old',
+                'tests/files/foo/patch')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Expected patch type 1, but got 0.")
+
+    def test_apply_patch_in_place_foo_memory_size_missing(self):
+        with self.assertRaises(detools.Error) as cm:
+            detools.apply_patch_in_place_filenames(
+                'tests/files/foo/old',
+                'tests/files/foo/missing-in-place-memory-size.patch')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Failed to read first size byte.")
+
+    def test_apply_patch_in_place_foo_segment_size_missing(self):
+        with self.assertRaises(detools.Error) as cm:
+            detools.apply_patch_in_place_filenames(
+                'tests/files/foo/old',
+                'tests/files/foo/missing-in-place-segment-size.patch')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Failed to read first size byte.")
+
+    def test_apply_patch_in_place_foo_shift_size_missing(self):
+        with self.assertRaises(detools.Error) as cm:
+            detools.apply_patch_in_place_filenames(
+                'tests/files/foo/old',
+                'tests/files/foo/missing-in-place-shift-size.patch')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Failed to read first size byte.")
+
+    def test_apply_patch_in_place_foo_from_size_missing(self):
+        with self.assertRaises(detools.Error) as cm:
+            detools.apply_patch_in_place_filenames(
+                'tests/files/foo/old',
+                'tests/files/foo/missing-in-place-from-size.patch')
+
+        self.assertEqual(
+            str(cm.exception),
+            "Failed to read first size byte.")
+
     def test_create_and_apply_patch_foo_data_format_arm_cortex_m4(self):
         self.assert_create_and_apply_patch(
             'tests/files/foo/old',

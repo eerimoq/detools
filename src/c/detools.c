@@ -2388,6 +2388,9 @@ const char *detools_error_as_string(int error)
     case DETOOLS_FILE_TELL_FAILED:
         return "File tell failed.";
 
+    case DETOOLS_SHORT_HEADER:
+        return "Short header.";
+
     case DETOOLS_NOT_ENOUGH_PATCH_DATA:
         return "Not enough patch data.";
 

@@ -290,7 +290,11 @@ static void assert_apply_patch_in_place_resumable(const char *from_p,
 
     if (expected_res != 0) {
         if (expected_res != res) {
-            printf("FAIL: Expected result %d, but got %d\n", expected_res, res);
+            printf("FAIL: Expected result %d (%s), but got %d (%s)\n",
+                   expected_res,
+                   detools_error_as_string(-expected_res),
+                   res,
+                   detools_error_as_string(-res));
             exit(1);
         }
 
@@ -331,6 +335,21 @@ static void assert_apply_patch_in_place(const char *from_p,
                                           NULL,
                                           memory_size,
                                           0);
+}
+
+static void assert_apply_patch_in_place_error(const char *from_p,
+                                              const char *patch_p,
+                                              size_t memory_size,
+                                              int error)
+{
+    assert_apply_patch_in_place_resumable(from_p,
+                                          patch_p,
+                                          "assert-apply-patch.new",
+                                          false,
+                                          NULL,
+                                          NULL,
+                                          memory_size,
+                                          error);
 }
 
 static void assert_apply_patch_error(const char *from_p,
@@ -783,6 +802,50 @@ static void test_apply_patch_file_open_error(void)
                                          "") == -DETOOLS_FILE_OPEN_FAILED);
 }
 
+static void test_apply_patch_foo_in_place_bad_patch_type(void)
+{
+    assert_apply_patch_in_place_error("tests/files/foo/old",
+                                      "tests/files/foo/patch",
+                                      3000,
+                                      -DETOOLS_BAD_PATCH_TYPE);
+}
+
+static void test_apply_patch_foo_in_place_memory_size_missing(void)
+{
+    assert_apply_patch_in_place_error(
+        "tests/files/foo/old",
+        "tests/files/foo/missing-in-place-memory-size.patch",
+        3000,
+        -DETOOLS_SHORT_HEADER);
+}
+
+static void test_apply_patch_foo_in_place_segment_size_missing(void)
+{
+    assert_apply_patch_in_place_error(
+        "tests/files/foo/old",
+        "tests/files/foo/missing-in-place-segment-size.patch",
+        3000,
+        -DETOOLS_SHORT_HEADER);
+}
+
+static void test_apply_patch_foo_in_place_shift_size_missing(void)
+{
+    assert_apply_patch_in_place_error(
+        "tests/files/foo/old",
+        "tests/files/foo/missing-in-place-shift-size.patch",
+        3000,
+        -DETOOLS_SHORT_HEADER);
+}
+
+static void test_apply_patch_foo_in_place_from_size_missing(void)
+{
+    assert_apply_patch_in_place_error(
+        "tests/files/foo/old",
+        "tests/files/foo/missing-in-place-from-size.patch",
+        3000,
+        -DETOOLS_SHORT_HEADER);
+}
+
 static void test_apply_patch_foo_incremental(void)
 {
     struct detools_apply_patch_t apply_patch;
@@ -895,6 +958,8 @@ static void test_error_as_string(void)
                   "File seek failed.") == 0);
     assert(strcmp(detools_error_as_string(DETOOLS_FILE_TELL_FAILED),
                   "File tell failed.") == 0);
+    assert(strcmp(detools_error_as_string(DETOOLS_SHORT_HEADER),
+                  "Short header.") == 0);
     assert(strcmp(detools_error_as_string(DETOOLS_NOT_ENOUGH_PATCH_DATA),
                   "Not enough patch data.") == 0);
     assert(strcmp(detools_error_as_string(DETOOLS_HEATSHRINK_SINK),
@@ -957,6 +1022,12 @@ int main()
     test_apply_patch_one_byte();
     test_apply_patch_short_to_size();
     test_apply_patch_file_open_error();
+
+    test_apply_patch_foo_in_place_bad_patch_type();
+    test_apply_patch_foo_in_place_memory_size_missing();
+    test_apply_patch_foo_in_place_segment_size_missing();
+    test_apply_patch_foo_in_place_shift_size_missing();
+    test_apply_patch_foo_in_place_from_size_missing();
 
     test_apply_patch_foo_incremental();
     test_apply_patch_foo_incremental_init_finalize();
