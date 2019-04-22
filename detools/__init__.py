@@ -438,7 +438,7 @@ def _main():
     subparser = subparsers.add_parser('create_patch',
                                       description='Create a patch.')
     subparser.add_argument('-t', '--type',
-                           choices=('normal', 'in-place'),
+                           choices=('normal', 'in-place', 'bsdiff'),
                            default='normal',
                            help='Patch type (default: normal).')
     subparser.add_argument('-c', '--compression',

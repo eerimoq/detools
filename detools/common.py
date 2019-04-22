@@ -1,5 +1,6 @@
 import os
 import struct
+from io import BytesIO
 from .errors import Error
 
 try:
@@ -135,6 +136,10 @@ def unpack_size_with_length(fin):
 
 def unpack_size(fin):
     return unpack_size_with_length(fin)[0]
+
+
+def unpack_size_bytes(data):
+    return unpack_size(BytesIO(data))
 
 
 def pack_usize(value):

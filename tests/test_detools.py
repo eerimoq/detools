@@ -767,6 +767,20 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/python3/aarch64/3.7.2-3--3.7.3-1-aarch64.patch',
             data_format='aarch64')
 
+    def test_create_and_apply_patch_foo_bsdiff(self):
+        self.assert_create_patch('tests/files/foo/old',
+                                 'tests/files/foo/new',
+                                 'tests/files/foo/bsdiff.patch',
+                                 patch_type='bsdiff')
+
+    def test_create_and_apply_patch_micropython_bsdiff(self):
+        self.assert_create_patch(
+            'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython/esp8266-20190125-v1.10.bin',
+            'tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-'
+            'bsdiff.patch',
+            patch_type='bsdiff')
+
 
 # This file is not '__main__' when executed via 'python setup.py3
 # test'.

@@ -1,6 +1,7 @@
 import lzma
 from bz2 import BZ2Compressor
 from io import BytesIO
+import struct
 import bitstruct
 from .errors import Error
 from .compression.crle import CrleCompressor
@@ -16,6 +17,7 @@ from .common import file_size
 from .common import file_read
 from .common import pack_size
 from .common import DataSegment
+from .common import unpack_size_bytes
 from .data_format import encode as data_format_encode
 
 try:
@@ -199,6 +201,52 @@ def create_patch_in_place(ffrom,
     fpatch.write(compressor.flush())
 
 
+def offtout(x):
+    if x < 0:
+        x *= -1
+        x |= (1 << 63)
+
+    return struct.pack('<Q', x)
+
+
+def create_patch_bsdiff(ffrom, fto, fpatch):
+    to_size = file_size(fto)
+    from_data = file_read(ffrom)
+    suffix_array = sais.sais(from_data)
+    chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
+
+    fctrl = BytesIO()
+    fdiff = BytesIO()
+    fextra = BytesIO()
+
+    ctrl_compressor = BZ2Compressor()
+    diff_compressor = BZ2Compressor()
+    extra_compressor = BZ2Compressor()
+
+    for i in range(0, len(chunks), 5):
+        size = offtout(unpack_size_bytes(chunks[i + 0]))
+        fctrl.write(ctrl_compressor.compress(size))
+        fdiff.write(diff_compressor.compress(chunks[i + 1]))
+        size = offtout(unpack_size_bytes(chunks[i + 2]))
+        fctrl.write(ctrl_compressor.compress(size))
+        fextra.write(extra_compressor.compress(chunks[i + 3]))
+        size = offtout(unpack_size_bytes(chunks[i + 4]))
+        fctrl.write(ctrl_compressor.compress(size))
+
+    fctrl.write(ctrl_compressor.flush())
+    fdiff.write(diff_compressor.flush())
+    fextra.write(extra_compressor.flush())
+
+    # Write everything to the patch file.
+    fpatch.write(b'BSDIFF40')
+    fpatch.write(offtout(fctrl.tell()))
+    fpatch.write(offtout(fdiff.tell()))
+    fpatch.write(offtout(to_size))
+    fpatch.write(fctrl.getvalue())
+    fpatch.write(fdiff.getvalue())
+    fpatch.write(fextra.getvalue())
+
+
 def create_patch(ffrom,
                  fto,
                  fpatch,
@@ -226,7 +274,7 @@ def create_patch(ffrom,
     `compression` must be ``'bz2'``, ``'crle'``, ``'lzma'`` or
     ``'none'``.
 
-    `patch_type` must be ``'normal'`` or ``'in-place'``.
+    `patch_type` must be ``'normal'``, ``'in-place'`` or ``'bsdiff'``.
 
     `memory_size`, `segment_size` and `minimum_shift_size` are used
     when creating an in-place patch.
@@ -268,6 +316,8 @@ def create_patch(ffrom,
                               minimum_shift_size,
                               data_format,
                               data_segment)
+    elif patch_type == 'bsdiff':
+        create_patch_bsdiff(ffrom, fto, fpatch)
     else:
         raise Error("Bad patch type '{}'.".format(patch_type))
 
