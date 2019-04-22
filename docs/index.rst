@@ -31,7 +31,7 @@ The in-place patch type is designed to update an application in
 place. It is useful when flash operations are faster than the external
 interface transfer speed.
 
-Use ``--type in-place`` to create an in-plance patch. The to options
+Use ``--type in-place`` to create an in-place patch. The to options
 ``--memory-size`` and ``--segment-size`` are required, while
 ``--minimum-shift-size`` is optional.
 

@@ -67,55 +67,11 @@ better.
 +---------------------+----------+-----------+---------+------------+---------+
 | foo old -> new      |     2780 |    69.5 % |   4.5 % |      4.5 % |   6.8 % |
 +---------------------+----------+-----------+---------+------------+---------+
-| upy 1f5d945af (1)   |   319988 |    57.5 % |   2.6 % |      4.2 % |  14.2 % |
-+---------------------+----------+-----------+---------+------------+---------+
-| upy 1f5d945af (2)   |   319988 |    57.5 % |   1.6 % |         \- |      \- |
-+---------------------+----------+-----------+---------+------------+---------+
-| upy 1f5d945af (3)   |   319988 |    57.5 % |   0.9 % |         \- |      \- |
-+---------------------+----------+-----------+---------+------------+---------+
-
-Two builds of MicroPython for PYBv1.1. The from-file is built from
-commit 1f5d945af, while the to-file is built from the same commit, but
-with line 209 in ``vm.c`` deleted.
-
-(1): Default settings.
-
-.. code-block:: text
-
-   detools create_patch \
-       tests/files/pybv11/1f5d945af/firmware1.bin \
-       tests/files/pybv11/1f5d945af-dirty/firmware1.bin \
-       tests/files/pybv11/1f5d945af--1f5d945af-dirty.patch
-
-(2): ARM Cortex-M4 aware algorithm.
-
-.. code-block:: text
-
-   detools create_patch \
-       --data-format arm-cortex-m4 \
-       tests/files/pybv11/1f5d945af/firmware1.bin \
-       tests/files/pybv11/1f5d945af-dirty/firmware1.bin \
-       tests/files/pybv11/1f5d945af--1f5d945af-dirty-arm-cortex-m4.patch
-
-(3): ARM Cortex-M4 aware algorithm with data segments to efficiently
-compress function and data pointers.
-
-.. code-block:: text
-
-   detools create_patch \
-       --data-format arm-cortex-m4 \
-       --from-data-offsets 0x36f7c-0x4e1f0 \
-       --from-code-addresses 0x8020000-0x8056deb \
-       --from-data-addresses 0x8056f7c-0x806e1f0 \
-       --to-data-offsets 0x36f54-0x4e1d4 \
-       --to-code-addresses 0x8020000-0x8056dc3 \
-       --to-data-addresses 0x8056f54-0x806e1d4 \
-       tests/files/pybv11/1f5d945af/firmware1.bin \
-       tests/files/pybv11/1f5d945af-dirty/firmware1.bin \
-       tests/files/pybv11/1f5d945af--1f5d945af-dirty-arm-cortex-m4-data-sections.patch
 
 Example usage
 =============
+
+Examples in C are found in `src/c`_.
 
 Command line tool
 -----------------
@@ -244,3 +200,5 @@ Contributing
 .. _Normal: https://detools.readthedocs.io/en/latest/#id1
 
 .. _in-place: https://detools.readthedocs.io/en/latest/#id2
+
+.. _src/c: https://github.com/eerimoq/detools/tree/master/src/c
