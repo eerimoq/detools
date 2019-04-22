@@ -74,6 +74,9 @@ test-c:
 	! src/c/detools apply_patch tests/files/foo/old tests/files/foo/patch
 	! src/c/detools apply_patch_in_place
 	! src/c/detools apply_patch_in_place tests/files/foo/old
+	$(MAKE) -C src/c/examples/in-place all
+	$(MAKE) -C src/c/examples/in-place heatshrink
+	$(MAKE) -C src/c/examples/in-place crle
 
 test-c-fuzzer:
 	clang $(FUZZER_CFLAGS) \

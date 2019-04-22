@@ -3,6 +3,12 @@ About
 
 An implementation of detools in the C programming language.
 
+Goals:
+
+- Low RAM usage.
+
+- Small code size.
+
 Configuration
 =============
 
@@ -100,3 +106,33 @@ Below is an example of how to incrementally apply an in-place patch.
 
        return (res);
    }
+
+Code size
+=========
+
+Build an in-place apply patch application using gcc. The code size
+will likely be smaller when cross compiling for an embedded device.
+
+All functionality enabled.
+
+.. code-block:: text
+
+   $ make -s -C examples/in-place all
+        text    data     bss     dec     hex filename
+        8973     608       8    9589    2575 in-place
+
+Only heatshrink decompression.
+
+.. code-block:: text
+
+   $ make -s -C examples/in-place heatshrink
+        text    data     bss     dec     hex filename
+        6339     544       8    6891    1aeb in-place-heatshrink
+
+Only CRLE decompression.
+
+.. code-block:: text
+
+   $ make -s -C examples/in-place crle
+        text    data     bss     dec     hex filename
+        5651     544       8    6203    183b in-place-crle
