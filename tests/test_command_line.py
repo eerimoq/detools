@@ -1952,6 +1952,45 @@ class DetoolsCommandLineTest(unittest.TestCase):
             '\n'
             '\n')
 
+    def test_command_line_create_patch_foo_bsdiff(self):
+        foo_patch = 'foo.patch'
+        argv = [
+            'detools',
+            'create_patch',
+            '--type', 'bsdiff',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            foo_patch
+        ]
+
+        if os.path.exists(foo_patch):
+            os.remove(foo_patch)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_patch),
+                         read_file('tests/files/foo/bsdiff.patch'))
+
+    def test_command_line_apply_patch_foo_bsdiff(self):
+        foo_new = 'foo.new'
+        argv = [
+            'detools',
+            'apply_patch_bsdiff',
+            'tests/files/foo/old',
+            'tests/files/foo/bsdiff.patch',
+            foo_new
+        ]
+
+        if os.path.exists(foo_new):
+            os.remove(foo_new)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_new),
+                         read_file('tests/files/foo/new'))
+
 
 if __name__ == '__main__':
     unittest.main()

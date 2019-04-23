@@ -54,6 +54,14 @@ class DetoolsTest(unittest.TestCase):
                 to_size = detools.apply_patch_in_place(fmem, fpatch)
 
             actual = fmem.getvalue()[:to_size]
+        elif patch_type == 'bsdiff':
+            fnew = BytesIO()
+
+            with open(from_filename, 'rb') as fold:
+                with open(patch_filename, 'rb') as fpatch:
+                    to_size = detools.apply_patch_bsdiff(fold, fpatch, fnew)
+
+            actual = fnew.getvalue()
         else:
             raise Exception(patch_type)
 
@@ -768,13 +776,13 @@ class DetoolsTest(unittest.TestCase):
             data_format='aarch64')
 
     def test_create_and_apply_patch_foo_bsdiff(self):
-        self.assert_create_patch('tests/files/foo/old',
-                                 'tests/files/foo/new',
-                                 'tests/files/foo/bsdiff.patch',
-                                 patch_type='bsdiff')
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/bsdiff.patch',
+                                           patch_type='bsdiff')
 
     def test_create_and_apply_patch_micropython_bsdiff(self):
-        self.assert_create_patch(
+        self.assert_create_and_apply_patch(
             'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
             'tests/files/micropython/esp8266-20190125-v1.10.bin',
             'tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-'

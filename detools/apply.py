@@ -1,4 +1,5 @@
 import os
+import struct
 from lzma import LZMADecompressor
 from bz2 import BZ2Decompressor
 import bitstruct
@@ -173,6 +174,35 @@ def read_header_in_place(fpatch):
     return compression, memory_size, segment_size, shift_size, from_size, to_size
 
 
+def offtin(data):
+    x = struct.unpack('<Q', data)[0]
+
+    if x & (1 << 63):
+        x &= ~(1 << 63)
+        x *= -1
+
+    return x
+
+
+def read_header_bsdiff(fpatch):
+    """Read a bsdiff header.
+
+    """
+
+    magic = fpatch.read(8)
+
+    if magic != b'BSDIFF40':
+        raise Error(
+            "Expected magic 'BSDIFF40', but got '{}'.".format(
+                magic.decode('latin-1')))
+
+    ctrl_size = offtin(fpatch.read(8))
+    diff_size = offtin(fpatch.read(8))
+    to_size = offtin(fpatch.read(8))
+
+    return ctrl_size, diff_size, to_size
+
+
 def shift_memory(fmem, memory_size, shift_size, from_size):
     """Shift given memory.
 
@@ -330,7 +360,7 @@ def apply_patch_in_place(fmem, fpatch):
     Both arguments are file-like objects.
 
     >>> fmem = open('foo.mem', 'r+b')
-    >>> fpatch = open('foo.patch', 'rb')
+    >>> fpatch = open('foo-in-place.patch', 'rb')
     >>> apply_patch_in_place(fmem, fpatch)
     2780
 
@@ -362,6 +392,73 @@ def apply_patch_in_place(fmem, fpatch):
     return to_size
 
 
+def apply_patch_bsdiff(ffrom, fpatch, fto):
+    """Apply given bsdiff patch `fpatch` to `ffrom` to create
+    `fto`. Returns the size of the created to-data.
+
+    All arguments are file-like objects.
+
+    >>> ffrom = open('foo.mem', 'rb')
+    >>> fpatch = open('foo-bsdiff.patch', 'rb')
+    >>> fto = open('foo.new', 'wb')
+    >>> apply_patch_bsdiff(ffrom, fpatch, fto)
+    2780
+
+    """
+
+    ctrl_size, diff_size, to_size = read_header_bsdiff(fpatch)
+
+    ctrl_decompressor = BZ2Decompressor()
+    diff_decompressor = BZ2Decompressor()
+    extra_decompressor = BZ2Decompressor()
+
+    ctrl_decompressor.decompress(fpatch.read(ctrl_size), 0)
+    diff_decompressor.decompress(fpatch.read(diff_size), 0)
+    extra_decompressor.decompress(fpatch.read(), 0)
+
+    to_pos = 0
+
+    while to_pos < to_size:
+        # Control data.
+        diff_size = offtin(ctrl_decompressor.decompress(b'', 8))
+        extra_size = offtin(ctrl_decompressor.decompress(b'', 8))
+        adjustment = offtin(ctrl_decompressor.decompress(b'', 8))
+
+        # Diff data.
+        if to_pos + diff_size > to_size:
+            raise Error("Patch diff data too long.")
+
+        diff_data = diff_decompressor.decompress(b'', diff_size)
+        from_data = ffrom.read(diff_size)
+        data = bytearray(
+            (db + fb) & 0xff for db, fb in zip(diff_data, from_data)
+        )
+        fto.write(data)
+        to_pos += diff_size
+
+        # Extra data.
+        if to_pos + extra_size > to_size:
+            raise Error("Patch extra data too long.")
+
+        extra_data = extra_decompressor.decompress(b'', extra_size)
+        fto.write(extra_data)
+        to_pos += extra_size
+
+        # Adjustment.
+        ffrom.seek(adjustment, os.SEEK_CUR)
+
+    if not ctrl_decompressor.eof:
+        raise Error('End of control data not found.')
+
+    if not diff_decompressor.eof:
+        raise Error('End of diff data not found.')
+
+    if not extra_decompressor.eof:
+        raise Error('End of extra data not found.')
+
+    return to_size
+
+
 def apply_patch_filenames(fromfile, patchfile, tofile):
     """Same as :func:`~detools.apply_patch()`, but with filenames instead
     of file-like objects.
@@ -389,3 +486,18 @@ def apply_patch_in_place_filenames(memfile, patchfile):
     with open(memfile, 'r+b') as fmem:
         with open(patchfile, 'rb') as fpatch:
             return apply_patch_in_place(fmem, fpatch)
+
+
+def apply_patch_bsdiff_filenames(fromfile, patchfile, tofile):
+    """Same as :func:`~detools.apply_patch_bsdiff()`, but with filenames
+    instead of file-like objects.
+
+    >>> apply_patch_bsdiff_filenames('foo.old', 'foo-bsdiff.patch', 'foo.new')
+    2780
+
+    """
+
+    with open(fromfile, 'rb') as ffrom:
+        with open(patchfile, 'rb') as fpatch:
+            with open(tofile, 'wb') as fto:
+                return apply_patch_bsdiff(ffrom, fpatch, fto)

@@ -12,8 +12,10 @@ from .create import create_patch
 from .create import create_patch_filenames
 from .apply import apply_patch
 from .apply import apply_patch_in_place
+from .apply import apply_patch_bsdiff
 from .apply import apply_patch_filenames
 from .apply import apply_patch_in_place_filenames
+from .apply import apply_patch_bsdiff_filenames
 from .info import patch_info
 from .info import patch_info_filename
 from .errors import Error
@@ -230,6 +232,10 @@ def _do_apply_patch(args):
 
 def _do_apply_patch_in_place(args):
     apply_patch_in_place_filenames(args.memfile, args.patchfile)
+
+
+def _do_apply_patch_bsdiff(args):
+    apply_patch_bsdiff_filenames(args.fromfile, args.patchfile, args.tofile)
 
 
 def _format_size(value):
@@ -509,6 +515,14 @@ def _main():
     subparser.add_argument('memfile', help='Memory file.')
     subparser.add_argument('patchfile', help='Patch file.')
     subparser.set_defaults(func=_do_apply_patch_in_place)
+
+    # Bsdiff apply patch subparser.
+    subparser = subparsers.add_parser('apply_patch_bsdiff',
+                                      description='Apply given bsdiff patch.')
+    subparser.add_argument('fromfile', help='From file.')
+    subparser.add_argument('patchfile', help='Patch file.')
+    subparser.add_argument('tofile', help='Created to file.')
+    subparser.set_defaults(func=_do_apply_patch_bsdiff)
 
     # Patch info subparser.
     subparser = subparsers.add_parser('patch_info',
