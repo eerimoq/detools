@@ -144,6 +144,18 @@ Apply the in-place patch ``foo-in-place.patch`` to ``foo.mem``.
    $ ls -l foo.mem
    -rwxrwxr-x 1 erik erik 2780 Mar 16 08:51 foo.mem
 
+The bsdiff apply patch subcommand
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Apply the patch ``foo-bsdiff.patch`` to ``tests/files/foo/old`` to
+create ``foo.new``.
+
+.. code-block:: text
+
+   $ detools apply_patch_bsdiff tests/files/foo/old foo-bsdiff.patch foo.new
+   $ ls -l foo.new
+   -rw-rw-r-- 1 erik erik 2780 Mar  1 19:18 foo.new
+
 The patch info subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
