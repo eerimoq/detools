@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
+import re
+import os
+from distutils import ccompiler
 import setuptools
 from setuptools import find_packages
 from setuptools import Extension
-import re
 
 
 def find_version():
@@ -11,8 +13,12 @@ def find_version():
                      open('detools/version.py', 'r').read(),
                      re.MULTILINE).group(1)
 
-
 def setup(ext_modules):
+    include_dirs = []
+
+    if ccompiler.new_compiler().compiler_type == "msvc":
+        include_dirs.append(os.path.join("inc", "msvc"))
+
     setuptools.setup(
         name='detools',
         version=find_version(),
@@ -36,6 +42,7 @@ def setup(ext_modules):
             'heatshrink': ['heatshrink']
         },
         ext_modules=ext_modules,
+        include_dirs=include_dirs,
         test_suite="tests",
         entry_points={
             'console_scripts': ['detools=detools.__init__:_main']

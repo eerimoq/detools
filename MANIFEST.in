@@ -1,3 +1,4 @@
 include LICENSE
 include Makefile
+recursive-include inc *.h
 recursive-include tests *.py *.old *.new *.patch *.bin *.rst *.c *.1.0 old new patch *.elf
