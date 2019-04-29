@@ -3,9 +3,12 @@ build: off
 environment:
   matrix:
     - PYTHON: "C:\\Python37"
+      PYTHON_VERSION: "3.7.x"
+      PYTHON_ARCH: "32"
 
 install:
-  - set PATH=%PYTHON_INSTALL%;%PYTHON_INSTALL%\\Scripts;%PATH%
+  - "set PATH=%PYTHON_INSTALL%;%PYTHON_INSTALL%\\Scripts;%PATH%"
+  - "python --version"
   - "python -m pip install -r requirements.txt"
 
 test_script:
