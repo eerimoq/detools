@@ -17,7 +17,7 @@ def setup(ext_modules):
     include_dirs = []
 
     if ccompiler.new_compiler().compiler_type == "msvc":
-        include_dirs.append(os.path.join("inc", "msvc"))
+        pass # include_dirs.append(os.path.join("inc", "msvc"))
 
     setuptools.setup(
         name='detools',
