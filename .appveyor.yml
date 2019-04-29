@@ -1,0 +1,12 @@
+build: off
+
+environment:
+  matrix:
+    - PYTHON: "C:\\Python37"
+
+install:
+  - set PATH=%PYTHON_INSTALL%;%PYTHON_INSTALL%\\Scripts;%PATH%
+  - "python -m pip install -r requirements.txt"
+
+test_script:
+  - "python setup.py test"
