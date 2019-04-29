@@ -11,6 +11,7 @@ def find_version():
                      open('detools/version.py', 'r').read(),
                      re.MULTILINE).group(1)
 
+
 def setup(ext_modules):
     setuptools.setup(
         name='detools',
