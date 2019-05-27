@@ -201,7 +201,7 @@ struct detools_apply_patch_patch_reader_lzma_t {
 
 #if DETOOLS_CONFIG_COMPRESSION_HEATSHRINK == 1
 
-#include "heatshrink/heatshrink_decoder.h"
+#include "heatshrink_decoder.h"
 
 struct detools_apply_patch_patch_reader_heatshrink_t {
     heatshrink_decoder decoder;

@@ -2,8 +2,9 @@ FLAGS := \
 	-Os \
 	-ffunction-sections \
 	-fdata-sections \
-	-Wl,--gc-sections
-	-std=c99
+	-Wl,--gc-sections \
+	-std=c99 \
+	-I../../heatshrink
 
 SRC := \
 	../../detools.c \

@@ -86,3 +86,4 @@ pybv11-aarch64.patch
 pybv11-data-format-with-elf-data-sections.patch
 pybv11-elf-data-sections.new
 pybv11-data-format-with-elf-data-sections-offsets.patch
+libdetools.a
