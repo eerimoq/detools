@@ -19,14 +19,8 @@ from .common import pack_size
 from .common import DataSegment
 from .common import unpack_size_bytes
 from .data_format import encode as data_format_encode
-
-try:
-    from . import csais as sais
-    from . import cbsdiff as bsdiff
-except ImportError:
-    print('detools: Failed to import C extensions. Using Python fallback.')
-    from . import sais
-    from . import bsdiff as bsdiff
+from . import csais as sais
+from . import cbsdiff as bsdiff
 
 
 def pack_header(patch_type, compression):

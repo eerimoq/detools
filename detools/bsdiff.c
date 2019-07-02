@@ -32,12 +32,12 @@
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-static int64_t matchlen(uint8_t *from_p,
-                        int64_t from_size,
+static int32_t matchlen(uint8_t *from_p,
+                        int32_t from_size,
                         uint8_t *to_p,
-                        int64_t to_size)
+                        int32_t to_size)
 {
-    int64_t i;
+    int32_t i;
 
     for (i = 0; i < MIN(from_size, to_size); i++) {
         if (from_p[i] != to_p[i]) {
@@ -48,17 +48,17 @@ static int64_t matchlen(uint8_t *from_p,
     return (i);
 }
 
-static int64_t search(int64_t *sa_p,
+static int32_t search(int32_t *sa_p,
                       uint8_t *from_p,
-                      int64_t from_size,
+                      int32_t from_size,
                       uint8_t *to_p,
-                      int64_t to_size,
-                      int64_t from_begin,
-                      int64_t from_end,
-                      int64_t *pos_p)
+                      int32_t to_size,
+                      int32_t from_begin,
+                      int32_t from_end,
+                      int32_t *pos_p)
 {
-    int64_t x;
-    int64_t y;
+    int32_t x;
+    int32_t y;
 
     if (from_end - from_begin < 2) {
         x = matchlen(from_p + sa_p[from_begin],
@@ -90,7 +90,7 @@ static int64_t search(int64_t *sa_p,
     }
 }
 
-static int pack_size(uint8_t *buf_p, int64_t value, size_t size)
+static int pack_size(uint8_t *buf_p, int32_t value, size_t size)
 {
     int res;
 
@@ -127,7 +127,7 @@ static int pack_size(uint8_t *buf_p, int64_t value, size_t size)
     return (res);
 }
 
-static int append_bytes(PyObject *list_p, uint8_t *buf_p, int64_t size)
+static int append_bytes(PyObject *list_p, uint8_t *buf_p, int32_t size)
 {
     int res;
     PyObject *bytes_p;
@@ -145,7 +145,7 @@ static int append_bytes(PyObject *list_p, uint8_t *buf_p, int64_t size)
     return (res);
 }
 
-static int append_size(PyObject *list_p, int64_t size)
+static int append_size(PyObject *list_p, int32_t size)
 {
     int res;
     uint8_t buf[10];
@@ -159,7 +159,7 @@ static int append_size(PyObject *list_p, int64_t size)
     return (append_bytes(list_p, &buf[0], res));
 }
 
-static int append_buffer(PyObject *list_p, uint8_t *buf_p, int64_t size)
+static int append_buffer(PyObject *list_p, uint8_t *buf_p, int32_t size)
 {
     int res;
 
@@ -174,7 +174,7 @@ static int append_buffer(PyObject *list_p, uint8_t *buf_p, int64_t size)
 
 static int parse_args(PyObject *args_p,
                       Py_ssize_t *suffix_array_length_p,
-                      int64_t **sa_pp,
+                      int32_t **sa_pp,
                       char **from_pp,
                       char **to_pp,
                       Py_ssize_t *from_size_p,
@@ -184,7 +184,6 @@ static int parse_args(PyObject *args_p,
     PyObject *sa_p;
     PyObject *from_bytes_p;
     PyObject *to_bytes_p;
-    int i;
 
     res = PyArg_ParseTuple(args_p,
                            "OOO",
@@ -196,40 +195,27 @@ static int parse_args(PyObject *args_p,
         return (-1);
     }
 
-    *suffix_array_length_p = PyList_Size(sa_p);
+    *suffix_array_length_p = (PyByteArray_Size(sa_p) / sizeof(int32_t));
 
     if (*suffix_array_length_p <= 0) {
         return (-1);
     }
 
-    *sa_pp = PyMem_Malloc(*suffix_array_length_p * sizeof(**sa_pp));
-
-    if (*sa_pp == NULL) {
-        return (-1);
-    }
-
-    for (i = 0; i < *suffix_array_length_p; i++) {
-        (*sa_pp)[i] = PyLong_AsLong(PyList_GET_ITEM(sa_p, i));
-    }
+    *sa_pp = (int32_t *)PyByteArray_AsString(sa_p);
 
     res = PyBytes_AsStringAndSize(from_bytes_p, from_pp, from_size_p);
 
     if (res != 0) {
-        goto err1;
+        return (-1);
     }
 
     res = PyBytes_AsStringAndSize(to_bytes_p, to_pp, to_size_p);
 
     if (res != 0) {
-        goto err1;
+        return (-1);
     }
 
     return (res);
-
- err1:
-    PyMem_Free(*sa_pp);
-
-    return (-1);
 }
 
 static int write_diff_extra_and_adjustment(PyObject *list_p,
@@ -238,26 +224,26 @@ static int write_diff_extra_and_adjustment(PyObject *list_p,
                                            uint8_t *to_p,
                                            Py_ssize_t to_size,
                                            uint8_t *debuf_p,
-                                           int64_t scan,
-                                           int64_t pos,
-                                           int64_t *last_scan_p,
-                                           int64_t *last_pos_p,
-                                           int64_t *last_offset_p)
+                                           int32_t scan,
+                                           int32_t pos,
+                                           int32_t *last_scan_p,
+                                           int32_t *last_pos_p,
+                                           int32_t *last_offset_p)
 {
     int res;
-    int64_t s;
-    int64_t sf;
-    int64_t diff_size;
-    int64_t extra_pos;
-    int64_t extra_size;
-    int64_t sb;
-    int64_t lenb;
-    int64_t overlap;
-    int64_t ss;
-    int64_t lens;
-    int64_t i;
-    int64_t last_scan;
-    int64_t last_pos;
+    int32_t s;
+    int32_t sf;
+    int32_t diff_size;
+    int32_t extra_pos;
+    int32_t extra_size;
+    int32_t sb;
+    int32_t lenb;
+    int32_t overlap;
+    int32_t ss;
+    int32_t lens;
+    int32_t i;
+    int32_t last_scan;
+    int32_t last_pos;
 
     last_scan = *last_scan_p;
     last_pos = *last_pos_p;
@@ -363,7 +349,7 @@ static int write_diff_extra_and_adjustment(PyObject *list_p,
 }
 
 static int create_patch_loop(PyObject *list_p,
-                             int64_t *sa_p,
+                             int32_t *sa_p,
                              uint8_t *from_p,
                              Py_ssize_t from_size,
                              uint8_t *to_p,
@@ -371,14 +357,14 @@ static int create_patch_loop(PyObject *list_p,
                              uint8_t *debuf_p)
 {
     int res;
-    int64_t scan;
-    int64_t pos;
-    int64_t len;
-    int64_t last_scan;
-    int64_t last_pos;
-    int64_t last_offset;
-    int64_t from_score;
-    int64_t scsc;
+    int32_t scan;
+    int32_t pos;
+    int32_t len;
+    int32_t last_scan;
+    int32_t last_pos;
+    int32_t last_offset;
+    int32_t from_score;
+    int32_t scsc;
 
     scan = 0;
     len = 0;
@@ -477,7 +463,7 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
     uint8_t *to_p;
     Py_ssize_t from_size;
     Py_ssize_t to_size;
-    int64_t *sa_p;
+    int32_t *sa_p;
     uint8_t *debuf_p;
     PyObject *list_p;
     Py_ssize_t suffix_array_length;
@@ -519,7 +505,6 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
     }
 
     PyMem_Free(debuf_p);
-    PyMem_Free(sa_p);
 
     return (list_p);
 
@@ -542,11 +527,11 @@ static PyMethodDef module_methods[] = {
 };
 
 static PyModuleDef module = {
-    PyModuleDef_HEAD_INIT,
-    .m_name = "cbsdiff",
-    .m_doc = NULL,
-    .m_size = -1,
-    .m_methods = module_methods
+   PyModuleDef_HEAD_INIT,
+   .m_name = "cbsdiff",
+   .m_doc = NULL,
+   .m_size = -1,
+   .m_methods = module_methods
 };
 
 PyMODINIT_FUNC PyInit_cbsdiff(void)

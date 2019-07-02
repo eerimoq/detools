@@ -42,18 +42,18 @@
 
 #define SAIS_MYMALLOC(_num, _type) ((_type *)malloc((_num) * sizeof(_type)))
 #define SAIS_MYFREE(_ptr, _num, _type) free((_ptr))
-#define chr(_a) (cs == sizeof(int)              \
-                 ? ((int *)t_p)[(_a)]           \
+#define chr(_a) (cs == sizeof(int32_t)          \
+                 ? ((int32_t *)t_p)[(_a)]       \
                  : ((uint8_t *)t_p)[(_a)])
 
 /* find the start or end of each bucket */
 static void get_counts(const void *t_p,
-                       int *c_p,
-                       int n,
-                       int k,
-                       int cs)
+                       int32_t *c_p,
+                       int32_t n,
+                       int32_t k,
+                       int32_t cs)
 {
-    int i;
+    int32_t i;
 
     for (i = 0; i < k; ++i) {
         c_p[i] = 0;
@@ -64,13 +64,13 @@ static void get_counts(const void *t_p,
     }
 }
 
-static void get_buckets(const int *c_p,
-                        int *b_p,
-                        int k,
-                        int end)
+static void get_buckets(const int32_t *c_p,
+                        int32_t *b_p,
+                        int32_t k,
+                        int32_t end)
 {
-    int i;
-    int sum;
+    int32_t i;
+    int32_t sum;
 
     sum = 0;
 
@@ -89,18 +89,18 @@ static void get_buckets(const int *c_p,
 
 /* sort all type LMS suffixes */
 static void lms_sort_1(const void *t_p,
-                       int *sa_p,
-                       int *c_p,
-                       int *b_p,
-                       int n,
-                       int k,
-                       int cs)
+                       int32_t *sa_p,
+                       int32_t *c_p,
+                       int32_t *b_p,
+                       int32_t n,
+                       int32_t k,
+                       int32_t cs)
 {
-    int *b2_p;
-    int i;
-    int j;
-    int c0;
-    int c1;
+    int32_t *b2_p;
+    int32_t i;
+    int32_t j;
+    int32_t c0;
+    int32_t c1;
 
     /* compute SAl */
     if (c_p == b_p) {
@@ -118,7 +118,7 @@ static void lms_sort_1(const void *t_p,
             assert(chr(j) >= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = (int)(b2_p - sa_p);
+                b_p[c1] = (int32_t)(b2_p - sa_p);
                 b2_p = sa_p + b_p[c1 = c0];
             }
 
@@ -143,7 +143,7 @@ static void lms_sort_1(const void *t_p,
             assert(chr(j) <= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = (int)(b2_p - sa_p);
+                b_p[c1] = (int32_t)(b2_p - sa_p);
                 b2_p = sa_p + b_p[c1 = c0];
             }
 
@@ -155,22 +155,22 @@ static void lms_sort_1(const void *t_p,
     }
 }
 
-static int lms_postproc_1(const void *t_p,
-                          int *sa_p,
-                          int n,
-                          int m,
-                          int cs)
+static int32_t lms_postproc_1(const void *t_p,
+                              int32_t *sa_p,
+                              int32_t n,
+                              int32_t m,
+                              int32_t cs)
 {
-    int i;
-    int j;
-    int p;
-    int q;
-    int plen;
-    int qlen;
-    int name;
-    int c0;
-    int c1;
-    int diff;
+    int32_t i;
+    int32_t j;
+    int32_t p;
+    int32_t q;
+    int32_t plen;
+    int32_t qlen;
+    int32_t name;
+    int32_t c0;
+    int32_t c1;
+    int32_t diff;
 
     /* compact all the sorted substrings into the first m items of SA
        2*m must be not larger than n (proveable) */
@@ -244,21 +244,21 @@ static int lms_postproc_1(const void *t_p,
 }
 
 static void lms_sort_2(const void *t_p,
-                       int *sa_p,
-                       int *c_p,
-                       int *b_p,
-                       int *d_p,
-                       int n,
-                       int k,
-                       int cs)
+                       int32_t *sa_p,
+                       int32_t *c_p,
+                       int32_t *b_p,
+                       int32_t *d_p,
+                       int32_t n,
+                       int32_t k,
+                       int32_t cs)
 {
-    int *b2_p;
-    int i;
-    int j;
-    int t;
-    int d;
-    int c0;
-    int c1;
+    int32_t *b2_p;
+    int32_t i;
+    int32_t j;
+    int32_t t;
+    int32_t d;
+    int32_t c0;
+    int32_t c1;
 
     assert(c_p != b_p);
 
@@ -281,7 +281,7 @@ static void lms_sort_2(const void *t_p,
             assert(chr(j) >= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = (int)(b2_p - sa_p);
+                b_p[c1] = (int32_t)(b2_p - sa_p);
                 b2_p = sa_p + b_p[c1 = c0];
             }
 
@@ -327,7 +327,7 @@ static void lms_sort_2(const void *t_p,
             assert(chr(j) <= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = (int)(b2_p - sa_p);
+                b_p[c1] = (int32_t)(b2_p - sa_p);
                 b2_p = sa_p + b_p[c1 = c0];
             }
 
@@ -347,14 +347,14 @@ static void lms_sort_2(const void *t_p,
     }
 }
 
-static int lms_postproc_2(int *sa_p,
-                          int n,
-                          int m)
+static int32_t lms_postproc_2(int32_t *sa_p,
+                              int32_t n,
+                              int32_t m)
 {
-    int i;
-    int j;
-    int d;
-    int name;
+    int32_t i;
+    int32_t j;
+    int32_t d;
+    int32_t name;
 
     /* compact all the sorted LMS substrings into the first m items of SA */
     assert(0 < n);
@@ -416,18 +416,18 @@ static int lms_postproc_2(int *sa_p,
 
 /* compute SA and BWT */
 static void induce_sa(const void *t_p,
-                      int *sa_p,
-                      int *c_p,
-                      int *b_p,
-                      int n,
-                      int k,
-                      int cs)
+                      int32_t *sa_p,
+                      int32_t *c_p,
+                      int32_t *b_p,
+                      int32_t n,
+                      int32_t k,
+                      int32_t cs)
 {
-    int *b;
-    int i;
-    int j;
-    int c0;
-    int c1;
+    int32_t *b;
+    int32_t i;
+    int32_t j;
+    int32_t c0;
+    int32_t c1;
 
     /* compute SAl */
     if (c_p == b_p) {
@@ -448,7 +448,7 @@ static void induce_sa(const void *t_p,
             assert(chr(j) >= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = (int)(b - sa_p);
+                b_p[c1] = (int32_t)(b - sa_p);
                 b = sa_p + b_p[c1 = c0];
             }
 
@@ -470,7 +470,7 @@ static void induce_sa(const void *t_p,
             assert(chr(j) <= chr(j + 1));
 
             if ((c0 = chr(j)) != c1) {
-                b_p[c1] = (int)(b - sa_p);
+                b_p[c1] = (int32_t)(b - sa_p);
                 b = sa_p + b_p[c1 = c0];
             }
 
@@ -483,35 +483,35 @@ static void induce_sa(const void *t_p,
 }
 
 /* find the suffix array SA of T[0..n-1] in {0..255}^n */
-static int sais_main(const void *t_p,
-                     int *sa_p,
-                     int fs,
-                     int n,
-                     int k,
-                     int cs)
+static int32_t sais_main(const void *t_p,
+                         int32_t *sa_p,
+                         int32_t fs,
+                         int32_t n,
+                         int32_t k,
+                         int32_t cs)
 {
-    int *c_p;
-    int *b_p;
-    int *d_p;
-    int *ra_p;
-    int *b;
-    int i;
-    int j;
-    int m;
-    int p;
-    int q;
-    int t;
-    int name;
-    int newfs;
-    int c0;
-    int c1;
+    int32_t *c_p;
+    int32_t *b_p;
+    int32_t *d_p;
+    int32_t *ra_p;
+    int32_t *b;
+    int32_t i;
+    int32_t j;
+    int32_t m;
+    int32_t p;
+    int32_t q;
+    int32_t t;
+    int32_t name;
+    int32_t newfs;
+    int32_t c0;
+    int32_t c1;
     unsigned int flags;
 
     assert((t_p != NULL) && (sa_p != NULL));
     assert((0 <= fs) && (0 < n) && (1 <= k));
 
     if (k <= MINBUCKETSIZE) {
-        if ((c_p = SAIS_MYMALLOC(k, int)) == NULL) {
+        if ((c_p = SAIS_MYMALLOC(k, int32_t)) == NULL) {
             return -2;
         }
 
@@ -519,8 +519,8 @@ static int sais_main(const void *t_p,
             b_p = sa_p + (n + fs - k);
             flags = 1;
         } else {
-            if ((b_p = SAIS_MYMALLOC(k, int)) == NULL) {
-                SAIS_MYFREE(c_p, k, int);
+            if ((b_p = SAIS_MYMALLOC(k, int32_t)) == NULL) {
+                SAIS_MYFREE(c_p, k, int32_t);
 
                 return (-2);
             }
@@ -534,7 +534,7 @@ static int sais_main(const void *t_p,
             b_p = c_p - k;
             flags = 0;
         } else if (k <= (MINBUCKETSIZE * 4)) {
-            if ((b_p = SAIS_MYMALLOC(k, int)) == NULL) {
+            if ((b_p = SAIS_MYMALLOC(k, int32_t)) == NULL) {
                 return (-2);
             }
 
@@ -544,7 +544,7 @@ static int sais_main(const void *t_p,
             flags = 8;
         }
     } else {
-        if ((c_p = b_p = SAIS_MYMALLOC(k, int)) == NULL) {
+        if ((c_p = b_p = SAIS_MYMALLOC(k, int32_t)) == NULL) {
             return (-2);
         }
 
@@ -598,13 +598,13 @@ static int sais_main(const void *t_p,
     if (1 < m) {
         if (flags & (16 | 32)) {
             if (flags & 16) {
-                if ((d_p = SAIS_MYMALLOC(k * 2, int)) == NULL) {
+                if ((d_p = SAIS_MYMALLOC(k * 2, int32_t)) == NULL) {
                     if (flags & (1 | 4)) {
-                        SAIS_MYFREE(c_p, k, int);
+                        SAIS_MYFREE(c_p, k, int32_t);
                     }
 
                     if (flags & 2) {
-                        SAIS_MYFREE(b_p, k, int);
+                        SAIS_MYFREE(b_p, k, int32_t);
                     }
 
                     return (-2);
@@ -631,7 +631,7 @@ static int sais_main(const void *t_p,
             name = lms_postproc_2(sa_p, n, m);
 
             if (flags & 16) {
-                SAIS_MYFREE(d_p, k * 2, int);
+                SAIS_MYFREE(d_p, k * 2, int32_t);
             }
         } else {
             lms_sort_1(t_p, sa_p, c_p, b_p, n, k, cs);
@@ -648,11 +648,11 @@ static int sais_main(const void *t_p,
        recurse if names are not yet unique */
     if (name < m) {
         if (flags & 4) {
-            SAIS_MYFREE(c_p, k, int);
+            SAIS_MYFREE(c_p, k, int32_t);
         }
 
         if (flags & 2) {
-            SAIS_MYFREE(b_p, k, int);
+            SAIS_MYFREE(b_p, k, int32_t);
         }
 
         newfs = (n + fs) - (m * 2);
@@ -674,9 +674,9 @@ static int sais_main(const void *t_p,
             }
         }
 
-        if (sais_main(ra_p, sa_p, newfs, m, name, sizeof(int)) != 0) {
+        if (sais_main(ra_p, sa_p, newfs, m, name, sizeof(int32_t)) != 0) {
             if (flags & 1) {
-                SAIS_MYFREE(c_p, k, int);
+                SAIS_MYFREE(c_p, k, int32_t);
             }
 
             return (-2);
@@ -709,15 +709,15 @@ static int sais_main(const void *t_p,
         }
 
         if (flags & 4) {
-            if ((c_p = b_p = SAIS_MYMALLOC(k, int)) == NULL) {
+            if ((c_p = b_p = SAIS_MYMALLOC(k, int32_t)) == NULL) {
                 return (-2);
             }
         }
 
         if (flags & 2) {
-            if ((b_p = SAIS_MYMALLOC(k, int)) == NULL) {
+            if ((b_p = SAIS_MYMALLOC(k, int32_t)) == NULL) {
                 if (flags & 1) {
-                    SAIS_MYFREE(c_p, k, int);
+                    SAIS_MYFREE(c_p, k, int32_t);
                 }
 
                 return (-2);
@@ -764,17 +764,17 @@ static int sais_main(const void *t_p,
     induce_sa(t_p, sa_p, c_p, b_p, n, k, cs);
 
     if (flags & (1 | 4)) {
-        SAIS_MYFREE(c_p, k, int);
+        SAIS_MYFREE(c_p, k, int32_t);
     }
 
     if (flags & 2) {
-        SAIS_MYFREE(b_p, k, int);
+        SAIS_MYFREE(b_p, k, int32_t);
     }
 
     return (0);
 }
 
-static int sais(const uint8_t *t_p, int *sa_p, int n)
+static int32_t sais(const uint8_t *t_p, int32_t *sa_p, int32_t n)
 {
     if ((t_p == NULL) || (sa_p == NULL) || (n < 0)) {
         return (-1);
@@ -799,10 +799,8 @@ static PyObject *m_sais(PyObject *self_p, PyObject* arg_p)
     int res;
     char *buf_p;
     Py_ssize_t size;
-    int *suffix_array_p;
-    PyObject *list_p;
-    PyObject *value_p;
-    Py_ssize_t i;
+    int32_t *suffix_array_p;
+    PyObject *byte_array_p;
 
     /* Input argument conversion. */
     res = PyBytes_AsStringAndSize(arg_p, &buf_p, &size);
@@ -811,53 +809,38 @@ static PyObject *m_sais(PyObject *self_p, PyObject* arg_p)
         return (NULL);
     }
 
-    if (size > INT_MAX) {
-        PyErr_SetString(PyExc_ValueError, "SA-IS data too long (over INT_MAX).");
+    if (size > 0x7fffffff) {
+        PyErr_SetString(PyExc_ValueError, "SA-IS data too long (over 0x7fffffff).");
 
         return (NULL);
     }
 
-    suffix_array_p = PyMem_Malloc((size + 1) * sizeof(int));
+    byte_array_p = PyByteArray_FromStringAndSize("", 1);
 
-    if (suffix_array_p == NULL) {
+    if (byte_array_p == NULL) {
         return (NULL);
     }
 
-    /* Execute the SA-IS algorithm. */
-    res = sais((uint8_t *)buf_p, suffix_array_p, (int)size);
+    res = PyByteArray_Resize(byte_array_p, (size + 1) * sizeof(*suffix_array_p));
 
     if (res != 0) {
         goto err1;
     }
 
-    /* Create result list. */
-    list_p = PyList_New(size + 1);
+    suffix_array_p = (int32_t *)PyByteArray_AsString(byte_array_p);
+    suffix_array_p[0] = (int32_t)size;
 
-    if (list_p == NULL) {
+    /* Execute the SA-IS algorithm. */
+    res = sais((uint8_t *)buf_p, &suffix_array_p[1], (int32_t)size);
+
+    if (res != 0) {
         goto err1;
     }
 
-    PyList_SET_ITEM(list_p, 0, PyLong_FromLong(size));
-
-    for (i = 0; i < size; i++) {
-        value_p = PyLong_FromLong(suffix_array_p[i]);
-
-        if (value_p == NULL) {
-            goto err2;
-        }
-
-        PyList_SET_ITEM(list_p, i + 1, value_p);
-    }
-
-    PyMem_Free(suffix_array_p);
-
-    return (list_p);
-
- err2:
-    Py_DECREF(list_p);
+    return (byte_array_p);
 
  err1:
-    PyMem_Free(suffix_array_p);
+    Py_DECREF(byte_array_p);
 
     return (NULL);
 }
