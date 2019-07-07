@@ -29,7 +29,8 @@ setup(name='detools',
           'humanfriendly',
           'bitstruct',
           'pyelftools',
-          'zstandard'
+          'zstandard',
+          'lz4'
       ],
       extras_require={
           'heatshrink': ['heatshrink']

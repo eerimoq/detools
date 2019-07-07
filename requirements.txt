@@ -2,3 +2,4 @@ humanfriendly
 bitstruct
 pyelftools
 zstandard
+lz4

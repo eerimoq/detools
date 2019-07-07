@@ -8,6 +8,7 @@ from .compression.crle import CrleCompressor
 from .compression.none import NoneCompressor
 from .compression.heatshrink import HeatshrinkCompressor
 from .compression.zstd import ZstdCompressor
+from .compression.lz4 import Lz4Compressor
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import DATA_FORMATS
@@ -41,6 +42,8 @@ def create_compressor(compression):
         compressor = HeatshrinkCompressor()
     elif compression == 'zstd':
         compressor = ZstdCompressor()
+    elif compression == 'lz4':
+        compressor = Lz4Compressor()
     else:
         raise Error(format_bad_compression_string(compression))
 
@@ -269,7 +272,7 @@ def create_patch(ffrom,
     three arguments are file-like objects.
 
     `compression` must be ``'bz2'``, ``'crle'``, ``'lzma'``,
-    ``'zstd'`` or ``'none'``.
+    ``'zstd'``, ``'lz4'`` or ``'none'``.
 
     `patch_type` must be ``'normal'``, ``'in-place'`` or ``'bsdiff'``.
 

@@ -185,6 +185,12 @@ class DetoolsTest(unittest.TestCase):
                                            'tests/files/shell/zstd.patch',
                                            compression='zstd')
 
+    def test_create_and_apply_patch_shell_lz4_compression(self):
+        self.assert_create_and_apply_patch('tests/files/shell/old',
+                                           'tests/files/shell/new',
+                                           'tests/files/shell/lz4.patch',
+                                           compression='lz4')
+
     def test_create_and_apply_patch_shell_arm_cortex_m4(self):
         self.assert_create_and_apply_patch('tests/files/shell/old',
                                            'tests/files/shell/new',
@@ -271,6 +277,20 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/micropython/esp8266-20180511-v1.9.4--'
             '20190125-v1.10-zstd.patch',
             compression='zstd')
+
+    def test_create_and_apply_patch_foo_lz4_compression(self):
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/lz4.patch',
+                                           compression='lz4')
+
+    def test_create_and_apply_patch_micropython_lz4_compression(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython/esp8266-20190125-v1.10.bin',
+            'tests/files/micropython/esp8266-20180511-v1.9.4--'
+            '20190125-v1.10-lz4.patch',
+            compression='lz4')
 
     def test_create_and_apply_patch_micropython_crle_compression(self):
         self.assert_create_and_apply_patch(
@@ -569,7 +589,7 @@ class DetoolsTest(unittest.TestCase):
                 self.assertEqual(
                     str(cm.exception),
                     "Expected compression none(0), lzma(1), crle(2), bz2(3), "
-                    "heatshrink(4) or zstd(5), but got 15.")
+                    "heatshrink(4), zstd(5) or lz4(6), but got 15.")
 
     def test_create_patch_foo_bad_compression(self):
         fpatch = BytesIO()
@@ -581,8 +601,8 @@ class DetoolsTest(unittest.TestCase):
 
                 self.assertEqual(
                     str(cm.exception),
-                    "Expected compression bz2, crle, heatshrink, lzma, none or "
-                    "zstd, but got bad.")
+                    "Expected compression bz2, crle, heatshrink, lz4, lzma, "
+                    "none or zstd, but got bad.")
 
     def test_apply_patch_one_byte(self):
         fnew = BytesIO()
