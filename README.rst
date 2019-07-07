@@ -11,7 +11,7 @@ Binary `delta encoding`_ in Python 3 and C.
 Based on http://www.daemonology.net/bsdiff/, with the following
 differences:
 
-- BZ2, LZMA, `heatshrink`_ or CRLE compression.
+- BZ2, LZMA, `Zstandard`_, `heatshrink`_ or CRLE compression.
 
 - Linear patch file access pattern to allow streaming and less RAM
   usage.
@@ -226,6 +226,8 @@ Contributing
 .. _delta encoding: https://en.wikipedia.org/wiki/Delta_encoding
 
 .. _heatshrink: https://github.com/atomicobject/heatshrink
+
+.. _Zstandard: https://facebook.github.io/zstd
 
 .. _Normal: https://detools.readthedocs.io/en/latest/#id1
 
