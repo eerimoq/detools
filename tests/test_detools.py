@@ -179,6 +179,12 @@ class DetoolsTest(unittest.TestCase):
                                            'tests/files/shell/bz2.patch',
                                            compression='bz2')
 
+    def test_create_and_apply_patch_shell_zstd_compression(self):
+        self.assert_create_and_apply_patch('tests/files/shell/old',
+                                           'tests/files/shell/new',
+                                           'tests/files/shell/zstd.patch',
+                                           compression='zstd')
+
     def test_create_and_apply_patch_shell_arm_cortex_m4(self):
         self.assert_create_and_apply_patch('tests/files/shell/old',
                                            'tests/files/shell/new',
@@ -251,6 +257,20 @@ class DetoolsTest(unittest.TestCase):
                                                'tests/files/foo/new',
                                                'tests/files/foo/heatshrink.patch',
                                                compression='heatshrink')
+
+    def test_create_and_apply_patch_foo_zstd_compression(self):
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/zstd.patch',
+                                           compression='zstd')
+
+    def test_create_and_apply_patch_micropython_zstd_compression(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/micropython/esp8266-20180511-v1.9.4.bin',
+            'tests/files/micropython/esp8266-20190125-v1.10.bin',
+            'tests/files/micropython/esp8266-20180511-v1.9.4--'
+            '20190125-v1.10-zstd.patch',
+            compression='zstd')
 
     def test_create_and_apply_patch_micropython_crle_compression(self):
         self.assert_create_and_apply_patch(

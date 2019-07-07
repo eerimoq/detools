@@ -7,11 +7,13 @@ from .errors import Error
 from .compression.crle import CrleDecompressor
 from .compression.none import NoneDecompressor
 from .compression.heatshrink import HeatshrinkDecompressor
+from .compression.zstd import ZstdDecompressor
 from .common import COMPRESSION_NONE
 from .common import COMPRESSION_LZMA
 from .common import COMPRESSION_CRLE
 from .common import COMPRESSION_BZ2
 from .common import COMPRESSION_HEATSHRINK
+from .common import COMPRESSION_ZSTD
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import format_bad_compression_string
@@ -34,6 +36,8 @@ class PatchReader(object):
             self._decompressor = NoneDecompressor(patch_data_length(fpatch))
         elif compression == 'heatshrink':
             self._decompressor = HeatshrinkDecompressor(patch_data_length(fpatch))
+        elif compression == 'zstd':
+            self._decompressor = ZstdDecompressor(patch_data_length(fpatch))
         else:
             raise Error(format_bad_compression_string(compression))
 
@@ -122,6 +126,8 @@ def convert_compression(compression):
         compression = 'bz2'
     elif compression == COMPRESSION_HEATSHRINK:
         compression = 'heatshrink'
+    elif compression == COMPRESSION_ZSTD:
+        compression = 'zstd'
     else:
         raise Error(format_bad_compression_number(compression))
 

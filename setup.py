@@ -28,7 +28,8 @@ setup(name='detools',
       install_requires=[
           'humanfriendly',
           'bitstruct',
-          'pyelftools'
+          'pyelftools',
+          'zstandard'
       ],
       extras_require={
           'heatshrink': ['heatshrink']

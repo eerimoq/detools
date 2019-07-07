@@ -446,11 +446,11 @@ def _main():
     subparser.add_argument('-t', '--type',
                            choices=('normal', 'in-place', 'bsdiff'),
                            default='normal',
-                           help='Patch type (default: normal).')
+                           help='Patch type (default: %(default)s).')
     subparser.add_argument('-c', '--compression',
                            choices=sorted(_COMPRESSIONS),
                            default='lzma',
-                           help='Compression algorithm (default: lzma).')
+                           help='Compression algorithm (default: %(default)s).')
     subparser.add_argument('--memory-size',
                            type=to_binary_size,
                            help='Target memory size.')
