@@ -30,11 +30,9 @@ setup(name='detools',
           'bitstruct',
           'pyelftools',
           'zstandard',
-          'lz4'
+          'lz4',
+          'heatshrink2'
       ],
-      extras_require={
-          'heatshrink': ['heatshrink']
-      },
       ext_modules=[
           Extension(name="detools.csais", sources=["detools/sais.c"]),
           Extension(name="detools.cbsdiff", sources=["detools/bsdiff.c"])

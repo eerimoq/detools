@@ -2,12 +2,9 @@
 
 """
 
-try:
-    from heatshrink.core import Writer
-    from heatshrink.core import Reader
-    from heatshrink.core import Encoder
-except ImportError:
-    print('detools: Failed to import heatshrink.')
+from heatshrink2.core import Writer
+from heatshrink2.core import Reader
+from heatshrink2.core import Encoder
 
 
 class HeatshrinkCompressor(object):

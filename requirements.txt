@@ -3,3 +3,4 @@ bitstruct
 pyelftools
 zstandard
 lz4
+heatshrink2
