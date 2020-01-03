@@ -29,8 +29,8 @@ setup(name='detools',
           'humanfriendly',
           'bitstruct',
           'pyelftools',
-          'zstandard',
-          'lz4',
+          'zstandard==0.11.1',
+          'lz4==2.1.10',
           'heatshrink2'
       ],
       ext_modules=[
