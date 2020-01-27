@@ -60,6 +60,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#define PBTOOLS_VERSION                  "0.34.1"
+
 /* Error codes. */
 #define DETOOLS_OK                              0
 #define DETOOLS_NOT_IMPLEMENTED                 1
