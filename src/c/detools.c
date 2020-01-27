@@ -135,56 +135,6 @@ static int chunk_unpack_header_size(struct detools_apply_patch_chunk_t *self_p,
     return (0);
 }
 
-static void unpack_usize_init(struct detools_unpack_usize_t *self_p)
-{
-    self_p->state = detools_unpack_usize_state_first_t;
-    self_p->value = 0;
-    self_p->offset = 0;
-}
-
-static int unpack_usize(struct detools_unpack_usize_t *self_p,
-                        struct detools_apply_patch_chunk_t *patch_chunk_p,
-                        int *size_p)
-{
-    int res;
-    uint8_t byte;
-
-    do {
-        switch (self_p->state) {
-
-        case detools_unpack_usize_state_first_t:
-            res = chunk_get(patch_chunk_p, &byte);
-
-            if (res != 0) {
-                return (res);
-            }
-
-            self_p->value = (byte & 0x7f);
-            self_p->offset = 7;
-            self_p->state = detools_unpack_usize_state_consecutive_t;
-            break;
-
-        case detools_unpack_usize_state_consecutive_t:
-            res = chunk_get(patch_chunk_p, &byte);
-
-            if (res != 0) {
-                return (res);
-            }
-
-            self_p->value |= ((byte & 0x7f) << self_p->offset);
-            self_p->offset += 7;
-            break;
-
-        default:
-            return (-DETOOLS_INTERNAL_ERROR);
-        }
-    } while ((byte & 0x80) != 0);
-
-    *size_p = self_p->value;
-
-    return (0);
-}
-
 /*
  * None patch reader.
  */
@@ -542,6 +492,56 @@ static int patch_reader_lzma_init(struct detools_apply_patch_patch_reader_t *sel
  */
 
 #if DETOOLS_CONFIG_COMPRESSION_CRLE == 1
+
+static void unpack_usize_init(struct detools_unpack_usize_t *self_p)
+{
+    self_p->state = detools_unpack_usize_state_first_t;
+    self_p->value = 0;
+    self_p->offset = 0;
+}
+
+static int unpack_usize(struct detools_unpack_usize_t *self_p,
+                        struct detools_apply_patch_chunk_t *patch_chunk_p,
+                        int *size_p)
+{
+    int res;
+    uint8_t byte;
+
+    do {
+        switch (self_p->state) {
+
+        case detools_unpack_usize_state_first_t:
+            res = chunk_get(patch_chunk_p, &byte);
+
+            if (res != 0) {
+                return (res);
+            }
+
+            self_p->value = (byte & 0x7f);
+            self_p->offset = 7;
+            self_p->state = detools_unpack_usize_state_consecutive_t;
+            break;
+
+        case detools_unpack_usize_state_consecutive_t:
+            res = chunk_get(patch_chunk_p, &byte);
+
+            if (res != 0) {
+                return (res);
+            }
+
+            self_p->value |= ((byte & 0x7f) << self_p->offset);
+            self_p->offset += 7;
+            break;
+
+        default:
+            return (-DETOOLS_INTERNAL_ERROR);
+        }
+    } while ((byte & 0x80) != 0);
+
+    *size_p = self_p->value;
+
+    return (0);
+}
 
 static int patch_reader_crle_decompress_idle(
     struct detools_apply_patch_patch_reader_t *self_p,
