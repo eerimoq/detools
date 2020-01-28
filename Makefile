@@ -48,16 +48,30 @@ test-sdist:
 	python3 setup.py test
 
 test-c:
-	$(CC) -DDETOOLS_CONFIG_FILE_IO=0 -Isrc/c/heatshrink \
+	$(CC) $(CFLAGS) -DDETOOLS_CONFIG_FILE_IO=0 -Isrc/c/heatshrink \
 	    -c src/c/detools.c -o detools.no-file-io.o
-	$(CC) -DDETOOLS_CONFIG_COMPRESSION_NONE=0 -Isrc/c/heatshrink \
+	$(CC) $(CFLAGS) -DDETOOLS_CONFIG_COMPRESSION_NONE=0 -Isrc/c/heatshrink \
 	    -c src/c/detools.c -o detools.no-none.o
-	$(CC) -DDETOOLS_CONFIG_COMPRESSION_LZMA=0 -Isrc/c/heatshrink \
+	$(CC) $(CFLAGS) -DDETOOLS_CONFIG_COMPRESSION_LZMA=0 -Isrc/c/heatshrink \
 	    -c src/c/detools.c -o detools.no-lzma.o
-	$(CC) -DDETOOLS_CONFIG_COMPRESSION_CRLE=0 -Isrc/c/heatshrink \
+	$(CC) $(CFLAGS) -DDETOOLS_CONFIG_COMPRESSION_CRLE=0 -Isrc/c/heatshrink \
 	    -c src/c/detools.c -o detools.no-crle.o
-	$(CC) -DDETOOLS_CONFIG_COMPRESSION_HEATSHRINK=0 -Isrc/c/heatshrink \
+	$(CC) $(CFLAGS) -DDETOOLS_CONFIG_COMPRESSION_HEATSHRINK=0 -Isrc/c/heatshrink \
 	    -c src/c/detools.c -o detools.no-crle.o
+	$(CC) $(CFLAGS) \
+	    -DDETOOLS_CONFIG_COMPRESSION_NONE=0 \
+	    -DDETOOLS_CONFIG_COMPRESSION_CRLE=0 \
+	    -Isrc/c/heatshrink -c src/c/detools.c -o detools.no-crle.o
+	$(CC) $(CFLAGS) \
+	    -DDETOOLS_CONFIG_COMPRESSION_NONE=0 \
+	    -DDETOOLS_CONFIG_COMPRESSION_LZMA=0 \
+	    -DDETOOLS_CONFIG_COMPRESSION_CRLE=0 \
+	    -Isrc/c/heatshrink -c src/c/detools.c -o detools.no-crle.o
+	$(CC) $(CFLAGS) \
+	    -DDETOOLS_CONFIG_COMPRESSION_NONE=0 \
+	    -DDETOOLS_CONFIG_COMPRESSION_CRLE=0 \
+	    -DDETOOLS_CONFIG_COMPRESSION_HEATSHRINK=0 \
+	    -Isrc/c/heatshrink -c src/c/detools.c -o detools.no-crle.o
 	$(CC) $(CFLAGS) $(C_SOURCES) -llzma -o main
 	./main
 	$(MAKE) -C src/c library

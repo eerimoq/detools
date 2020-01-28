@@ -83,8 +83,9 @@ static int chunk_get(struct detools_apply_patch_chunk_t *self_p,
     return (0);
 }
 
-#if DETOOLS_CONFIG_COMPRESSION_CRLE == 1 \
-	|| DETOOLS_CONFIG_COMPRESSION_NONE == 1
+#if DETOOLS_CONFIG_COMPRESSION_NONE == 1        \
+    || DETOOLS_CONFIG_COMPRESSION_CRLE == 1     \
+    || DETOOLS_CONFIG_COMPRESSION_LZMA == 1
 
 static void chunk_read_all_no_check(struct detools_apply_patch_chunk_t *self_p,
                                     uint8_t *buf_p,
@@ -93,6 +94,11 @@ static void chunk_read_all_no_check(struct detools_apply_patch_chunk_t *self_p,
     memcpy(buf_p, &self_p->buf_p[self_p->offset], size);
     self_p->offset += size;
 }
+
+#endif
+
+#if DETOOLS_CONFIG_COMPRESSION_NONE == 1        \
+    || DETOOLS_CONFIG_COMPRESSION_CRLE == 1
 
 static int chunk_read(struct detools_apply_patch_chunk_t *self_p,
                       uint8_t *buf_p,
@@ -781,8 +787,7 @@ static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
 {
     int res;
 
-#if ((DETOOLS_CONFIG_COMPRESSION_NONE != 1)             \
-     && (DETOOLS_CONFIG_COMPRESSION_HEATSHRINK != 1))
+#if DETOOLS_CONFIG_COMPRESSION_NONE != 1
     (void)patch_size;
 #endif
 
