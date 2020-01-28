@@ -845,8 +845,72 @@ static PyObject *m_sais(PyObject *self_p, PyObject* arg_p)
     return (NULL);
 }
 
+/**
+ * def sais_mmap(from_mmap, suffix_array_mmap) -> None
+ */
+static PyObject *m_sais_mmap(PyObject *self_p, PyObject* args_p)
+{
+    int res;
+    Py_buffer from_mmap_view;
+    Py_buffer suffix_array_mmap_view;
+    PyObject *from_mmap_p;
+    PyObject *suffix_array_mmap_p;
+    int32_t *suffix_array_p;
+
+    res = PyArg_ParseTuple(args_p,
+                           "OO",
+                           &from_mmap_p,
+                           &suffix_array_mmap_p);
+
+    if (res == 0) {
+        return (NULL);
+    }
+
+    /* Input argument conversion. */
+    res = PyObject_GetBuffer(from_mmap_p, &from_mmap_view, PyBUF_CONTIG_RO);
+
+    if (res == -1) {
+        return (NULL);
+    }
+
+    res = PyObject_GetBuffer(suffix_array_mmap_p,
+                             &suffix_array_mmap_view,
+                             PyBUF_CONTIG);
+
+    if (res == -1) {
+        goto err1;
+    }
+
+    suffix_array_p = (int32_t *)suffix_array_mmap_view.buf;
+    suffix_array_p[0] = (int32_t)from_mmap_view.len;
+
+    /* Execute the SA-IS algorithm. */
+    res = sais((uint8_t *)from_mmap_view.buf,
+               &suffix_array_p[1],
+               (int32_t)from_mmap_view.len);
+
+    if (res != 0) {
+        goto err2;
+    }
+
+    PyBuffer_Release(&from_mmap_view);
+    PyBuffer_Release(&suffix_array_mmap_view);
+    Py_INCREF(Py_None);
+
+    return (Py_None);
+
+ err2:
+        PyBuffer_Release(&suffix_array_mmap_view);
+
+ err1:
+        PyBuffer_Release(&from_mmap_view);
+
+        return (NULL);
+}
+
 static PyMethodDef module_methods[] = {
     { "sais", m_sais, METH_O },
+    { "sais_mmap", m_sais_mmap, METH_VARARGS },
     { NULL }
 };
 

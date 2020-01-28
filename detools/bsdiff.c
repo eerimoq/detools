@@ -173,7 +173,6 @@ static int append_buffer(PyObject *list_p, uint8_t *buf_p, int32_t size)
 }
 
 static int parse_args(PyObject *args_p,
-                      Py_ssize_t *suffix_array_length_p,
                       int32_t **sa_pp,
                       char **from_pp,
                       char **to_pp,
@@ -184,6 +183,7 @@ static int parse_args(PyObject *args_p,
     PyObject *sa_p;
     PyObject *from_bytes_p;
     PyObject *to_bytes_p;
+    Py_ssize_t suffix_array_length;
 
     res = PyArg_ParseTuple(args_p,
                            "OOO",
@@ -195,9 +195,9 @@ static int parse_args(PyObject *args_p,
         return (-1);
     }
 
-    *suffix_array_length_p = (PyByteArray_Size(sa_p) / sizeof(int32_t));
+    suffix_array_length = (PyByteArray_Size(sa_p) / sizeof(int32_t));
 
-    if (*suffix_array_length_p <= 0) {
+    if (suffix_array_length <= 0) {
         return (-1);
     }
 
@@ -466,10 +466,8 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
     int32_t *sa_p;
     uint8_t *debuf_p;
     PyObject *list_p;
-    Py_ssize_t suffix_array_length;
 
     res = parse_args(args_p,
-                     &suffix_array_length,
                      &sa_p,
                      (char **)&from_p,
                      (char **)&to_p,
@@ -520,9 +518,124 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
     return (NULL);
 }
 
+static int parse_args_mmap(PyObject *args_p,
+                           Py_buffer *suffix_array_view_p,
+                           Py_buffer *from_view_p,
+                           Py_buffer *to_view_p)
+{
+    int res;
+    PyObject *suffix_array_mmap_p;
+    PyObject *from_mmap_p;
+    PyObject *to_mmap_p;
+
+    res = PyArg_ParseTuple(args_p,
+                           "OOO",
+                           &suffix_array_mmap_p,
+                           &from_mmap_p,
+                           &to_mmap_p);
+
+    if (res == 0) {
+        return (-1);
+    }
+
+    res = PyObject_GetBuffer(suffix_array_mmap_p,
+                             suffix_array_view_p,
+                             PyBUF_CONTIG_RO);
+
+    if (res == -1) {
+        return (res);
+    }
+
+    res = PyObject_GetBuffer(from_mmap_p, from_view_p, PyBUF_CONTIG_RO);
+
+    if (res == -1) {
+        goto err1;
+    }
+
+    res = PyObject_GetBuffer(to_mmap_p, to_view_p, PyBUF_CONTIG_RO);
+
+    if (res == -1) {
+        goto err2;
+    }
+
+    return (res);
+
+ err2:
+    PyBuffer_Release(from_view_p);
+
+ err1:
+    PyBuffer_Release(suffix_array_view_p);
+
+    return (res);
+}
+
+static PyObject *m_create_patch_mmap(PyObject *self_p, PyObject *args_p)
+{
+    int res;
+    uint8_t *debuf_p;
+    PyObject *list_p;
+    Py_buffer suffix_array_view;
+    Py_buffer from_view;
+    Py_buffer to_view;
+
+    res = parse_args_mmap(args_p,
+                          &suffix_array_view,
+                          &from_view,
+                          &to_view);
+
+    if (res != 0) {
+        return (NULL);
+    }
+
+    debuf_p = PyMem_Malloc(to_view.len + 1);
+
+    if (debuf_p == NULL) {
+        goto err1;
+    }
+
+    list_p = PyList_New(0);
+
+    if (list_p == NULL) {
+        goto err2;
+    }
+
+    res = create_patch_loop(list_p,
+                            suffix_array_view.buf,
+                            from_view.buf,
+                            from_view.len,
+                            to_view.buf,
+                            to_view.len,
+                            debuf_p);
+
+    if (res != 0) {
+        goto err3;
+    }
+
+    PyMem_Free(debuf_p);
+    PyBuffer_Release(&suffix_array_view);
+    PyBuffer_Release(&from_view);
+    PyBuffer_Release(&to_view);
+
+    return (list_p);
+
+ err3:
+    Py_DECREF(list_p);
+
+ err2:
+    PyMem_Free(debuf_p);
+
+ err1:
+    PyBuffer_Release(&suffix_array_view);
+    PyBuffer_Release(&from_view);
+    PyBuffer_Release(&to_view);
+
+    return (NULL);
+}
+
 static PyMethodDef module_methods[] = {
     { "pack_size", m_pack_size, METH_O },
     { "create_patch", m_create_patch, METH_VARARGS },
+    { "create_patch_mmap", m_create_patch_mmap, METH_VARARGS },
     { NULL }
 };
 

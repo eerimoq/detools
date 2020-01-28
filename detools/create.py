@@ -1,3 +1,5 @@
+import tempfile
+import mmap
 import lzma
 from bz2 import BZ2Compressor
 from io import BytesIO
@@ -50,6 +52,30 @@ def create_compressor(compression):
     return compressor
 
 
+def zero_fill_file(fout, size):
+    zeros = 4096 * b'\x00'
+    left = size
+    chunk_size = 4096
+
+    while left > 0:
+        if left < 4096:
+            chunk_size = left
+            zeros = zeros[:left]
+
+        fout.write(zeros)
+        left -= chunk_size
+
+    fout.flush()
+
+
+def mmap_read_only(fin):
+    return mmap.mmap(fin.fileno(), 0, access=mmap.ACCESS_READ)
+
+
+def mmap_read_write(fin):
+    return mmap.mmap(fin.fileno(), 0)
+
+
 def create_patch_normal_data(ffrom,
                              fto,
                              fpatch,
@@ -83,9 +109,23 @@ def create_patch_normal_data(ffrom,
         dfpatch += patch
 
     fpatch.write(compressor.compress(dfpatch))
-    from_data = file_read(ffrom)
-    suffix_array = sais.sais(from_data)
-    chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
+
+    try:
+        with mmap_read_only(ffrom) as from_mmap:
+            with mmap_read_only(fto) as to_mmap:
+                with tempfile.TemporaryFile() as fsuffix_array:
+                    zero_fill_file(fsuffix_array, 4 * (file_size(ffrom) + 1))
+
+                    with mmap_read_write(fsuffix_array) as suffix_array_mmap:
+                        sais.sais_mmap(from_mmap, suffix_array_mmap)
+                        chunks = bsdiff.create_patch_mmap(suffix_array_mmap,
+                                                          from_mmap,
+                                                          to_mmap)
+    except Exception:
+        print('Failed to use mmap.')
+        from_data = file_read(ffrom)
+        suffix_array = sais.sais(from_data)
+        chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
 
     # with open('data-to.patch', 'wb') as fout:
     #     for i in range(0, len(chunks), 5):
