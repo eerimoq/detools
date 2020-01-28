@@ -121,11 +121,12 @@ def create_patch_normal_data(ffrom,
                         chunks = bsdiff.create_patch_mmap(suffix_array_mmap,
                                                           from_mmap,
                                                           to_mmap)
+        print('Chunks created with mmap.')
     except Exception:
-        print('Failed to use mmap.')
         from_data = file_read(ffrom)
         suffix_array = sais.sais(from_data)
         chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
+        print('Chunks created without mmap.')
 
     # with open('data-to.patch', 'wb') as fout:
     #     for i in range(0, len(chunks), 5):
