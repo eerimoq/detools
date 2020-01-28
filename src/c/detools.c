@@ -83,6 +83,9 @@ static int chunk_get(struct detools_apply_patch_chunk_t *self_p,
     return (0);
 }
 
+#if DETOOLS_CONFIG_COMPRESSION_CRLE == 1 \
+	|| DETOOLS_CONFIG_COMPRESSION_NONE == 1
+
 static void chunk_read_all_no_check(struct detools_apply_patch_chunk_t *self_p,
                                     uint8_t *buf_p,
                                     size_t size)
@@ -104,6 +107,8 @@ static int chunk_read(struct detools_apply_patch_chunk_t *self_p,
 
     return (0);
 }
+
+#endif
 
 static int chunk_unpack_header_size(struct detools_apply_patch_chunk_t *self_p,
                                     int *size_p)
