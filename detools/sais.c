@@ -122,7 +122,7 @@ static void lms_sort_1(const void *t_p,
                 b2_p = sa_p + b_p[c1 = c0];
             }
 
-            assert(i < (b - sa_p));
+            assert(i < (b2_p - sa_p));
             --j;
             *b2_p++ = (chr(j) < c1) ? ~j : j;
             sa_p[i] = 0;
@@ -147,7 +147,7 @@ static void lms_sort_1(const void *t_p,
                 b2_p = sa_p + b_p[c1 = c0];
             }
 
-            assert((b - sa_p) <= i);
+            assert((b2_p - sa_p) <= i);
             --j;
             *--b2_p = (chr(j) > c1) ? ~(j + 1) : j;
             sa_p[i] = 0;
@@ -285,7 +285,7 @@ static void lms_sort_2(const void *t_p,
                 b2_p = sa_p + b_p[c1 = c0];
             }
 
-            assert(i < (b - sa_p));
+            assert(i < (b2_p - sa_p));
             --j;
             t = c0; t = (t << 1) | (chr(j) < c1);
 
@@ -331,7 +331,7 @@ static void lms_sort_2(const void *t_p,
                 b2_p = sa_p + b_p[c1 = c0];
             }
 
-            assert((b - sa_p) <= i);
+            assert((b2_p - sa_p) <= i);
             --j;
             t = c0;
             t = (t << 1) | (chr(j) > c1);
