@@ -206,7 +206,7 @@ def _do_create_patch(args):
                            args.patchfile,
                            args.compression,
                            args.type,
-                           'divsufsort',
+                           args.suffix_array_algorithm,
                            args.memory_size,
                            args.segment_size,
                            args.minimum_shift_size,
@@ -452,6 +452,10 @@ def _main():
                            choices=sorted(_COMPRESSIONS),
                            default='lzma',
                            help='Compression algorithm (default: %(default)s).')
+    subparser.add_argument('-s', '--suffix-array-algorithm',
+                           choices=('sais', 'divsufsort'),
+                           default='divsufsort',
+                           help='Suffix atrray algorithm (default: %(default)s).')
     subparser.add_argument('--memory-size',
                            type=to_binary_size,
                            help='Target memory size.')
