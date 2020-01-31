@@ -380,11 +380,11 @@ static int create_patch_loop(PyObject *list_p,
         for (scsc = scan; scan < to_size; scan++) {
             len = search(sa_p,
                          from_p,
-                         from_size,
+                         (int32_t)from_size,
                          to_p + scan,
-                         to_size - scan,
+                         (int32_t)to_size - scan,
                          0,
-                         from_size,
+                         (int32_t)from_size,
                          &pos);
 
             for (; scsc < scan + len; scsc++) {
@@ -439,7 +439,7 @@ static PyObject *m_pack_size(PyObject *self_p, PyObject *arg_p)
         return (NULL);
     }
 
-    res = pack_size(&buf[0], size, sizeof(buf));
+    res = pack_size(&buf[0], (int32_t)size, sizeof(buf));
 
     if (res <= 0) {
         PyErr_Format(PyExc_ValueError, "Pack size failed with %d.", res);
