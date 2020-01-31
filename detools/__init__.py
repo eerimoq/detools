@@ -206,6 +206,7 @@ def _do_create_patch(args):
                            args.patchfile,
                            args.compression,
                            args.type,
+                           'divsufsort',
                            args.memory_size,
                            args.segment_size,
                            args.minimum_shift_size,

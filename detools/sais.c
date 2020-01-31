@@ -852,13 +852,13 @@ static PyMethodDef module_methods[] = {
 
 static PyModuleDef module = {
     PyModuleDef_HEAD_INIT,
-    .m_name = "csais",
+    .m_name = "sais",
     .m_doc = NULL,
     .m_size = -1,
     .m_methods = module_methods
 };
 
-PyMODINIT_FUNC PyInit_csais(void)
+PyMODINIT_FUNC PyInit_sais(void)
 {
     PyObject *m_p;
 

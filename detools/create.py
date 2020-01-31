@@ -21,7 +21,8 @@ from .common import pack_size
 from .common import DataSegment
 from .common import unpack_size_bytes
 from .data_format import encode as data_format_encode
-from . import csais as sais
+from . import sais as sais
+from . import divsufsort as divsufsort
 from . import cbsdiff as bsdiff
 
 
@@ -54,6 +55,7 @@ def create_patch_normal_data(ffrom,
                              fto,
                              fpatch,
                              compression,
+                             suffix_array_algorithm,
                              data_format,
                              data_segment):
     to_size = file_size(fto)
@@ -84,7 +86,12 @@ def create_patch_normal_data(ffrom,
 
     fpatch.write(compressor.compress(dfpatch))
     from_data = file_read(ffrom)
-    suffix_array = sais.sais(from_data)
+
+    if suffix_array_algorithm == 'sais':
+        suffix_array = sais.sais(from_data)
+    elif suffix_array_algorithm == 'divsufsort':
+        suffix_array = divsufsort.divsufsort(from_data)
+
     chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
 
     # with open('data-to.patch', 'wb') as fout:
@@ -102,6 +109,7 @@ def create_patch_normal(ffrom,
                         fto,
                         fpatch,
                         compression,
+                        suffix_array_algorithm,
                         data_format,
                         data_segment):
     fpatch.write(pack_header(PATCH_TYPE_NORMAL,
@@ -111,6 +119,7 @@ def create_patch_normal(ffrom,
                              fto,
                              fpatch,
                              compression,
+                             suffix_array_algorithm,
                              data_format,
                              data_segment)
 
@@ -136,6 +145,7 @@ def create_patch_in_place(ffrom,
                           fto,
                           fpatch,
                           compression,
+                          suffix_array_algorithm,
                           memory_size,
                           segment_size,
                           minimum_shift_size,
@@ -180,6 +190,7 @@ def create_patch_in_place(ffrom,
             BytesIO(to_data[to_offset:to_offset + segment_size]),
             fsegment,
             'none',
+            suffix_array_algorithm,
             data_format,
             data_segment)
         fsegments.write(fsegment.getvalue())
@@ -252,6 +263,7 @@ def create_patch(ffrom,
                  fpatch,
                  compression='lzma',
                  patch_type='normal',
+                 suffix_array_algorithm='divsufsort',
                  memory_size=None,
                  segment_size=None,
                  minimum_shift_size=None,
@@ -275,6 +287,8 @@ def create_patch(ffrom,
     ``'zstd'``, ``'lz4'`` or ``'none'``.
 
     `patch_type` must be ``'normal'``, ``'in-place'`` or ``'bsdiff'``.
+
+    `suffix_array_algorithm` must be ``'sais'`` or ``'divsufsort'``.
 
     `memory_size`, `segment_size` and `minimum_shift_size` are used
     when creating an in-place patch.
@@ -304,6 +318,7 @@ def create_patch(ffrom,
                             fto,
                             fpatch,
                             compression,
+                            suffix_array_algorithm,
                             data_format,
                             data_segment)
     elif patch_type == 'in-place':
@@ -311,6 +326,7 @@ def create_patch(ffrom,
                               fto,
                               fpatch,
                               compression,
+                              suffix_array_algorithm,
                               memory_size,
                               segment_size,
                               minimum_shift_size,
@@ -327,6 +343,7 @@ def create_patch_filenames(fromfile,
                            patchfile,
                            compression='lzma',
                            patch_type='normal',
+                           suffix_array_algorithm='divsufsort',
                            memory_size=None,
                            segment_size=None,
                            minimum_shift_size=None,
@@ -358,6 +375,7 @@ def create_patch_filenames(fromfile,
                              fpatch,
                              compression,
                              patch_type,
+                             suffix_array_algorithm,
                              memory_size,
                              segment_size,
                              minimum_shift_size,

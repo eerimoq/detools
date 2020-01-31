@@ -1,7 +1,6 @@
 import unittest
 import struct
 
-import detools.csais
 import detools.cbsdiff
 
 

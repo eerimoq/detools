@@ -1,7 +1,7 @@
 import unittest
 import struct
 
-import detools.csais
+import detools.sais
 
 
 def read_file(filename):
@@ -15,9 +15,9 @@ def suffix_array_list_to_bytearray(suffix_array):
     ])
 
 
-class DetoolsSaisTest(unittest.TestCase):
+class DetoolsSuffixArrayTest(unittest.TestCase):
 
-    def test_sais(self):
+    def test_suffix_array(self):
         datas = [
             (
                 b'',
@@ -49,7 +49,8 @@ class DetoolsSaisTest(unittest.TestCase):
 
         for data, suffix_array in datas:
             suffix_array = suffix_array_list_to_bytearray(suffix_array)
-            self.assertEqual(detools.csais.sais(data), suffix_array)
+            self.assertEqual(detools.sais.sais(data), suffix_array)
+            self.assertEqual(detools.divsufsort.divsufsort(data), suffix_array)
 
 
 if __name__ == '__main__':

@@ -34,7 +34,13 @@ setup(name='detools',
           'heatshrink2'
       ],
       ext_modules=[
-          Extension(name="detools.csais", sources=["detools/sais.c"]),
+          Extension(name="detools.sais", sources=["detools/sais.c"]),
+          Extension(name="detools.divsufsort",
+                    sources=[
+                        "detools/divsufsort.c",
+                        "detools/libdivsufsort/divsufsort.c",
+                        "detools/libdivsufsort/divsufsort64.c"
+                    ]),
           Extension(name="detools.cbsdiff", sources=["detools/bsdiff.c"])
       ],
       test_suite="tests",
