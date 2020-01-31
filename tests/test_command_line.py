@@ -32,6 +32,26 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_patch),
                          read_file('tests/files/foo/patch'))
 
+    def test_command_line_create_patch_foo_sais(self):
+        foo_patch = 'foo.patch'
+        argv = [
+            'detools',
+            'create_patch',
+            '--suffix-array-algorithm', 'sais',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            foo_patch
+        ]
+
+        if os.path.exists(foo_patch):
+            os.remove(foo_patch)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_patch),
+                         read_file('tests/files/foo/patch'))
+
     def test_command_line_apply_patch_foo(self):
         foo_new = 'foo.new'
         argv = [
