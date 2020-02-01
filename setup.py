@@ -11,6 +11,25 @@ def find_version():
                      open('detools/version.py', 'r').read(),
                      re.MULTILINE).group(1)
 
+HDIFFPATCH_SOURCES = [
+    "HDiff/diff.cpp",
+    "HDiff/private_diff/compress_detect.cpp",
+    "HDiff/private_diff/suffix_string.cpp",
+    "HDiff/private_diff/libdivsufsort/divsufsort.c",
+    "HDiff/private_diff/libdivsufsort/divsufsort64.c",
+    "HDiff/private_diff/limit_mem_diff/stream_serialize.cpp",
+    "HDiff/private_diff/limit_mem_diff/digest_matcher.cpp",
+    "HDiff/private_diff/limit_mem_diff/adler_roll.c",
+    "HDiff/private_diff/bytes_rle.cpp",
+    "HPatch/patch.c",
+]
+
+HDIFFPATCH_SOURCES = [
+    "detools/HDiffPatch/libHDiffPatch/" + source
+    for source in HDIFFPATCH_SOURCES
+]
+HDIFFPATCH_SOURCES += ["detools/hdiffpatch.cpp"]
+HDIFFPATCH_SOURCES += ["detools/HDiffPatch/file_for_patch.c"]
 
 setup(name='detools',
       version=find_version(),
@@ -41,7 +60,8 @@ setup(name='detools',
                         "detools/libdivsufsort/divsufsort.c",
                         "detools/libdivsufsort/divsufsort64.c"
                     ]),
-          Extension(name="detools.cbsdiff", sources=["detools/bsdiff.c"])
+          Extension(name="detools.cbsdiff", sources=["detools/bsdiff.c"]),
+          Extension(name="detools.hdiffpatch", sources=HDIFFPATCH_SOURCES)
       ],
       test_suite="tests",
       entry_points={

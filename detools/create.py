@@ -24,6 +24,7 @@ from .data_format import encode as data_format_encode
 from . import sais as sais
 from . import divsufsort as divsufsort
 from . import cbsdiff as bsdiff
+from . import hdiffpatch as hdiffpatch
 
 
 def pack_header(patch_type, compression):
@@ -258,6 +259,13 @@ def create_patch_bsdiff(ffrom, fto, fpatch):
     fpatch.write(fextra.getvalue())
 
 
+def create_patch_hdiffpatch(ffrom, fto, fpatch, match_block_size):
+    patch = hdiffpatch.create_patch(file_read(ffrom),
+                                    file_read(fto),
+                                    match_block_size)
+    fpatch.write(patch)
+
+
 def create_patch(ffrom,
                  fto,
                  fpatch,
@@ -279,7 +287,8 @@ def create_patch(ffrom,
                  to_data_begin=0,
                  to_data_end=0,
                  to_code_begin=0,
-                 to_code_end=0):
+                 to_code_end=0,
+                 match_block_size=0):
     """Create a patch from `ffrom` to `fto` and write it to `fpatch`. All
     three arguments are file-like objects.
 
@@ -292,6 +301,10 @@ def create_patch(ffrom,
 
     `memory_size`, `segment_size` and `minimum_shift_size` are used
     when creating an in-place patch.
+
+    `match_block_size` is used by hdiffpatch. If 0, whole files are
+    loaded into memory. If greater than 0, less memory is needed to
+    create the patch, but the patch will be bigger.
 
     >>> ffrom = open('foo.old', 'rb')
     >>> fto = open('foo.new', 'rb')
@@ -334,6 +347,8 @@ def create_patch(ffrom,
                               data_segment)
     elif patch_type == 'bsdiff':
         create_patch_bsdiff(ffrom, fto, fpatch)
+    elif patch_type == 'hdiffpatch':
+        create_patch_hdiffpatch(ffrom, fto, fpatch, match_block_size)
     else:
         raise Error("Bad patch type '{}'.".format(patch_type))
 
@@ -359,7 +374,8 @@ def create_patch_filenames(fromfile,
                            to_data_begin=0,
                            to_data_end=0,
                            to_code_begin=0,
-                           to_code_end=0):
+                           to_code_end=0,
+                           match_block_size=0):
     """Same as :func:`~detools.create_patch()`, but with filenames instead
     of file-like objects.
 
@@ -391,4 +407,5 @@ def create_patch_filenames(fromfile,
                              to_data_begin,
                              to_data_end,
                              to_code_begin,
-                             to_code_end)
+                             to_code_end,
+                             match_block_size)

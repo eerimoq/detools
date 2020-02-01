@@ -13,9 +13,11 @@ from .create import create_patch_filenames
 from .apply import apply_patch
 from .apply import apply_patch_in_place
 from .apply import apply_patch_bsdiff
+from .apply import apply_patch_hdiffpatch
 from .apply import apply_patch_filenames
 from .apply import apply_patch_in_place_filenames
 from .apply import apply_patch_bsdiff_filenames
+from .apply import apply_patch_hdiffpatch_filenames
 from .info import patch_info
 from .info import patch_info_filename
 from .errors import Error
@@ -222,7 +224,8 @@ def _do_create_patch(args):
                            to_data_begin,
                            to_data_end,
                            to_code_begin,
-                           to_code_end)
+                           to_code_end,
+                           args.match_block_size)
 
     print("Successfully created patch '{}'!".format(args.patchfile))
 
@@ -237,6 +240,10 @@ def _do_apply_patch_in_place(args):
 
 def _do_apply_patch_bsdiff(args):
     apply_patch_bsdiff_filenames(args.fromfile, args.patchfile, args.tofile)
+
+
+def _do_apply_patch_hdiffpatch(args):
+    apply_patch_hdiffpatch_filenames(args.fromfile, args.patchfile, args.tofile)
 
 
 def _format_size(value):
@@ -445,7 +452,7 @@ def _main():
     subparser = subparsers.add_parser('create_patch',
                                       description='Create a patch.')
     subparser.add_argument('-t', '--type',
-                           choices=('normal', 'in-place', 'bsdiff'),
+                           choices=('normal', 'in-place', 'bsdiff', 'hdiffpatch'),
                            default='normal',
                            help='Patch type (default: %(default)s).')
     subparser.add_argument('-c', '--compression',
@@ -456,6 +463,10 @@ def _main():
                            choices=('sais', 'divsufsort'),
                            default='divsufsort',
                            help='Suffix atrray algorithm (default: %(default)s).')
+    subparser.add_argument('--match-block-size',
+                           type=to_binary_size,
+                           default=0,
+                           help='Match block size (default: %(default)s).')
     subparser.add_argument('--memory-size',
                            type=to_binary_size,
                            help='Target memory size.')
@@ -528,6 +539,14 @@ def _main():
     subparser.add_argument('patchfile', help='Patch file.')
     subparser.add_argument('tofile', help='Created to file.')
     subparser.set_defaults(func=_do_apply_patch_bsdiff)
+
+    # Hdiffpatch apply patch subparser.
+    subparser = subparsers.add_parser('apply_patch_hdiffpatch',
+                                      description='Apply given hdiffpatch patch.')
+    subparser.add_argument('fromfile', help='From file.')
+    subparser.add_argument('patchfile', help='Patch file.')
+    subparser.add_argument('tofile', help='Created to file.')
+    subparser.set_defaults(func=_do_apply_patch_hdiffpatch)
 
     # Patch info subparser.
     subparser = subparsers.add_parser('patch_info',

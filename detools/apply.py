@@ -21,8 +21,10 @@ from .common import PATCH_TYPE_IN_PLACE
 from .common import format_bad_compression_string
 from .common import format_bad_compression_number
 from .common import file_size
+from .common import file_read
 from .common import unpack_size
 from .data_format import create_readers
+from . import hdiffpatch as hdiffpatch
 
 
 class PatchReader(object):
@@ -471,6 +473,25 @@ def apply_patch_bsdiff(ffrom, fpatch, fto):
     return to_size
 
 
+def apply_patch_hdiffpatch(ffrom, fpatch, fto):
+    """Apply given hdiffpatch patch `fpatch` to `ffrom` to create
+    `fto`. Returns the size of the created to-data.
+
+    All arguments are file-like objects.
+
+    >>> ffrom = open('foo.mem', 'rb')
+    >>> fpatch = open('foo-hdiffpatch.patch', 'rb')
+    >>> fto = open('foo.new', 'wb')
+    >>> apply_patch_hdiffpatch(ffrom, fpatch, fto)
+    2780
+
+    """
+
+    to_data = hdiffpatch.apply_patch(file_read(ffrom), file_read(fpatch))
+
+    return fto.write(to_data)
+
+
 def apply_patch_filenames(fromfile, patchfile, tofile):
     """Same as :func:`~detools.apply_patch()`, but with filenames instead
     of file-like objects.
@@ -513,3 +534,18 @@ def apply_patch_bsdiff_filenames(fromfile, patchfile, tofile):
         with open(patchfile, 'rb') as fpatch:
             with open(tofile, 'wb') as fto:
                 return apply_patch_bsdiff(ffrom, fpatch, fto)
+
+
+def apply_patch_hdiffpatch_filenames(fromfile, patchfile, tofile):
+    """Same as :func:`~detools.apply_patch_hdiffpatch()`, but with
+    filenames instead of file-like objects.
+
+    >>> apply_patch_hdiffpatch_filenames('foo.old', 'foo-bsdiff.patch', 'foo.new')
+    2780
+
+    """
+
+    with open(fromfile, 'rb') as ffrom:
+        with open(patchfile, 'rb') as fpatch:
+            with open(tofile, 'wb') as fto:
+                return apply_patch_hdiffpatch(ffrom, fpatch, fto)

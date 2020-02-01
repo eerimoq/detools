@@ -14,9 +14,9 @@ class DetoolsTest(unittest.TestCase):
                             **kwargs):
         fpatch = BytesIO()
 
-        with open(from_filename, 'rb') as fold:
-            with open(to_filename, 'rb') as fnew:
-                detools.create_patch(fold, fnew, fpatch, **kwargs)
+        with open(from_filename, 'rb') as ffrom:
+            with open(to_filename, 'rb') as fto:
+                detools.create_patch(ffrom, fto, fpatch, **kwargs)
 
         actual = fpatch.getvalue()
         # open(patch_filename, 'wb').write(actual)
@@ -34,18 +34,18 @@ class DetoolsTest(unittest.TestCase):
         patch_type = kwargs.get('patch_type', 'normal')
 
         if patch_type == 'normal':
-            fnew = BytesIO()
+            fto = BytesIO()
 
-            with open(from_filename, 'rb') as fold:
+            with open(from_filename, 'rb') as ffrom:
                 with open(patch_filename, 'rb') as fpatch:
-                    to_size = detools.apply_patch(fold, fpatch, fnew)
+                    to_size = detools.apply_patch(ffrom, fpatch, fto)
 
-            actual = fnew.getvalue()
+            actual = fto.getvalue()
         elif patch_type == 'in-place':
             memory_size = kwargs['memory_size']
 
-            with open(from_filename, 'rb') as fold:
-                data = fold.read()
+            with open(from_filename, 'rb') as ffrom:
+                data = ffrom.read()
 
             data += (memory_size - len(data)) * b'\xff'
             fmem = BytesIO(data)
@@ -55,18 +55,26 @@ class DetoolsTest(unittest.TestCase):
 
             actual = fmem.getvalue()[:to_size]
         elif patch_type == 'bsdiff':
-            fnew = BytesIO()
+            fto = BytesIO()
 
-            with open(from_filename, 'rb') as fold:
+            with open(from_filename, 'rb') as ffrom:
                 with open(patch_filename, 'rb') as fpatch:
-                    to_size = detools.apply_patch_bsdiff(fold, fpatch, fnew)
+                    to_size = detools.apply_patch_bsdiff(ffrom, fpatch, fto)
 
-            actual = fnew.getvalue()
+            actual = fto.getvalue()
+        elif patch_type == 'hdiffpatch':
+            fto = BytesIO()
+
+            with open(from_filename, 'rb') as ffrom:
+                with open(patch_filename, 'rb') as fpatch:
+                    to_size = detools.apply_patch_hdiffpatch(ffrom, fpatch, fto)
+
+            actual = fto.getvalue()
         else:
             raise Exception(patch_type)
 
-        with open(to_filename, 'rb') as fnew:
-            expected = fnew.read()
+        with open(to_filename, 'rb') as fto:
+            expected = fto.read()
 
         # open('actual-to.bin', 'wb').write(actual)
 
@@ -826,6 +834,12 @@ class DetoolsTest(unittest.TestCase):
             'tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-'
             'bsdiff.patch',
             patch_type='bsdiff')
+
+    def test_create_and_apply_patch_micropython_hdiffpatch(self):
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/hdiffpatch.patch',
+                                           patch_type='hdiffpatch')
 
 
 # This file is not '__main__' when executed via 'python setup.py3
