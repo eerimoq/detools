@@ -295,14 +295,12 @@ static PyMethodDef module_methods[] = {
     { NULL }
 };
 
-extern "C" {
-
 static PyModuleDef module = {
     PyModuleDef_HEAD_INIT,
-    .m_name = "hdiffpatch",
-    .m_doc = NULL,
-    .m_size = -1,
-    .m_methods = module_methods
+    "hdiffpatch",
+    NULL,
+    -1,
+    module_methods
 };
 
 PyMODINIT_FUNC PyInit_hdiffpatch(void)
@@ -317,6 +315,4 @@ PyMODINIT_FUNC PyInit_hdiffpatch(void)
     }
 
     return (m_p);
-}
-
 }
