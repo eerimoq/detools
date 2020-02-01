@@ -121,7 +121,7 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject* args_p)
             return (NULL);
         }
 
-        res = PyByteArray_Resize(byte_array_p, patch_data.out_length);
+        res = PyByteArray_Resize(byte_array_p, (Py_ssize_t)patch_data.out_length);
 
         if (res != 0) {
             return (NULL);
@@ -135,7 +135,7 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject* args_p)
 
         members_read = fread(PyByteArray_AsString(byte_array_p),
                              1,
-                             patch_data.out_length,
+                             (size_t)patch_data.out_length,
                              patch_data.m_file);
         hpatch_TFileStreamOutput_close(&patch_data);
 
@@ -263,7 +263,7 @@ static PyObject *m_apply_patch(PyObject *self_p, PyObject* args_p)
         return (NULL);
     }
 
-    res = PyByteArray_Resize(byte_array_p, patch_info.newDataSize);
+    res = PyByteArray_Resize(byte_array_p, (Py_ssize_t)patch_info.newDataSize);
 
     if (res != 0) {
         return (NULL);
@@ -295,6 +295,8 @@ static PyMethodDef module_methods[] = {
     { NULL }
 };
 
+extern "C" {
+
 static PyModuleDef module = {
     PyModuleDef_HEAD_INIT,
     .m_name = "hdiffpatch",
@@ -315,4 +317,6 @@ PyMODINIT_FUNC PyInit_hdiffpatch(void)
     }
 
     return (m_p);
+}
+
 }
