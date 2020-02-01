@@ -14,4 +14,5 @@ install:
   - python -m pip install -r requirements.txt
 
 test_script:
+  - git submodule update --init --recursive
   - python setup.py test
