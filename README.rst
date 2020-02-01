@@ -40,6 +40,9 @@ differences:
 
   - AArch64
 
+There is also a wrapper of `HDiffPatch`_, implementing basic
+operations.
+
 Project homepage: https://github.com/eerimoq/detools
 
 Documentation: http://detools.readthedocs.org/en/latest
@@ -140,7 +143,7 @@ Lower hdiffpatch memory usage with --match-block-size.
          tests/files/foo/old tests/files/foo/new foo-hdiffpatch.patch
    Successfully created patch 'foo-hdiffpatch.patch'!
    $ ls -l foo-hdiffpatch.patch
-   -rw-rw-r-- 1 erik erik 261 Apr 22 18:20 foo-hdiffpatch.patch
+   -rw-rw-r-- 1 erik erik 488 Apr 22 18:20 foo-hdiffpatch.patch
 
 The apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -187,15 +190,6 @@ create ``foo.new``.
 .. code-block:: text
 
    $ detools apply_patch_hdiffpatch tests/files/foo/old foo-hdiffpatch.patch foo.new
-   $ ls -l foo.new
-   -rw-rw-r-- 1 erik erik 2780 Mar  1 19:18 foo.new
-
-Limit memory usage to 32 MiB.
-
-.. code-block:: text
-
-   $ detools apply_patch_hdiffpatch --cache-size 32MiB \
-         tests/files/foo/old foo-hdiffpatch.patch foo.new
    $ ls -l foo.new
    -rw-rw-r-- 1 erik erik 2780 Mar  1 19:18 foo.new
 
@@ -262,6 +256,8 @@ Contributing
 .. _codecov: https://codecov.io/gh/eerimoq/detools
 
 .. _SA-IS: https://sites.google.com/site/yuta256/sais
+
+.. _HDiffPatch: https://github.com/sisong/HDiffPatch
 
 .. _Incremental apply patch: https://github.com/eerimoq/detools/tree/master/src/c
 
