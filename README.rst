@@ -16,7 +16,7 @@ differences:
 - Linear patch file access pattern to allow streaming and less RAM
   usage.
 
-- `SA-IS`_ instead of qsufsort.
+- `SA-IS`_ or divsufsort instead of qsufsort.
 
 - Variable length size fields.
 
