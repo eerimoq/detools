@@ -42,7 +42,7 @@ differences:
 
 There is also a wrapper of `HDiffPatch`_, implementing basic
 operations. Adds a custom header, so it is not compatible with
-original HDiffPatch implementation as of today.
+original `HDiffPatch`_ implementation as of today.
 
 Project homepage: https://github.com/eerimoq/detools
 
@@ -180,18 +180,6 @@ create ``foo.new``.
 .. code-block:: text
 
    $ detools apply_patch_bsdiff tests/files/foo/old foo-bsdiff.patch foo.new
-   $ ls -l foo.new
-   -rw-rw-r-- 1 erik erik 2780 Mar  1 19:18 foo.new
-
-The hdiffpatch apply patch subcommand
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Apply the patch ``foo-hdiffpatch.patch`` to ``tests/files/foo/old`` to
-create ``foo.new``.
-
-.. code-block:: text
-
-   $ detools apply_patch_hdiffpatch tests/files/foo/old foo-hdiffpatch.patch foo.new
    $ ls -l foo.new
    -rw-rw-r-- 1 erik erik 2780 Mar  1 19:18 foo.new
 

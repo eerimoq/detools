@@ -1,6 +1,7 @@
 import os
 import struct
 from io import BytesIO
+import bitstruct
 from .errors import Error
 
 try:
@@ -182,3 +183,18 @@ class DataSegment(object):
         self.to_data_end = to_data_end
         self.to_code_begin = to_code_begin
         self.to_code_end = to_code_end
+
+
+def unpack_header(data):
+    return bitstruct.unpack('p1u3u4', data)
+
+
+def peek_header_type(fpatch):
+    position = fpatch.tell()
+    header = fpatch.read(1)
+    fpatch.seek(position, os.SEEK_SET)
+
+    if len(header) != 1:
+        raise Error('Failed to read the patch header.')
+
+    return unpack_header(header)[0]

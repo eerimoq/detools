@@ -2078,7 +2078,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         foo_new = 'foo.new'
         argv = [
             'detools',
-            'apply_patch_hdiffpatch',
+            'apply_patch',
             'tests/files/foo/old',
             'tests/files/foo/hdiffpatch.patch',
             foo_new
@@ -2097,7 +2097,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         foo_new = 'foo.new'
         argv = [
             'detools',
-            'apply_patch_hdiffpatch',
+            'apply_patch',
             'tests/files/foo/old',
             'tests/files/foo/hdiffpatch-none.patch',
             foo_new

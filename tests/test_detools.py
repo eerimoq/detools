@@ -33,7 +33,7 @@ class DetoolsTest(unittest.TestCase):
                            **kwargs):
         patch_type = kwargs.get('patch_type', 'normal')
 
-        if patch_type == 'normal':
+        if patch_type in ['normal', 'hdiffpatch']:
             fto = BytesIO()
 
             with open(from_filename, 'rb') as ffrom:
@@ -60,14 +60,6 @@ class DetoolsTest(unittest.TestCase):
             with open(from_filename, 'rb') as ffrom:
                 with open(patch_filename, 'rb') as fpatch:
                     to_size = detools.apply_patch_bsdiff(ffrom, fpatch, fto)
-
-            actual = fto.getvalue()
-        elif patch_type == 'hdiffpatch':
-            fto = BytesIO()
-
-            with open(from_filename, 'rb') as ffrom:
-                with open(patch_filename, 'rb') as fpatch:
-                    to_size = detools.apply_patch_hdiffpatch(ffrom, fpatch, fto)
 
             actual = fto.getvalue()
         else:
@@ -570,9 +562,7 @@ class DetoolsTest(unittest.TestCase):
                 with self.assertRaises(detools.Error) as cm:
                     detools.apply_patch(fold, fpatch, fnew)
 
-                self.assertEqual(
-                    str(cm.exception),
-                    "Expected patch type 0, but got 7.")
+                self.assertEqual(str(cm.exception), "Bad patch type 7.")
 
     def test_create_patch_foo_bad_patch_type(self):
         fpatch = BytesIO()
