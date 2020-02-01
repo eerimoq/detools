@@ -2031,6 +2031,27 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_patch),
                          read_file('tests/files/foo/hdiffpatch.patch'))
 
+    def test_command_line_create_patch_foo_hdiffpatch_none(self):
+        foo_patch = 'foo.patch'
+        argv = [
+            'detools',
+            'create_patch',
+            '--type', 'hdiffpatch',
+            '-c', 'none',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            foo_patch
+        ]
+
+        if os.path.exists(foo_patch):
+            os.remove(foo_patch)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_patch),
+                         read_file('tests/files/foo/hdiffpatch-none.patch'))
+
     def test_command_line_create_patch_foo_hdiffpatch_match_block_size_64(self):
         foo_patch = 'foo.patch'
         argv = [
@@ -2060,6 +2081,25 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'apply_patch_hdiffpatch',
             'tests/files/foo/old',
             'tests/files/foo/hdiffpatch.patch',
+            foo_new
+        ]
+
+        if os.path.exists(foo_new):
+            os.remove(foo_new)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_new),
+                         read_file('tests/files/foo/new'))
+
+    def test_command_line_apply_patch_foo_hdiffpatch_none(self):
+        foo_new = 'foo.new'
+        argv = [
+            'detools',
+            'apply_patch_hdiffpatch',
+            'tests/files/foo/old',
+            'tests/files/foo/hdiffpatch-none.patch',
             foo_new
         ]
 

@@ -18,6 +18,7 @@ from .common import COMPRESSION_ZSTD
 from .common import COMPRESSION_LZ4
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
+from .common import PATCH_TYPE_HDIFFPATCH
 from .common import format_bad_compression_string
 from .common import format_bad_compression_number
 from .common import file_size
@@ -155,12 +156,38 @@ def read_header_normal(fpatch):
     patch_type, compression  = unpack_header(header)
 
     if patch_type != PATCH_TYPE_NORMAL:
-        raise Error("Expected patch type 0, but got {}.".format(patch_type))
+        raise Error(
+            "Expected patch type {}, but got {}.".format(PATCH_TYPE_NORMAL,
+                                                         patch_type))
 
     compression = convert_compression(compression)
     to_size = unpack_size(fpatch)
 
     return compression, to_size
+
+
+def read_header_hdiffpatch(fpatch):
+    """Read a hdiffpatch header.
+
+    """
+
+    header = fpatch.read(1)
+
+    if len(header) != 1:
+        raise Error('Failed to read the patch header.')
+
+    patch_type, compression  = unpack_header(header)
+
+    if patch_type != PATCH_TYPE_HDIFFPATCH:
+        raise Error(
+            "Expected patch type {}, but got {}.".format(PATCH_TYPE_HDIFFPATCH,
+                                                         patch_type))
+
+    compression = convert_compression(compression)
+    to_size = unpack_size(fpatch)
+    patch_size = unpack_size(fpatch)
+
+    return compression, to_size, patch_size
 
 
 def read_header_in_place(fpatch):
@@ -176,7 +203,9 @@ def read_header_in_place(fpatch):
     patch_type, compression = unpack_header(header)
 
     if patch_type != PATCH_TYPE_IN_PLACE:
-        raise Error("Expected patch type 1, but got {}.".format(patch_type))
+        raise Error(
+            "Expected patch type {}, but got {}.".format(PATCH_TYPE_IN_PLACE,
+                                                         patch_type))
 
     compression = convert_compression(compression)
     memory_size = unpack_size(fpatch)
@@ -487,7 +516,14 @@ def apply_patch_hdiffpatch(ffrom, fpatch, fto):
 
     """
 
-    to_data = hdiffpatch.apply_patch(file_read(ffrom), file_read(fpatch))
+    compression, to_size, patch_size = read_header_hdiffpatch(fpatch)
+
+    if to_size == 0:
+        return to_size
+
+    patch_reader = PatchReader(fpatch, compression)
+    to_data = hdiffpatch.apply_patch(file_read(ffrom),
+                                     patch_reader.read(patch_size))
 
     return fto.write(to_data)
 

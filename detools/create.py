@@ -11,6 +11,7 @@ from .compression.zstd import ZstdCompressor
 from .compression.lz4 import Lz4Compressor
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
+from .common import PATCH_TYPE_HDIFFPATCH
 from .common import DATA_FORMATS
 from .common import format_bad_compression_string
 from .common import compression_string_to_number
@@ -259,11 +260,21 @@ def create_patch_bsdiff(ffrom, fto, fpatch):
     fpatch.write(fextra.getvalue())
 
 
-def create_patch_hdiffpatch(ffrom, fto, fpatch, match_block_size):
+def create_patch_hdiffpatch(ffrom,
+                            fto,
+                            fpatch,
+                            compression,
+                            match_block_size):
     patch = hdiffpatch.create_patch(file_read(ffrom),
                                     file_read(fto),
                                     match_block_size)
-    fpatch.write(patch)
+    compressor = create_compressor(compression)
+    fpatch.write(pack_header(PATCH_TYPE_HDIFFPATCH,
+                             compression_string_to_number(compression)))
+    fpatch.write(pack_size(file_size(fto)))
+    fpatch.write(pack_size(len(patch)))
+    fpatch.write(compressor.compress(patch))
+    fpatch.write(compressor.flush())
 
 
 def create_patch(ffrom,
@@ -348,7 +359,11 @@ def create_patch(ffrom,
     elif patch_type == 'bsdiff':
         create_patch_bsdiff(ffrom, fto, fpatch)
     elif patch_type == 'hdiffpatch':
-        create_patch_hdiffpatch(ffrom, fto, fpatch, match_block_size)
+        create_patch_hdiffpatch(ffrom,
+                                fto,
+                                fpatch,
+                                compression,
+                                match_block_size)
     else:
         raise Error("Bad patch type '{}'.".format(patch_type))
 

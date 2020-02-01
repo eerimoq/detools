@@ -9,8 +9,9 @@ except ImportError:
     from .bsdiff import pack_size
 
 
-PATCH_TYPE_NORMAL    = 0
-PATCH_TYPE_IN_PLACE  = 1
+PATCH_TYPE_NORMAL      = 0
+PATCH_TYPE_IN_PLACE    = 1
+PATCH_TYPE_HDIFFPATCH  = 2
 
 COMPRESSION_NONE        = 0
 COMPRESSION_LZMA        = 1

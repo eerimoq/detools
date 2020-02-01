@@ -41,7 +41,8 @@ differences:
   - AArch64
 
 There is also a wrapper of `HDiffPatch`_, implementing basic
-operations.
+operations. Adds a custom header, so it is not compatible with
+original HDiffPatch implementation as of today.
 
 Project homepage: https://github.com/eerimoq/detools
 
@@ -135,7 +136,8 @@ the original HDiffPatch program.
    $ ls -l foo-hdiffpatch.patch
    -rw-rw-r-- 1 erik erik 261 Apr 22 18:20 foo-hdiffpatch.patch
 
-Lower hdiffpatch memory usage with --match-block-size.
+Lower hdiffpatch memory usage with ``--match-block-size``. Mainly
+useful for big files.
 
 .. code-block:: text
 

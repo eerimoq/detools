@@ -835,7 +835,7 @@ class DetoolsTest(unittest.TestCase):
             'bsdiff.patch',
             patch_type='bsdiff')
 
-    def test_create_and_apply_patch_micropython_hdiffpatch(self):
+    def test_create_and_apply_patch_foo_hdiffpatch(self):
         self.assert_create_and_apply_patch('tests/files/foo/old',
                                            'tests/files/foo/new',
                                            'tests/files/foo/hdiffpatch.patch',
