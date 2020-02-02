@@ -13,7 +13,7 @@ script:
   - env CFLAGS=--coverage coverage run --source=detools setup.py test
   - make test-sdist
   - make test-c
-  - PYTHON=python tests/benchmark.sh
+  - env PYTHON=python tests/benchmark.sh
 
 after_success:
   - coveralls
