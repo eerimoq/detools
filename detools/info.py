@@ -2,9 +2,11 @@ import os
 from .errors import Error
 from .apply import read_header_normal
 from .apply import read_header_in_place
+from .apply import read_header_hdiffpatch
 from .apply import PatchReader
 from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
+from .common import PATCH_TYPE_HDIFFPATCH
 from .common import file_size
 from .common import unpack_size
 from .common import unpack_size_with_length
@@ -124,6 +126,13 @@ def patch_info_in_place(fpatch):
             segments)
 
 
+def patch_info_hdiffpatch(fpatch):
+    patch_size = file_size(fpatch)
+    compression, to_size, _ = read_header_hdiffpatch(fpatch)
+
+    return (patch_size, compression, to_size)
+
+
 def patch_info(fpatch, fsize=None):
     """Get patch information from given file-like patch object `fpatch`.
 
@@ -138,6 +147,8 @@ def patch_info(fpatch, fsize=None):
         return 'normal', patch_info_normal(fpatch, fsize)
     elif patch_type == PATCH_TYPE_IN_PLACE:
         return 'in-place', patch_info_in_place(fpatch)
+    elif patch_type == PATCH_TYPE_HDIFFPATCH:
+        return 'hdiffpatch', patch_info_hdiffpatch(fpatch)
     else:
         raise Error('Bad patch type {}.'.format(patch_type))
 

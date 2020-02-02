@@ -440,6 +440,19 @@ def _patch_info_in_place(fsize,
                                      *normal_info)
 
 
+def _patch_info_hdiffpatch(fsize,
+                           patch_size,
+                           compression,
+                           to_size):
+    patch_to_ratio = _format_ratio(patch_size, to_size)
+
+    print('Type:               hdiffpatch')
+    print('Patch size:         {}'.format(fsize(patch_size)))
+    print('To size:            {}'.format(fsize(to_size)))
+    print('Patch/to ratio:     {} % (lower is better)'.format(patch_to_ratio))
+    print('Compression:        {}'.format(compression))
+
+
 def _do_patch_info(args):
     if args.no_human:
         fsize = _format_bytes
@@ -452,6 +465,8 @@ def _do_patch_info(args):
         _patch_info_normal(args.detailed, fsize, *info)
     elif patch_type == 'in-place':
         _patch_info_in_place(fsize, *info)
+    elif patch_type == 'hdiffpatch':
+        _patch_info_hdiffpatch(fsize, *info)
     else:
         raise Error('Bad patch type {}.'.format(patch_type))
 

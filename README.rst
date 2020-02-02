@@ -98,7 +98,7 @@ Create a patch ``foo.patch`` from ``tests/files/foo/old`` to
    $ detools create_patch tests/files/foo/old tests/files/foo/new foo.patch
    Successfully created patch 'foo.patch'!
    $ ls -l foo.patch
-   -rw-rw-r-- 1 erik erik 127 Mar  1 19:18 foo.patch
+   -rw-rw-r-- 1 erik erik 127 feb  2 10:35 foo.patch
 
 Create the same patch as above, but without compression.
 
@@ -108,7 +108,7 @@ Create the same patch as above, but without compression.
          tests/files/foo/old tests/files/foo/new foo-no-compression.patch
    Successfully created patch 'foo-no-compression.patch'!
    $ ls -l foo-no-compression.patch
-   -rw-rw-r-- 1 erik erik 2792 Mar  1 19:18 foo-no-compression.patch
+   -rw-rw-r-- 1 erik erik 2792 feb  2 10:35 foo-no-compression.patch
 
 The create in-place patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -117,11 +117,11 @@ Create an in-place patch ``foo-in-place.patch``.
 
 .. code-block:: text
 
-   $ detools create_patch_in-place --memory-size 3000 --segment-size 500 \
+   $ detools create_patch_in_place --memory-size 3000 --segment-size 500 \
          tests/files/foo/old tests/files/foo/new foo-in-place.patch
    Successfully created patch 'foo-in-place.patch'!
    $ ls -l foo-in-place.patch
-   -rw-rw-r-- 1 erik erik 672 Mar 16 08:49 foo-in-place.patch
+   -rw-rw-r-- 1 erik erik 672 feb  2 10:36 foo-in-place.patch
 
 The create bsdiff patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -135,13 +135,12 @@ original bsdiff program.
          tests/files/foo/old tests/files/foo/new foo-bsdiff.patch
    Successfully created patch 'foo-bsdiff.patch'!
    $ ls -l foo-bsdiff.patch
-   -rw-rw-r-- 1 erik erik 261 Apr 22 18:20 foo-bsdiff.patch
+   -rw-rw-r-- 1 erik erik 261 feb  2 10:36 foo-bsdiff.patch
 
 The create hdiffpatch patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Create a hdiffpatch patch ``foo-hdiffpatch.patch``, compatible with
-the original HDiffPatch program.
+Create a hdiffpatch patch ``foo-hdiffpatch.patch``.
 
 .. code-block:: text
 
@@ -149,7 +148,7 @@ the original HDiffPatch program.
          tests/files/foo/old tests/files/foo/new foo-hdiffpatch.patch
    Successfully created patch 'foo-hdiffpatch.patch'!
    $ ls -l foo-hdiffpatch.patch
-   -rw-rw-r-- 1 erik erik 261 Apr 22 18:20 foo-hdiffpatch.patch
+   -rw-rw-r-- 1 erik erik 146 feb  2 10:37 foo-hdiffpatch.patch
 
 Lower memory usage with ``--match-block-size``. Mainly useful for big
 files. Creates slightly bigger patches.
@@ -157,10 +156,10 @@ files. Creates slightly bigger patches.
 .. code-block:: text
 
    $ detools create_patch_hdiffpatch --match-block-size 64 \
-         tests/files/foo/old tests/files/foo/new foo-hdiffpatch.patch
+         tests/files/foo/old tests/files/foo/new foo-hdiffpatch-64.patch
    Successfully created patch 'foo-hdiffpatch.patch'!
-   $ ls -l foo-hdiffpatch.patch
-   -rw-rw-r-- 1 erik erik 488 Apr 22 18:20 foo-hdiffpatch.patch
+   $ ls -l foo-hdiffpatch-64.patch
+   -rw-rw-r-- 1 erik erik 389 feb  2 10:38 foo-hdiffpatch-64.patch
 
 The apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -172,7 +171,7 @@ Apply the patch ``foo.patch`` to ``tests/files/foo/old`` to create
 
    $ detools apply_patch tests/files/foo/old foo.patch foo.new
    $ ls -l foo.new
-   -rw-rw-r-- 1 erik erik 2780 Mar  1 19:18 foo.new
+   -rw-rw-r-- 1 erik erik 2780 feb  2 10:38 foo.new
 
 The in-place apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -181,10 +180,10 @@ Apply the in-place patch ``foo-in-place.patch`` to ``foo.mem``.
 
 .. code-block:: text
 
-   $ cp tests/files/foo/old foo.mem
+   $ cp tests/files/foo/in-place-3000-500.mem foo.mem
    $ detools apply_patch_in_place foo.mem foo-in-place.patch
    $ ls -l foo.mem
-   -rwxrwxr-x 1 erik erik 2780 Mar 16 08:51 foo.mem
+   -rw-rw-r-- 1 erik erik 3000 feb  2 10:40 foo.mem
 
 The bsdiff apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -196,7 +195,7 @@ create ``foo.new``.
 
    $ detools apply_patch_bsdiff tests/files/foo/old foo-bsdiff.patch foo.new
    $ ls -l foo.new
-   -rw-rw-r-- 1 erik erik 2780 Mar  1 19:18 foo.new
+   -rw-rw-r-- 1 erik erik 2780 feb  2 10:41 foo.new
 
 The patch info subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -13,7 +13,7 @@ def read_file(filename):
 
 class DetoolsCommandLineTest(unittest.TestCase):
 
-    def test_command_line_create_patch_foo(self):
+    def test_create_patch_foo(self):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
@@ -32,7 +32,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_patch),
                          read_file('tests/files/foo/patch'))
 
-    def test_command_line_create_patch_foo_sais(self):
+    def test_create_patch_foo_sais(self):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
@@ -52,7 +52,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_patch),
                          read_file('tests/files/foo/patch'))
 
-    def test_command_line_apply_patch_foo(self):
+    def test_apply_patch_foo(self):
         foo_new = 'foo.new'
         argv = [
             'detools',
@@ -72,7 +72,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_new),
                          read_file('tests/files/foo/new'))
 
-    def test_command_line_patch_info_foo(self):
+    def test_patch_info_foo(self):
         argv = [
             'detools',
             'patch_info',
@@ -104,7 +104,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
                          'Average extra size: 14 bytes\n'
                          'Median extra size:  14 bytes\n')
 
-    def test_command_line_patch_info_foo_no_delta(self):
+    def test_patch_info_foo_no_delta(self):
         argv = [
             'detools',
             'patch_info',
@@ -136,7 +136,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
                          'Average extra size: 0 bytes\n'
                          'Median extra size:  0 bytes\n')
 
-    def test_command_line_patch_info_foo_none_compression(self):
+    def test_patch_info_foo_none_compression(self):
         argv = [
             'detools',
             'patch_info',
@@ -168,7 +168,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
                          'Average extra size: 14 bytes\n'
                          'Median extra size:  14 bytes\n')
 
-    def test_command_line_patch_info_foo_crle_compression(self):
+    def test_patch_info_foo_crle_compression(self):
         argv = [
             'detools',
             'patch_info',
@@ -200,7 +200,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
                          'Average extra size: 14 bytes\n'
                          'Median extra size:  14 bytes\n')
 
-    def test_command_line_create_patch_foo_in_place(self):
+    def test_create_patch_foo_in_place(self):
         foo_patch = 'foo-in-place-3000-1500.patch'
         argv = [
             'detools',
@@ -221,7 +221,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_patch),
                          read_file('tests/files/foo/in-place-3000-1500.patch'))
 
-    def test_command_line_apply_patch_foo_in_place(self):
+    def test_apply_patch_foo_in_place(self):
         foo_mem = 'foo.mem'
         argv = [
             'detools',
@@ -242,7 +242,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             read_file(foo_mem),
             read_file('tests/files/foo/new') + (3000 - 2780) * b'\xff')
 
-    def test_command_line_patch_info_foo_in_place(self):
+    def test_patch_info_foo_in_place(self):
         argv = [
             'detools',
             'patch_info',
@@ -304,7 +304,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'Median extra size:  1.25 KiB\n'
             '\n')
 
-    def test_command_line_patch_info_foo_in_place_no_human(self):
+    def test_patch_info_foo_in_place_no_human(self):
         argv = [
             'detools',
             'patch_info',
@@ -367,7 +367,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'Median extra size:  1280 bytes\n'
             '\n')
 
-    def test_command_line_create_patch_foo_in_place_size_units(self):
+    def test_create_patch_foo_in_place_size_units(self):
         foo_patch = 'foo-in-place-3k-1.5k.patch'
         argv = [
             'detools',
@@ -388,7 +388,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_patch),
                          read_file('tests/files/foo/in-place-3k-1.5k.patch'))
 
-    def test_command_line_apply_patch_foo_in_place_size_units(self):
+    def test_apply_patch_foo_in_place_size_units(self):
         foo_mem = 'foo.mem'
         argv = [
             'detools',
@@ -409,7 +409,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             read_file(foo_mem),
             read_file('tests/files/foo/new') + (3072 - 2780) * b'\xff')
 
-    def test_command_line_patch_info_foo_in_place_size_units(self):
+    def test_patch_info_foo_in_place_size_units(self):
         argv = [
             'detools',
             'patch_info',
@@ -471,7 +471,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'Median extra size:  1.21 KiB\n'
             '\n')
 
-    def test_command_line_patch_info_empty(self):
+    def test_patch_info_empty(self):
         argv = [
             'detools',
             'patch_info',
@@ -504,7 +504,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'Average extra size: -\n'
             'Median extra size:  -\n')
 
-    def test_command_line_patch_info_empty_in_place(self):
+    def test_patch_info_empty_in_place(self):
         argv = [
             'detools',
             'patch_info',
@@ -530,7 +530,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'Compression:        lzma\n'
             '\n')
 
-    def test_command_line_patch_info_shell(self):
+    def test_patch_info_shell(self):
         argv = [
             'detools',
             'patch_info',
@@ -563,7 +563,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'Average extra size: 8 bytes\n'
             'Median extra size:  0 bytes\n')
 
-    def test_command_line_patch_info_shell_arm_cortex_m4(self):
+    def test_patch_info_shell_arm_cortex_m4(self):
         argv = [
             'detools',
             'patch_info',
@@ -597,7 +597,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'Average extra size: 8 bytes\n'
             'Median extra size:  0 bytes\n')
 
-    def test_command_line_patch_info_shell_bz2(self):
+    def test_patch_info_shell_bz2(self):
         argv = [
             'detools',
             'patch_info',
@@ -630,7 +630,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             'Average extra size: 8 bytes\n'
             'Median extra size:  0 bytes\n')
 
-    def test_command_line_create_patch_pybv11_arm_cortex_m4(self):
+    def test_create_patch_pybv11_arm_cortex_m4(self):
         pybv11_patch = 'pybv11-aarch64.patch'
         argv = [
             'detools',
@@ -652,7 +652,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             read_file('tests/files/pybv11/1f5d945af--1f5d945af-dirty-'
                       'arm-cortex-m4.patch'))
 
-    def test_command_line_create_patch_pybv11_data_sections(self):
+    def test_create_patch_pybv11_data_sections(self):
         pybv11_patch = 'pybv11-data-format-with-data-sections.patch'
         argv = [
             'detools',
@@ -680,7 +680,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             read_file('tests/files/pybv11/1f5d945af--1f5d945af-dirty-'
                       'arm-cortex-m4-data-sections.patch'))
 
-    def test_command_line_create_patch_pybv11_elf_data_sections(self):
+    def test_create_patch_pybv11_elf_data_sections(self):
         pybv11_patch = 'pybv11-data-format-with-elf-data-sections.patch'
         argv = [
             'detools',
@@ -704,7 +704,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             read_file('tests/files/pybv11/1f5d945af--1f5d945af-dirty-'
                       'arm-cortex-m4-elf-data-sections.patch'))
 
-    def test_command_line_create_patch_pybv11_swapped_elfs_error(self):
+    def test_create_patch_pybv11_swapped_elfs_error(self):
         argv = [
             'detools',
             'create_patch',
@@ -727,7 +727,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
                 "(data: 00000000000000000a00000012050000...) not found in "
                 "'tests/files/pybv11/1f5d945af/firmware1.bin'.")
 
-    def test_command_line_create_patch_pybv11_elf_data_sections_offsets(self):
+    def test_create_patch_pybv11_elf_data_sections_offsets(self):
         pybv11_patch = 'pybv11-data-format-with-elf-data-sections-offsets.patch'
         argv = [
             'detools',
@@ -753,7 +753,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             read_file('tests/files/pybv11/1f5d945af--1f5d945af-dirty-'
                       'arm-cortex-m4-elf-data-sections.patch'))
 
-    def test_command_line_apply_patch_pybv11_elf_data_sections(self):
+    def test_apply_patch_pybv11_elf_data_sections(self):
         pybv11_new = 'pybv11-elf-data-sections.new'
         argv = [
             'detools',
@@ -775,7 +775,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             read_file(pybv11_new),
             read_file('tests/files/pybv11/1f5d945af-dirty/firmware1.bin'))
 
-    def test_command_line_parse_range_errors(self):
+    def test_parse_range_errors(self):
         with self.assertRaises(detools.Error) as cm:
             detools.parse_range('--option', '')
 
@@ -813,7 +813,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             str(cm.exception),
             "--option: Expected an integer, but got 'a'.")
 
-    def test_command_line_patch_info_pybv11_data_sections_detailed(self):
+    def test_patch_info_pybv11_data_sections_detailed(self):
         argv = [
             'detools',
             'patch_info',
@@ -1607,7 +1607,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             '\n'
             '\n')
 
-    def test_command_line_patch_info_shell_pi_3_aarch64_detailed(self):
+    def test_patch_info_shell_pi_3_aarch64_detailed(self):
         argv = [
             'detools',
             'patch_info',
@@ -1778,7 +1778,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             '\n'
             '\n')
 
-    def test_command_line_patch_info_shell_pi_3_data_sections_detailed(self):
+    def test_patch_info_shell_pi_3_data_sections_detailed(self):
         argv = [
             'detools',
             'patch_info',
@@ -1970,7 +1970,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             '\n'
             '\n')
 
-    def test_command_line_create_patch_foo_bsdiff(self):
+    def test_create_patch_foo_bsdiff(self):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
@@ -1989,7 +1989,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_patch),
                          read_file('tests/files/foo/bsdiff.patch'))
 
-    def test_command_line_apply_patch_foo_bsdiff(self):
+    def test_apply_patch_foo_bsdiff(self):
         foo_new = 'foo.new'
         argv = [
             'detools',
@@ -2008,7 +2008,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_new),
                          read_file('tests/files/foo/new'))
 
-    def test_command_line_create_patch_foo_hdiffpatch(self):
+    def test_create_patch_foo_hdiffpatch(self):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
@@ -2027,7 +2027,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_patch),
                          read_file('tests/files/foo/hdiffpatch.patch'))
 
-    def test_command_line_create_patch_foo_hdiffpatch_none(self):
+    def test_create_patch_foo_hdiffpatch_none(self):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
@@ -2047,7 +2047,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_patch),
                          read_file('tests/files/foo/hdiffpatch-none.patch'))
 
-    def test_command_line_create_patch_foo_hdiffpatch_match_score_0(self):
+    def test_create_patch_foo_hdiffpatch_match_score_0(self):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
@@ -2068,7 +2068,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             read_file(foo_patch),
             read_file('tests/files/foo/hdiffpatch-match-score-0.patch'))
 
-    def test_command_line_create_patch_foo_hdiffpatch_match_block_size_64(self):
+    def test_create_patch_foo_hdiffpatch_match_block_size_64(self):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
@@ -2089,7 +2089,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             read_file(foo_patch),
             read_file('tests/files/foo/hdiffpatch-match-block-size-64.patch'))
 
-    def test_command_line_apply_patch_foo_hdiffpatch(self):
+    def test_apply_patch_foo_hdiffpatch(self):
         foo_new = 'foo.new'
         argv = [
             'detools',
@@ -2108,7 +2108,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_new),
                          read_file('tests/files/foo/new'))
 
-    def test_command_line_apply_patch_foo_hdiffpatch_none(self):
+    def test_apply_patch_foo_hdiffpatch_none(self):
         foo_new = 'foo.new'
         argv = [
             'detools',
@@ -2126,6 +2126,25 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(read_file(foo_new),
                          read_file('tests/files/foo/new'))
+
+    def test_patch_info_foo_hdiffpatch(self):
+        argv = [
+            'detools',
+            'patch_info',
+            'tests/files/foo/hdiffpatch.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(stdout.getvalue(),
+                         'Type:               hdiffpatch\n'
+                         'Patch size:         146 bytes\n'
+                         'To size:            2.71 KiB\n'
+                         'Patch/to ratio:     5.3 % (lower is better)\n'
+                         'Compression:        lzma\n')
 
 
 if __name__ == '__main__':
