@@ -44,6 +44,12 @@ There is also a wrapper of `HDiffPatch`_, implementing basic
 operations. Adds a custom header, so it is not compatible with
 original `HDiffPatch`_ implementation as of today.
 
+- See `HDiffPatch`_ for characteristics.
+
+- Suitable for large files.
+
+- Often slightly smaller patches than bsdiff.
+
 Project homepage: https://github.com/eerimoq/detools
 
 Documentation: http://detools.readthedocs.org/en/latest
