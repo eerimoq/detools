@@ -50,6 +50,8 @@ original `HDiffPatch`_ implementation as of today.
 
 - Often slightly smaller patches than bsdiff.
 
+- Often faster than bsdiff.
+
 Project homepage: https://github.com/eerimoq/detools
 
 Documentation: http://detools.readthedocs.org/en/latest
@@ -108,44 +110,53 @@ Create the same patch as above, but without compression.
    $ ls -l foo-no-compression.patch
    -rw-rw-r-- 1 erik erik 2792 Mar  1 19:18 foo-no-compression.patch
 
+The create in-place patch subcommand
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Create an in-place patch ``foo-in-place.patch``.
 
 .. code-block:: text
 
-   $ detools create_patch --type in-place --memory-size 3000 --segment-size 500 \
+   $ detools create_patch_in-place --memory-size 3000 --segment-size 500 \
          tests/files/foo/old tests/files/foo/new foo-in-place.patch
    Successfully created patch 'foo-in-place.patch'!
    $ ls -l foo-in-place.patch
    -rw-rw-r-- 1 erik erik 672 Mar 16 08:49 foo-in-place.patch
+
+The create bsdiff patch subcommand
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a bsdiff patch ``foo-bsdiff.patch``, compatible with the
 original bsdiff program.
 
 .. code-block:: text
 
-   $ detools create_patch --type bsdiff \
+   $ detools create_patch_bsdiff \
          tests/files/foo/old tests/files/foo/new foo-bsdiff.patch
    Successfully created patch 'foo-bsdiff.patch'!
    $ ls -l foo-bsdiff.patch
    -rw-rw-r-- 1 erik erik 261 Apr 22 18:20 foo-bsdiff.patch
+
+The create hdiffpatch patch subcommand
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a hdiffpatch patch ``foo-hdiffpatch.patch``, compatible with
 the original HDiffPatch program.
 
 .. code-block:: text
 
-   $ detools create_patch --type hdiffpatch \
+   $ detools create_patch_hdiffpatch \
          tests/files/foo/old tests/files/foo/new foo-hdiffpatch.patch
    Successfully created patch 'foo-hdiffpatch.patch'!
    $ ls -l foo-hdiffpatch.patch
    -rw-rw-r-- 1 erik erik 261 Apr 22 18:20 foo-hdiffpatch.patch
 
-Lower hdiffpatch memory usage with ``--match-block-size``. Mainly
-useful for big files. Creates slightly bigger patches.
+Lower memory usage with ``--match-block-size``. Mainly useful for big
+files. Creates slightly bigger patches.
 
 .. code-block:: text
 
-   $ detools create_patch --type hdiffpatch --match-block-size 64 \
+   $ detools create_patch_hdiffpatch --match-block-size 64 \
          tests/files/foo/old tests/files/foo/new foo-hdiffpatch.patch
    Successfully created patch 'foo-hdiffpatch.patch'!
    $ ls -l foo-hdiffpatch.patch
