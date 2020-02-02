@@ -2,6 +2,7 @@
 
 set -e
 
+PYTHON="${PYTHON:-python3}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 export PYTHONPATH=$SCRIPT_DIR/..
@@ -10,7 +11,7 @@ function create_patch() {
     echo "=== $1 ==="
     echo
     \time -f "RSS=%M elapsed=%E" \
-          python3 -m detools $1 $from_file $to_file $patch_file
+          $PYTHON -m detools $1 $from_file $to_file $patch_file
     ls -lh $patch_file
     echo
 }
