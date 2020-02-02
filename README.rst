@@ -141,7 +141,7 @@ the original HDiffPatch program.
    -rw-rw-r-- 1 erik erik 261 Apr 22 18:20 foo-hdiffpatch.patch
 
 Lower hdiffpatch memory usage with ``--match-block-size``. Mainly
-useful for big files.
+useful for big files. Creates slightly bigger patches.
 
 .. code-block:: text
 
