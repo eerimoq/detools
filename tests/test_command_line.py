@@ -204,8 +204,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         foo_patch = 'foo-in-place-3000-1500.patch'
         argv = [
             'detools',
-            'create_patch',
-            '--type', 'in-place',
+            'create_patch_in_place',
             '--memory-size', '3000',
             '--segment-size', '1500',
             'tests/files/foo/old',
@@ -372,8 +371,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         foo_patch = 'foo-in-place-3k-1.5k.patch'
         argv = [
             'detools',
-            'create_patch',
-            '--type', 'in-place',
+            'create_patch_in_place',
             '--memory-size', '3k',
             '--segment-size', '1.5k',
             'tests/files/foo/old',
@@ -1976,8 +1974,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
-            'create_patch',
-            '--type', 'bsdiff',
+            'create_patch_bsdiff',
             'tests/files/foo/old',
             'tests/files/foo/new',
             foo_patch
@@ -2015,8 +2012,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
-            'create_patch',
-            '--type', 'hdiffpatch',
+            'create_patch_hdiffpatch',
             'tests/files/foo/old',
             'tests/files/foo/new',
             foo_patch
@@ -2035,8 +2031,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
-            'create_patch',
-            '--type', 'hdiffpatch',
+            'create_patch_hdiffpatch',
             '-c', 'none',
             'tests/files/foo/old',
             'tests/files/foo/new',
@@ -2056,8 +2051,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
-            'create_patch',
-            '--type', 'hdiffpatch',
+            'create_patch_hdiffpatch',
             '--match-score', '0',
             'tests/files/foo/old',
             'tests/files/foo/new',
@@ -2078,8 +2072,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
         foo_patch = 'foo.patch'
         argv = [
             'detools',
-            'create_patch',
-            '--type', 'hdiffpatch',
+            'create_patch_hdiffpatch',
             '--match-block-size', '64',
             'tests/files/foo/old',
             'tests/files/foo/new',

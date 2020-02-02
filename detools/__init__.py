@@ -131,13 +131,7 @@ def data_format_from_files(option, elffile, binfile, offset):
             data_range.end)
 
 
-def _do_create_patch(args):
-    if args.type == 'in-place':
-        if args.memory_size is None:
-            raise Error('--memory-size is required for in-place patch.')
-        elif args.segment_size is None:
-            raise Error('--segment-size is required for in-place patch.')
-
+def data_format_args(args):
     from_data_offset_begin, from_data_offset_end = parse_range(
         '--from-data-offsets',
         args.from_data_offsets)
@@ -201,30 +195,67 @@ def _do_create_patch(args):
             to_data_begin,
             to_data_end))
 
+    return {
+        'data_format': args.data_format,
+        'from_data_offset_begin': from_data_offset_begin,
+        'from_data_offset_end': from_data_offset_end,
+        'from_data_begin': from_data_begin,
+        'from_data_end': from_data_end,
+        'from_code_begin': from_code_begin,
+        'from_code_end': from_code_end,
+        'to_data_offset_begin': to_data_offset_begin,
+        'to_data_offset_end': to_data_offset_end,
+        'to_data_begin': to_data_begin,
+        'to_data_end': to_data_end,
+        'to_code_begin': to_code_begin,
+        'to_code_end': to_code_end
+    }
+
+
+def _do_create_patch(args):
     create_patch_filenames(args.fromfile,
                            args.tofile,
                            args.patchfile,
                            args.compression,
-                           args.type,
+                           'normal',
+                           args.suffix_array_algorithm,
+                           **data_format_args(args))
+
+    print("Successfully created patch '{}'!".format(args.patchfile))
+
+
+def _do_create_patch_in_place(args):
+    create_patch_filenames(args.fromfile,
+                           args.tofile,
+                           args.patchfile,
+                           args.compression,
+                           'in-place',
                            args.suffix_array_algorithm,
                            args.memory_size,
                            args.segment_size,
                            args.minimum_shift_size,
-                           args.data_format,
-                           from_data_offset_begin,
-                           from_data_offset_end,
-                           from_data_begin,
-                           from_data_end,
-                           from_code_begin,
-                           from_code_end,
-                           to_data_offset_begin,
-                           to_data_offset_end,
-                           to_data_begin,
-                           to_data_end,
-                           to_code_begin,
-                           to_code_end,
-                           args.match_score,
-                           args.match_block_size)
+                           **data_format_args(args))
+
+    print("Successfully created patch '{}'!".format(args.patchfile))
+
+
+def _do_create_patch_bsdiff(args):
+    create_patch_filenames(args.fromfile,
+                           args.tofile,
+                           args.patchfile,
+                           patch_type='bsdiff')
+
+    print("Successfully created patch '{}'!".format(args.patchfile))
+
+
+def _do_create_patch_hdiffpatch(args):
+    create_patch_filenames(args.fromfile,
+                           args.tofile,
+                           args.patchfile,
+                           args.compression,
+                           'hdiffpatch',
+                           match_score=args.match_score,
+                           match_block_size=args.match_block_size)
 
     print("Successfully created patch '{}'!".format(args.patchfile))
 
@@ -429,54 +460,7 @@ def to_binary_size(value):
     return parse_size(value, binary=True)
 
 
-def _main():
-    parser = argparse.ArgumentParser(description='Binary delta encoding utility.')
-
-    parser.add_argument('-d', '--debug', action='store_true')
-    parser.add_argument('--version',
-                        action='version',
-                        version=__version__,
-                        help='Print version information and exit.')
-
-    # Workaround to make the subparser required in Python 3.
-    subparsers = parser.add_subparsers(title='subcommands',
-                                       dest='subcommand')
-    subparsers.required = True
-
-    # Create patch subparser.
-    subparser = subparsers.add_parser('create_patch',
-                                      description='Create a patch.')
-    subparser.add_argument('-t', '--type',
-                           choices=('normal', 'in-place', 'bsdiff', 'hdiffpatch'),
-                           default='normal',
-                           help='Patch type (default: %(default)s).')
-    subparser.add_argument('-c', '--compression',
-                           choices=sorted(_COMPRESSIONS),
-                           default='lzma',
-                           help='Compression algorithm (default: %(default)s).')
-    subparser.add_argument('-s', '--suffix-array-algorithm',
-                           choices=('sais', 'divsufsort'),
-                           default='divsufsort',
-                           help='Suffix atrray algorithm (default: %(default)s).')
-    subparser.add_argument('--match-score',
-                           type=int,
-                           default=6,
-                           help='Match score (default: %(default)s).')
-    subparser.add_argument('--match-block-size',
-                           type=to_binary_size,
-                           default=0,
-                           help='Match block size (default: %(default)s).')
-    subparser.add_argument('--memory-size',
-                           type=to_binary_size,
-                           help='Target memory size.')
-    subparser.add_argument(
-        '--segment-size',
-        type=to_binary_size,
-        help='Segment size. Must be a multiple of the largest erase block size.')
-    subparser.add_argument(
-        '--minimum-shift-size',
-        type=to_binary_size,
-        help='Minimum shift size (default: 2 * segment size).')
+def add_data_format_args(subparser):
     subparser.add_argument(
         '--data-format',
         choices=sorted(_DATA_FORMATS),
@@ -511,14 +495,101 @@ def _main():
     subparser.add_argument(
         '--to-data-addresses',
         help='To file data address ranges.')
+
+
+def _main():
+    parser = argparse.ArgumentParser(description='Binary delta encoding utility.')
+
+    parser.add_argument('-d', '--debug', action='store_true')
+    parser.add_argument('--version',
+                        action='version',
+                        version=__version__,
+                        help='Print version information and exit.')
+
+    # Workaround to make the subparser required in Python 3.
+    subparsers = parser.add_subparsers(title='subcommands',
+                                       dest='subcommand')
+    subparsers.required = True
+
+    # Create normal patch subparser.
+    subparser = subparsers.add_parser('create_patch',
+                                      description='Create a normal patch.')
+    subparser.add_argument('-c', '--compression',
+                           choices=sorted(_COMPRESSIONS),
+                           default='lzma',
+                           help='Compression algorithm (default: %(default)s).')
+    subparser.add_argument('-s', '--suffix-array-algorithm',
+                           choices=('sais', 'divsufsort'),
+                           default='divsufsort',
+                           help='Suffix array algorithm (default: %(default)s).')
+    add_data_format_args(subparser)
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
     subparser.add_argument('patchfile', help='Created patch file.')
     subparser.set_defaults(func=_do_create_patch)
 
+    # Create in-place patch subparser.
+    subparser = subparsers.add_parser('create_patch_in_place',
+                                      description='Create an in-place patch.')
+    subparser.add_argument('-c', '--compression',
+                           choices=sorted(_COMPRESSIONS),
+                           default='lzma',
+                           help='Compression algorithm (default: %(default)s).')
+    subparser.add_argument('-s', '--suffix-array-algorithm',
+                           choices=('sais', 'divsufsort'),
+                           default='divsufsort',
+                           help='Suffix array algorithm (default: %(default)s).')
+    subparser.add_argument('--memory-size',
+                           required=True,
+                           type=to_binary_size,
+                           help='Target memory size.')
+    subparser.add_argument(
+        '--segment-size',
+        required=True,
+        type=to_binary_size,
+        help='Segment size. Must be a multiple of the largest erase block size.')
+    subparser.add_argument(
+        '--minimum-shift-size',
+        type=to_binary_size,
+        help='Minimum shift size (default: 2 * segment size).')
+    add_data_format_args(subparser)
+    subparser.add_argument('fromfile', help='From file.')
+    subparser.add_argument('tofile', help='To file.')
+    subparser.add_argument('patchfile', help='Created patch file.')
+    subparser.set_defaults(func=_do_create_patch_in_place)
+
+    # Create bsdiff patch subparser.
+    subparser = subparsers.add_parser('create_patch_bsdiff',
+                                      description='Create a bsdiff patch.')
+    subparser.add_argument('fromfile', help='From file.')
+    subparser.add_argument('tofile', help='To file.')
+    subparser.add_argument('patchfile', help='Created patch file.')
+    subparser.set_defaults(func=_do_create_patch_bsdiff)
+
+    # Create hdiffpatch patch subparser.
+    subparser = subparsers.add_parser('create_patch_hdiffpatch',
+                                      description='Create a hdiffpatch patch.')
+    subparser.add_argument('-c', '--compression',
+                           choices=sorted(_COMPRESSIONS),
+                           default='lzma',
+                           help='Compression algorithm (default: %(default)s).')
+    subparser.add_argument('--match-score',
+                           type=int,
+                           default=6,
+                           help='Match score (default: %(default)s).')
+    subparser.add_argument('--match-block-size',
+                           type=to_binary_size,
+                           default=0,
+                           help='Match block size (default: %(default)s).')
+    subparser.add_argument('fromfile', help='From file.')
+    subparser.add_argument('tofile', help='To file.')
+    subparser.add_argument('patchfile', help='Created patch file.')
+    subparser.set_defaults(func=_do_create_patch_hdiffpatch)
+
     # Apply patch subparser.
-    subparser = subparsers.add_parser('apply_patch',
-                                      description='Apply given patch.')
+    subparser = subparsers.add_parser(
+        'apply_patch',
+        description='Apply given normal or hdiffpatch patch.')
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('patchfile', help='Patch file.')
     subparser.add_argument('tofile', help='Created to file.')
