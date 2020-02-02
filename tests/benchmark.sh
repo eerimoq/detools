@@ -33,6 +33,7 @@ if [ ! -e Python-3.8.1.tar ] ; then
 fi
 
 create_patch "create_patch"
+create_patch "create_patch_bsdiff"
 create_patch "create_patch_hdiffpatch"
 create_patch "create_patch_hdiffpatch --match-block-size 64"
 create_patch "create_patch_hdiffpatch --match-block-size 1k"
