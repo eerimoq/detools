@@ -114,3 +114,6 @@ test-c-fuzzer:
 release-to-pypi:
 	python3 setup.py sdist
 	twine upload dist/*
+
+benchmark:
+	tests/benchmark.sh
