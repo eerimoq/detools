@@ -8,6 +8,7 @@ python:
 
 install:
   - pip install coveralls
+  - pip install -r requirements.txt
 
 script:
   - env CFLAGS=--coverage coverage run --source=detools setup.py test
