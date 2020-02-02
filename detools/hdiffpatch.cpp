@@ -35,6 +35,7 @@ static int parse_create_patch_args(PyObject *args_p,
                                    char **to_pp,
                                    Py_ssize_t *from_size_p,
                                    Py_ssize_t *to_size_p,
+                                   unsigned int *match_score_p,
                                    unsigned int *block_size_p)
 {
     int res;
@@ -42,9 +43,10 @@ static int parse_create_patch_args(PyObject *args_p,
     PyObject *to_bytes_p;
 
     res = PyArg_ParseTuple(args_p,
-                           "OOI",
+                           "OOII",
                            &from_bytes_p,
                            &to_bytes_p,
+                           match_score_p,
                            block_size_p);
 
     if (res == 0) {
@@ -66,8 +68,106 @@ static int parse_create_patch_args(PyObject *args_p,
     return (res);
 }
 
+static PyObject *create_patch_memory(uint8_t *from_p,
+                                     uint8_t *to_p,
+                                     Py_ssize_t from_size,
+                                     Py_ssize_t to_size,
+                                     unsigned int match_score)
+{
+    std::vector<unsigned char> diff;
+
+    try {
+        create_compressed_diff(&to_p[0],
+                               &to_p[to_size],
+                               &from_p[0],
+                               &from_p[from_size],
+                               diff,
+                               NULL,
+                               match_score);
+    } catch (const std::exception& e) {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+
+        return (NULL);
+    }
+
+    return (PyByteArray_FromStringAndSize((const char *)diff.data(),
+                                          diff.size()));
+}
+
+static PyObject *create_patch_stream(uint8_t *from_p,
+                                     uint8_t *to_p,
+                                     Py_ssize_t from_size,
+                                     Py_ssize_t to_size,
+                                     unsigned int match_block_size)
+{
+    int res;
+    hpatch_TStreamInput from_data;
+    hpatch_TStreamInput to_data;
+    hpatch_TFileStreamOutput patch_data;
+    PyObject *byte_array_p;
+    size_t members_read;
+
+    mem_as_hStreamInput(&from_data, &from_p[0], &from_p[from_size]);
+    mem_as_hStreamInput(&to_data, &to_p[0], &to_p[to_size]);
+    hpatch_TFileStreamOutput_init(&patch_data);
+    hpatch_TFileStreamOutput_tmpfile(&patch_data, ~(hpatch_StreamPos_t)0);
+
+    create_compressed_diff_stream(&to_data,
+                                  &from_data,
+                                  &patch_data.base,
+                                  NULL,
+                                  match_block_size);
+
+    byte_array_p = PyByteArray_FromStringAndSize("", 1);
+
+    if (byte_array_p == NULL) {
+        goto out1;
+    }
+
+    res = PyByteArray_Resize(byte_array_p, (Py_ssize_t)patch_data.out_length);
+
+    if (res != 0) {
+        goto out2;
+    }
+
+    res = fseek(patch_data.m_file, 0, SEEK_SET);
+
+    if (res != 0) {
+        PyErr_SetString(PyExc_RuntimeError, "internal error: fseek failed");
+
+        goto out2;
+    }
+
+    members_read = fread(PyByteArray_AsString(byte_array_p),
+                         1,
+                         (size_t)patch_data.out_length,
+                         patch_data.m_file);
+    hpatch_TFileStreamOutput_close(&patch_data);
+
+    if (members_read != patch_data.out_length) {
+        PyErr_SetString(PyExc_RuntimeError, "internal error: fread failed");
+
+        goto out3;
+    }
+
+    return (byte_array_p);
+
+ out1:
+    hpatch_TFileStreamOutput_close(&patch_data);
+
+    return (NULL);
+
+ out2:
+    hpatch_TFileStreamOutput_close(&patch_data);
+
+ out3:
+    Py_DECREF(byte_array_p);
+
+    return (NULL);
+}
+
 /**
- * def create_patch(from_data, to_data, block_size) -> patch_data
+ * def create_patch(from_data, to_data, match_score, match_block_size) -> patch_data
  */
 static PyObject *m_create_patch(PyObject *self_p, PyObject* args_p)
 {
@@ -76,75 +176,34 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject* args_p)
     uint8_t *to_p;
     Py_ssize_t from_size;
     Py_ssize_t to_size;
-    std::vector<unsigned char> diff;
-    unsigned int block_size;
-    hpatch_TStreamInput  from_data;
-    hpatch_TStreamInput  to_data;
-    hpatch_TFileStreamOutput patch_data;
-    PyObject *byte_array_p;
-    size_t members_read;
+    unsigned int match_score;
+    unsigned int match_block_size;
 
     res = parse_create_patch_args(args_p,
                                   (char **)&from_p,
                                   (char **)&to_p,
                                   &from_size,
                                   &to_size,
-                                  &block_size);
+                                  &match_score,
+                                  &match_block_size);
 
     if (res != 0) {
         return (NULL);
     }
 
-    if (block_size == 0) {
-        create_compressed_diff(&to_p[0],
-                               &to_p[to_size],
-                               &from_p[0],
-                               &from_p[from_size],
-                               diff);
-        byte_array_p = PyByteArray_FromStringAndSize((const char *)diff.data(),
-                                                     diff.size());
+    if (match_block_size == 0) {
+        return (create_patch_memory(from_p,
+                                    to_p,
+                                    from_size,
+                                    to_size,
+                                    match_score));
     } else {
-        mem_as_hStreamInput(&from_data, &from_p[0], &from_p[from_size]);
-        mem_as_hStreamInput(&to_data, &to_p[0], &to_p[to_size]);
-        hpatch_TFileStreamOutput_init(&patch_data);
-        hpatch_TFileStreamOutput_tmpfile(&patch_data, ~(hpatch_StreamPos_t)0);
-
-        create_compressed_diff_stream(&to_data,
-                                      &from_data,
-                                      &patch_data.base,
-                                      NULL,
-                                      block_size);
-
-        byte_array_p = PyByteArray_FromStringAndSize("", 1);
-
-        if (byte_array_p == NULL) {
-            return (NULL);
-        }
-
-        res = PyByteArray_Resize(byte_array_p, (Py_ssize_t)patch_data.out_length);
-
-        if (res != 0) {
-            return (NULL);
-        }
-
-        res = fseek(patch_data.m_file, 0, SEEK_SET);
-
-        if (res != 0) {
-            return (NULL);
-        }
-
-        members_read = fread(PyByteArray_AsString(byte_array_p),
-                             1,
-                             (size_t)patch_data.out_length,
-                             patch_data.m_file);
-        hpatch_TFileStreamOutput_close(&patch_data);
-
-        if (members_read != patch_data.out_length) {
-            return (NULL);
-        }
+        return (create_patch_stream(from_p,
+                                    to_p,
+                                    from_size,
+                                    to_size,
+                                    match_block_size));
     }
-
-    return (byte_array_p);
 }
 
 static int parse_apply_patch_args(PyObject *args_p,

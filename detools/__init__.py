@@ -223,6 +223,7 @@ def _do_create_patch(args):
                            to_data_end,
                            to_code_begin,
                            to_code_end,
+                           args.match_score,
                            args.match_block_size)
 
     print("Successfully created patch '{}'!".format(args.patchfile))
@@ -457,6 +458,10 @@ def _main():
                            choices=('sais', 'divsufsort'),
                            default='divsufsort',
                            help='Suffix atrray algorithm (default: %(default)s).')
+    subparser.add_argument('--match-score',
+                           type=int,
+                           default=6,
+                           help='Match score (default: %(default)s).')
     subparser.add_argument('--match-block-size',
                            type=to_binary_size,
                            default=0,

@@ -264,9 +264,11 @@ def create_patch_hdiffpatch(ffrom,
                             fto,
                             fpatch,
                             compression,
+                            match_score,
                             match_block_size):
     patch = hdiffpatch.create_patch(file_read(ffrom),
                                     file_read(fto),
+                                    match_score,
                                     match_block_size)
     compressor = create_compressor(compression)
     fpatch.write(pack_header(PATCH_TYPE_HDIFFPATCH,
@@ -299,6 +301,7 @@ def create_patch(ffrom,
                  to_data_end=0,
                  to_code_begin=0,
                  to_code_end=0,
+                 match_score=6,
                  match_block_size=0):
     """Create a patch from `ffrom` to `fto` and write it to `fpatch`. All
     three arguments are file-like objects.
@@ -312,6 +315,9 @@ def create_patch(ffrom,
 
     `memory_size`, `segment_size` and `minimum_shift_size` are used
     when creating an in-place patch.
+
+    `match_score` is used by hdiffpatch. Default 6. Recommended 0-4
+    for binary files and 4-9 for text files.
 
     `match_block_size` is used by hdiffpatch. If 0, whole files are
     loaded into memory. If greater than 0, less memory is needed to
@@ -363,6 +369,7 @@ def create_patch(ffrom,
                                 fto,
                                 fpatch,
                                 compression,
+                                match_score,
                                 match_block_size)
     else:
         raise Error("Bad patch type '{}'.".format(patch_type))
@@ -390,6 +397,7 @@ def create_patch_filenames(fromfile,
                            to_data_end=0,
                            to_code_begin=0,
                            to_code_end=0,
+                           match_score=6,
                            match_block_size=0):
     """Same as :func:`~detools.create_patch()`, but with filenames instead
     of file-like objects.
@@ -423,4 +431,5 @@ def create_patch_filenames(fromfile,
                              to_data_end,
                              to_code_begin,
                              to_code_end,
+                             match_score,
                              match_block_size)
