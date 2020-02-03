@@ -232,6 +232,7 @@ def _do_create_patch(args):
                            args.suffix_array_algorithm,
                            match_score=args.match_score,
                            match_block_size=args.match_block_size,
+                           use_mmap=not args.no_mmap,
                            **data_format_args(args))
     print_successful(args.patchfile, start_time)
 
@@ -248,6 +249,7 @@ def _do_create_patch_in_place(args):
                            args.memory_size,
                            args.segment_size,
                            args.minimum_shift_size,
+                           use_mmap=not args.no_mmap,
                            **data_format_args(args))
     print_successful(args.patchfile, start_time)
 
@@ -271,6 +273,7 @@ def _do_apply_patch_in_place(args):
     start_time = time.time()
     apply_patch_in_place_filenames(args.memfile, args.patchfile)
     print_successful(args.memfile, start_time)
+
 
 def _do_apply_patch_bsdiff(args):
     start_time = time.time()
@@ -574,6 +577,9 @@ def _main():
         default=64,
         help=('Match block size used by match-blocks algorithm '
               '(default: %(default)s).'))
+    subparser.add_argument('--no-mmap',
+                           action='store_true',
+                           help='Do not use mmap.')
     add_data_format_args(subparser)
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
@@ -604,6 +610,9 @@ def _main():
         '--minimum-shift-size',
         type=to_binary_size,
         help='Minimum shift size (default: 2 * segment size).')
+    subparser.add_argument('--no-mmap',
+                           action='store_true',
+                           help='Do not use mmap.')
     add_data_format_args(subparser)
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')

@@ -47,10 +47,15 @@ class DetoolsSuffixArrayTest(unittest.TestCase):
             )
         ]
 
-        for data, suffix_array in datas:
-            suffix_array = suffix_array_list_to_bytearray(suffix_array)
-            self.assertEqual(detools.suffix_array.sais(data), suffix_array)
-            self.assertEqual(detools.suffix_array.divsufsort(data), suffix_array)
+        for data, expected in datas:
+            expected = suffix_array_list_to_bytearray(expected)
+            suffix_array = bytearray(len(expected))
+
+            detools.suffix_array.sais(data, suffix_array)
+            self.assertEqual(suffix_array, expected)
+
+            detools.suffix_array.divsufsort(data, suffix_array)
+            self.assertEqual(suffix_array, expected)
 
 
 if __name__ == '__main__':

@@ -10,9 +10,17 @@ export PYTHONPATH=$SCRIPT_DIR/..
 function create_patch() {
     echo "================= $1 ================="
     \time -f "RSS=%M elapsed=%E" \
-          $PYTHON -m detools create_patch $1 $from_file $to_file $patch_file \
+          $PYTHON -m detools create_patch $1 $from_file $to_file $2 \
           > /dev/null
-    ls -lh $patch_file
+    ls -lh $2
+}
+
+function apply_patch() {
+    echo "================= $1 ================="
+    \time -f "RSS=%M elapsed=%E" \
+          $PYTHON -m detools apply_patch $from_file $1 Python.tar \
+          > /dev/null
+    cmp Python.tar $to_file
 }
 
 if [ ! -e Python-3.7.3.tar ] ; then
@@ -27,12 +35,21 @@ fi
 
 from_file=Python-3.7.3.tar
 to_file=Python-3.8.1.tar
-patch_file=benchmark.patch
 
 for algorithm in bsdiff hdiffpatch match-blocks ; do
     for patch_type in normal hdiffpatch ; do
         for compression in lzma none ; do
-            create_patch "-a $algorithm -t $patch_type -c $compression"
+            create_patch \
+                "-a $algorithm -t $patch_type -c $compression" \
+                "$algorithm-$patch_type-$compression.patch"
+        done
+    done
+done
+
+for algorithm in bsdiff hdiffpatch match-blocks ; do
+    for patch_type in normal hdiffpatch ; do
+        for compression in lzma none ; do
+            apply_patch "$algorithm-$patch_type-$compression.patch"
         done
     done
 done

@@ -32,6 +32,45 @@ class DetoolsCommandLineTest(unittest.TestCase):
         self.assertEqual(read_file(foo_patch),
                          read_file('tests/files/foo/patch'))
 
+    def test_create_patch_foo_no_mmap(self):
+        foo_patch = 'foo.patch'
+        argv = [
+            'detools',
+            'create_patch',
+            '--no-mmap',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            foo_patch
+        ]
+
+        if os.path.exists(foo_patch):
+            os.remove(foo_patch)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(foo_patch),
+                         read_file('tests/files/foo/patch'))
+
+    def test_create_patch_empty_from_non_empty_to_mmap(self):
+        nonempty_patch = 'nonempty.patch'
+        argv = [
+            'detools',
+            'create_patch',
+            'tests/files/empty/old',
+            'tests/files/empty/nonempty.bin',
+            nonempty_patch
+        ]
+
+        if os.path.exists(nonempty_patch):
+            os.remove(nonempty_patch)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(nonempty_patch),
+                         read_file('tests/files/empty/nonempty.patch'))
+
     def test_create_patch_foo_sais(self):
         foo_patch = 'foo.patch'
         argv = [

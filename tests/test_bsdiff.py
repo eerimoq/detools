@@ -66,7 +66,10 @@ class DetoolsBsdiffTest(unittest.TestCase):
         for suffix_array, from_data, to_data, chunks in datas:
             suffix_array = suffix_array_list_to_bytearray(suffix_array)
             self.assertEqual(
-                detools.bsdiff.create_patch(suffix_array, from_data, to_data),
+                detools.bsdiff.create_patch(suffix_array,
+                                            from_data,
+                                            to_data,
+                                            bytearray(4 * (len(from_data) + 1))),
                 chunks)
 
 

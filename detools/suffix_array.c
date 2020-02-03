@@ -35,55 +35,63 @@ typedef int32_t (*create_t)(const uint8_t *buf_p,
                             int32_t length);
 
 static PyObject *create(PyObject *self_p,
-                        PyObject* arg_p,
+                        PyObject* args_p,
                         create_t create_callback)
 {
     int res;
-    char *buf_p;
-    Py_ssize_t size;
+    Py_buffer from_view;
+    Py_buffer suffix_array_view;
+    PyObject *from_p;
+    PyObject *suffix_array_buffer_p;
     int32_t *suffix_array_p;
-    PyObject *byte_array_p;
+
+    res = PyArg_ParseTuple(args_p,
+                           "OO",
+                           &from_p,
+                           &suffix_array_buffer_p);
+
+    if (res == 0) {
+        return (NULL);
+    }
 
     /* Input argument conversion. */
-    res = PyBytes_AsStringAndSize(arg_p, &buf_p, &size);
+    res = PyObject_GetBuffer(from_p, &from_view, PyBUF_CONTIG_RO);
 
     if (res == -1) {
         return (NULL);
     }
 
-    if (size > 0x7fffffff) {
-        PyErr_SetString(PyExc_ValueError,
-                        "Suffix array input data too long (over 2 GiB).");
+    res = PyObject_GetBuffer(suffix_array_buffer_p,
+                             &suffix_array_view,
+                             PyBUF_CONTIG);
 
-        return (NULL);
-    }
-
-    byte_array_p = PyByteArray_FromStringAndSize("", 1);
-
-    if (byte_array_p == NULL) {
-        return (NULL);
-    }
-
-    res = PyByteArray_Resize(byte_array_p, (size + 1) * sizeof(*suffix_array_p));
-
-    if (res != 0) {
+    if (res == -1) {
         goto err1;
     }
 
-    suffix_array_p = (int32_t *)PyByteArray_AsString(byte_array_p);
-    suffix_array_p[0] = (int32_t)size;
+    suffix_array_p = (int32_t *)suffix_array_view.buf;
+    suffix_array_p[0] = (int32_t)from_view.len;
 
     /* Execute the SA-IS algorithm. */
-    res = create_callback((uint8_t *)buf_p, &suffix_array_p[1], (int32_t)size);
+    res = create_callback((uint8_t *)from_view.buf,
+                          &suffix_array_p[1],
+                          (int32_t)from_view.len);
 
     if (res != 0) {
-        goto err1;
+        goto err2;
     }
 
-    return (byte_array_p);
+    PyBuffer_Release(&from_view);
+    PyBuffer_Release(&suffix_array_view);
+    Py_INCREF(Py_None);
+
+    return (Py_None);
+
+ err2:
+    PyBuffer_Release(&suffix_array_view);
 
  err1:
-    Py_DECREF(byte_array_p);
+    PyBuffer_Release(&from_view);
 
     return (NULL);
 }
@@ -91,22 +99,22 @@ static PyObject *create(PyObject *self_p,
 /**
  * def sais(data) -> suffix array
  */
-static PyObject *m_sais(PyObject *self_p, PyObject* arg_p)
+static PyObject *m_sais(PyObject *self_p, PyObject* args_p)
 {
-    return (create(self_p, arg_p, sais));
+    return (create(self_p, args_p, sais));
 }
 
 /**
  * def divsufsort(data) -> suffix array
  */
-static PyObject *m_divsufsort(PyObject *self_p, PyObject* arg_p)
+static PyObject *m_divsufsort(PyObject *self_p, PyObject* args_p)
 {
-    return (create(self_p, arg_p, divsufsort));
+    return (create(self_p, args_p, divsufsort));
 }
 
 static PyMethodDef module_methods[] = {
-    { "sais", m_sais, METH_O },
-    { "divsufsort", m_divsufsort, METH_O },
+    { "sais", m_sais, METH_VARARGS },
+    { "divsufsort", m_divsufsort, METH_VARARGS },
     { NULL }
 };
 

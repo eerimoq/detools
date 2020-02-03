@@ -1,5 +1,8 @@
+import io
 import time
 import logging
+import tempfile
+import mmap
 import lzma
 from bz2 import BZ2Compressor
 from io import BytesIO
@@ -61,13 +64,97 @@ def create_compressor(compression):
     return compressor
 
 
-def create_suffix_array(data, suffix_array_algorithm):
+def create_suffix_array(suffix_array, data, suffix_array_algorithm):
     if suffix_array_algorithm == 'sais':
-        return sais(data)
+        sais(data, suffix_array)
     elif suffix_array_algorithm == 'divsufsort':
-        return divsufsort(data)
+        divsufsort(data, suffix_array)
     else:
         raise Error('Bad suffix array algorithm {}.'.format(suffix_array_algorithm))
+
+
+def temporary_file(size):
+    fp = tempfile.TemporaryFile()
+    fp.truncate(size)
+    fp.flush()
+    fp.seek(0)
+
+    return fp
+
+
+def mmap_read_only(fin):
+    return mmap.mmap(fin.fileno(), 0, access=mmap.ACCESS_READ)
+
+
+def mmap_read_write(fin):
+    return mmap.mmap(fin.fileno(), 0)
+
+
+def create_chunks_mmap(ffrom, fto, suffix_array_algorithm):
+    LOGGER.debug('Creating chunks using mmap.')
+
+    suffix_array_size = 4 * (file_size(ffrom) + 1)
+
+    with mmap_read_only(ffrom) as from_mmap:
+        with mmap_read_only(fto) as to_mmap:
+            with temporary_file(suffix_array_size) as fsuffix_array:
+                with mmap_read_write(fsuffix_array) as suffix_array_mmap:
+                    start_time = time.time()
+                    create_suffix_array(suffix_array_mmap,
+                                        from_mmap,
+                                        suffix_array_algorithm)
+
+                    LOGGER.info('Suffix array of %s created in %s using mmap.',
+                                format_size(suffix_array_size),
+                                format_timespan(time.time() - start_time))
+
+                    with temporary_file(file_size(fto) + 1) as fde:
+                        with mmap_read_write(fde) as fde_mmap:
+                            start_time = time.time()
+                            chunks = bsdiff.create_patch(suffix_array_mmap,
+                                                         from_mmap,
+                                                         to_mmap,
+                                                         fde_mmap)
+
+                            LOGGER.info(
+                                'Bsdiff algorithm completed in %s using mmap.',
+                                format_timespan(time.time() - start_time))
+
+    return chunks
+
+
+def create_chunks_heap(ffrom, fto, suffix_array_algorithm):
+    LOGGER.debug('Creating chunks using the heap.')
+
+    from_data = file_read(ffrom)
+    start_time = time.time()
+    suffix_array = bytearray(4 * (len(from_data) + 1))
+    create_suffix_array(suffix_array, from_data, suffix_array_algorithm)
+
+    LOGGER.info('Suffix array of %s created in %s.',
+                format_size(len(suffix_array)),
+                format_timespan(time.time() - start_time))
+
+    start_time = time.time()
+    chunks = bsdiff.create_patch(suffix_array,
+                                 from_data,
+                                 file_read(fto),
+                                 bytearray(file_size(fto) + 1))
+
+    LOGGER.info('Bsdiff algorithm completed in %s.',
+                format_timespan(time.time() - start_time))
+
+    return chunks
+
+
+def create_chunks(ffrom, fto, suffix_array_algorithm, use_mmap):
+    if not use_mmap:
+        return create_chunks_heap(ffrom, fto, suffix_array_algorithm)
+
+    try:
+        return create_chunks_mmap(ffrom, fto, suffix_array_algorithm)
+    except (io.UnsupportedOperation, ValueError):
+        return create_chunks_heap(ffrom, fto, suffix_array_algorithm)
 
 
 def create_patch_normal_data(ffrom,
@@ -76,7 +163,8 @@ def create_patch_normal_data(ffrom,
                              compression,
                              suffix_array_algorithm,
                              data_format,
-                             data_segment):
+                             data_segment,
+                             use_mmap):
     to_size = file_size(fto)
 
     if to_size == 0:
@@ -93,36 +181,12 @@ def create_patch_normal_data(ffrom,
             data_format,
             data_segment)
 
-        # with open('data-format-from.bin', 'wb') as fout:
-        #     fout.write(file_read(ffrom))
-        #
-        # with open('data-format-to.bin', 'wb') as fout:
-        #     fout.write(file_read(fto))
-
         dfpatch = pack_size(len(patch))
         dfpatch += pack_size(DATA_FORMATS[data_format])
         dfpatch += patch
 
     fpatch.write(compressor.compress(dfpatch))
-    from_data = file_read(ffrom)
-    start_time = time.time()
-    suffix_array = create_suffix_array(from_data, suffix_array_algorithm)
-
-    LOGGER.info('Suffix array of %s created in %s.',
-                format_size(len(suffix_array)),
-                format_timespan(time.time() - start_time))
-
-    start_time = time.time()
-    chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
-
-    LOGGER.info('Bsdiff algorithm completed in %s.',
-                format_timespan(time.time() - start_time))
-
-    # with open('data-to.patch', 'wb') as fout:
-    #     for i in range(0, len(chunks), 5):
-    #         fout.write(chunks[i + 1])
-    #         fout.write(b'\xff' * len(chunks[i + 3]))
-
+    chunks = create_chunks(ffrom, fto, suffix_array_algorithm, use_mmap)
     start_time = time.time()
 
     for chunk in chunks:
@@ -130,7 +194,8 @@ def create_patch_normal_data(ffrom,
 
     fpatch.write(compressor.flush())
 
-    LOGGER.info('Compression completed in %s.',
+    LOGGER.info('Compression (%s) completed in %s.',
+                compression,
                 format_timespan(time.time() - start_time))
 
 
@@ -140,7 +205,8 @@ def create_patch_normal(ffrom,
                         compression,
                         suffix_array_algorithm,
                         data_format,
-                        data_segment):
+                        data_segment,
+                        use_mmap):
     fpatch.write(pack_header(PATCH_TYPE_NORMAL,
                              compression_string_to_number(compression)))
     fpatch.write(pack_size(file_size(fto)))
@@ -150,7 +216,8 @@ def create_patch_normal(ffrom,
                              compression,
                              suffix_array_algorithm,
                              data_format,
-                             data_segment)
+                             data_segment,
+                             use_mmap)
 
 
 def calc_shift(memory_size, segment_size, minimum_shift_size, from_size):
@@ -179,7 +246,8 @@ def create_patch_in_place(ffrom,
                           segment_size,
                           minimum_shift_size,
                           data_format,
-                          data_segment):
+                          data_segment,
+                          use_mmap):
     if (memory_size % segment_size) != 0:
         raise Error(
             'Memory size {} is not a multiple of segment size {}.'.format(
@@ -221,7 +289,8 @@ def create_patch_in_place(ffrom,
             'none',
             suffix_array_algorithm,
             data_format,
-            data_segment)
+            data_segment,
+            use_mmap)
         fsegments.write(fsegment.getvalue())
 
     # Create the patch.
@@ -253,8 +322,12 @@ def create_patch_bsdiff(ffrom, fto, fpatch):
     to_size = file_size(fto)
     from_data = file_read(ffrom)
     start_time = time.time()
-    suffix_array = divsufsort(from_data)
-    chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
+    suffix_array = bytearray(4 * (len(from_data) + 1))
+    divsufsort(from_data, suffix_array)
+    chunks = bsdiff.create_patch(suffix_array,
+                                 from_data,
+                                 file_read(fto),
+                                 bytearray(file_size(fto) + 1))
 
     LOGGER.info('Bsdiff algorithm completed in %s.',
                 format_timespan(time.time() - start_time))
@@ -388,7 +461,8 @@ def create_patch(ffrom,
                  to_code_begin=0,
                  to_code_end=0,
                  match_score=6,
-                 match_block_size=64):
+                 match_block_size=64,
+                 use_mmap=True):
     """Create a patch from `ffrom` to `fto` and write it to `fpatch`. All
     three arguments are file-like objects.
 
@@ -438,7 +512,8 @@ def create_patch(ffrom,
                             compression,
                             suffix_array_algorithm,
                             data_format,
-                            data_segment)
+                            data_segment,
+                            use_mmap)
     elif algorithm == 'bsdiff' and patch_type == 'in-place':
         create_patch_in_place(ffrom,
                               fto,
@@ -449,7 +524,8 @@ def create_patch(ffrom,
                               segment_size,
                               minimum_shift_size,
                               data_format,
-                              data_segment)
+                              data_segment,
+                              use_mmap)
     elif algorithm == 'bsdiff' and patch_type == 'bsdiff':
         create_patch_bsdiff(ffrom, fto, fpatch)
     elif algorithm == 'hdiffpatch' and patch_type == 'hdiffpatch':
@@ -496,7 +572,8 @@ def create_patch_filenames(fromfile,
                            to_code_begin=0,
                            to_code_end=0,
                            match_score=6,
-                           match_block_size=64):
+                           match_block_size=64,
+                           use_mmap=True):
     """Same as :func:`~detools.create_patch()`, but with filenames instead
     of file-like objects.
 
@@ -531,4 +608,5 @@ def create_patch_filenames(fromfile,
                              to_code_begin,
                              to_code_end,
                              match_score,
-                             match_block_size)
+                             match_block_size,
+                             use_mmap)

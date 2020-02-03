@@ -89,11 +89,6 @@ pybv11-data-format-with-elf-data-sections-offsets.patch
 libdetools.a
 Python-3.7.3.tar
 Python-3.8.1.tar
-Random-3.7.3.bin
-Random-3.8.1.bin
-Trunc-3.7.3.tar
-Trunc-3.8.1.tar
-Zeros-3.7.3.bin
-Zeros-3.8.1.bin
-benchmark.patch
+Python.tar
+/*.patch
 to.tar

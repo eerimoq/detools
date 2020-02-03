@@ -172,52 +172,6 @@ static int append_buffer(PyObject *list_p, uint8_t *buf_p, int32_t size)
     return (append_bytes(list_p, buf_p, size));
 }
 
-static int parse_args(PyObject *args_p,
-                      Py_ssize_t *suffix_array_length_p,
-                      int32_t **sa_pp,
-                      char **from_pp,
-                      char **to_pp,
-                      Py_ssize_t *from_size_p,
-                      Py_ssize_t *to_size_p)
-{
-    int res;
-    PyObject *sa_p;
-    PyObject *from_bytes_p;
-    PyObject *to_bytes_p;
-
-    res = PyArg_ParseTuple(args_p,
-                           "OOO",
-                           &sa_p,
-                           &from_bytes_p,
-                           &to_bytes_p);
-
-    if (res == 0) {
-        return (-1);
-    }
-
-    *suffix_array_length_p = (PyByteArray_Size(sa_p) / sizeof(int32_t));
-
-    if (*suffix_array_length_p <= 0) {
-        return (-1);
-    }
-
-    *sa_pp = (int32_t *)PyByteArray_AsString(sa_p);
-
-    res = PyBytes_AsStringAndSize(from_bytes_p, from_pp, from_size_p);
-
-    if (res != 0) {
-        return (-1);
-    }
-
-    res = PyBytes_AsStringAndSize(to_bytes_p, to_pp, to_size_p);
-
-    if (res != 0) {
-        return (-1);
-    }
-
-    return (res);
-}
-
 static int write_diff_extra_and_adjustment(PyObject *list_p,
                                            uint8_t *from_p,
                                            Py_ssize_t from_size,
@@ -456,66 +410,121 @@ static PyObject *m_pack_size(PyObject *self_p, PyObject *arg_p)
     return (bytes_p);
 }
 
+static int parse_args(PyObject *args_p,
+                      Py_buffer *suffix_array_view_p,
+                      Py_buffer *from_view_p,
+                      Py_buffer *to_view_p,
+                      Py_buffer *de_view_p)
+{
+    int res;
+    PyObject *suffix_array_p;
+    PyObject *from_p;
+    PyObject *to_p;
+    PyObject *de_p;
+
+    res = PyArg_ParseTuple(args_p,
+                           "OOOO",
+                           &suffix_array_p,
+                           &from_p,
+                           &to_p,
+                           &de_p);
+
+    if (res == 0) {
+        return (-1);
+    }
+
+    res = PyObject_GetBuffer(suffix_array_p,
+                             suffix_array_view_p,
+                             PyBUF_CONTIG_RO);
+
+    if (res == -1) {
+        return (res);
+    }
+
+    res = PyObject_GetBuffer(from_p, from_view_p, PyBUF_CONTIG_RO);
+
+    if (res == -1) {
+        goto err1;
+    }
+
+    res = PyObject_GetBuffer(to_p, to_view_p, PyBUF_CONTIG_RO);
+
+    if (res == -1) {
+        goto err2;
+    }
+
+    res = PyObject_GetBuffer(de_p, de_view_p, PyBUF_CONTIG);
+
+    if (res == -1) {
+        goto err3;
+    }
+
+    return (res);
+
+ err3:
+    PyBuffer_Release(to_view_p);
+
+ err2:
+    PyBuffer_Release(from_view_p);
+
+ err1:
+    PyBuffer_Release(suffix_array_view_p);
+
+    return (res);
+}
+
 static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
 {
     int res;
-    uint8_t *from_p;
-    uint8_t *to_p;
-    Py_ssize_t from_size;
-    Py_ssize_t to_size;
-    int32_t *sa_p;
-    uint8_t *debuf_p;
     PyObject *list_p;
-    Py_ssize_t suffix_array_length;
+    Py_buffer suffix_array_view;
+    Py_buffer from_view;
+    Py_buffer to_view;
+    Py_buffer de_view;
 
     res = parse_args(args_p,
-                     &suffix_array_length,
-                     &sa_p,
-                     (char **)&from_p,
-                     (char **)&to_p,
-                     &from_size,
-                     &to_size);
+                     &suffix_array_view,
+                     &from_view,
+                     &to_view,
+                     &de_view);
 
     if (res != 0) {
         return (NULL);
     }
 
-    debuf_p = PyMem_Malloc(to_size + 1);
-
-    if (debuf_p == NULL) {
-        goto err1;
-    }
-
     list_p = PyList_New(0);
 
     if (list_p == NULL) {
-        goto err2;
+        goto err1;
     }
 
     res = create_patch_loop(list_p,
-                            sa_p,
-                            from_p,
-                            from_size,
-                            to_p,
-                            to_size,
-                            debuf_p);
+                            suffix_array_view.buf,
+                            from_view.buf,
+                            from_view.len,
+                            to_view.buf,
+                            to_view.len,
+                            de_view.buf);
 
     if (res != 0) {
-        goto err3;
+        goto err2;
     }
 
-    PyMem_Free(debuf_p);
+    PyBuffer_Release(&suffix_array_view);
+    PyBuffer_Release(&from_view);
+    PyBuffer_Release(&to_view);
+    PyBuffer_Release(&de_view);
 
     return (list_p);
 
- err3:
+ err2:
     Py_DECREF(list_p);
 
- err2:
-    PyMem_Free(debuf_p);
-
  err1:
-    PyMem_Free(sa_p);
+    PyBuffer_Release(&suffix_array_view);
+    PyBuffer_Release(&from_view);
+    PyBuffer_Release(&to_view);
+    PyBuffer_Release(&de_view);
 
     return (NULL);
 }
