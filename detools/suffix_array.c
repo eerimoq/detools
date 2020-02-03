@@ -30,10 +30,13 @@
 #include "sais/sais.h"
 #include "libdivsufsort/divsufsort.h"
 
-/**
- * def sais(data) -> suffix array
- */
-static PyObject *m_sais(PyObject *self_p, PyObject* arg_p)
+typedef int32_t (*create_t)(const uint8_t *buf_p,
+                            int32_t *suffix_array_p,
+                            int32_t length);
+
+static PyObject *create(PyObject *self_p,
+                        PyObject* arg_p,
+                        create_t create_callback)
 {
     int res;
     char *buf_p;
@@ -70,7 +73,7 @@ static PyObject *m_sais(PyObject *self_p, PyObject* arg_p)
     suffix_array_p[0] = (int32_t)size;
 
     /* Execute the SA-IS algorithm. */
-    res = sais((uint8_t *)buf_p, &suffix_array_p[1], (int32_t)size);
+    res = create_callback((uint8_t *)buf_p, &suffix_array_p[1], (int32_t)size);
 
     if (res != 0) {
         goto err1;
@@ -85,57 +88,19 @@ static PyObject *m_sais(PyObject *self_p, PyObject* arg_p)
 }
 
 /**
+ * def sais(data) -> suffix array
+ */
+static PyObject *m_sais(PyObject *self_p, PyObject* arg_p)
+{
+    return (create(self_p, arg_p, sais));
+}
+
+/**
  * def divsufsort(data) -> suffix array
  */
 static PyObject *m_divsufsort(PyObject *self_p, PyObject* arg_p)
 {
-    int res;
-    char *buf_p;
-    Py_ssize_t size;
-    int32_t *suffix_array_p;
-    PyObject *byte_array_p;
-
-    /* Input argument conversion. */
-    res = PyBytes_AsStringAndSize(arg_p, &buf_p, &size);
-
-    if (res == -1) {
-        return (NULL);
-    }
-
-    if (size > 0x7fffffff) {
-        PyErr_SetString(PyExc_ValueError, "divsufsort data too long (over 0x7fffffff).");
-
-        return (NULL);
-    }
-
-    byte_array_p = PyByteArray_FromStringAndSize("", 1);
-
-    if (byte_array_p == NULL) {
-        return (NULL);
-    }
-
-    res = PyByteArray_Resize(byte_array_p, (size + 1) * sizeof(*suffix_array_p));
-
-    if (res != 0) {
-        goto err1;
-    }
-
-    suffix_array_p = (int32_t *)PyByteArray_AsString(byte_array_p);
-    suffix_array_p[0] = (int32_t)size;
-
-    /* Execute the SA-IS algorithm. */
-    res = divsufsort((uint8_t *)buf_p, &suffix_array_p[1], (int32_t)size);
-
-    if (res != 0) {
-        goto err1;
-    }
-
-    return (byte_array_p);
-
- err1:
-    Py_DECREF(byte_array_p);
-
-    return (NULL);
+    return (create(self_p, arg_p, divsufsort));
 }
 
 static PyMethodDef module_methods[] = {
