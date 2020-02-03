@@ -774,7 +774,7 @@ static int32_t sais_main(const void *t_p,
     return (0);
 }
 
-static int32_t sais(const uint8_t *t_p, int32_t *sa_p, int32_t n)
+int32_t sais(const uint8_t *t_p, int32_t *sa_p, int32_t n)
 {
     if ((t_p == NULL) || (sa_p == NULL) || (n < 0)) {
         return (-1);
@@ -789,85 +789,4 @@ static int32_t sais(const uint8_t *t_p, int32_t *sa_p, int32_t n)
     }
 
     return (sais_main(t_p, sa_p, 0, n, UCHAR_SIZE, sizeof(uint8_t)));
-}
-
-/**
- * def sais(data) -> suffix array
- */
-static PyObject *m_sais(PyObject *self_p, PyObject* arg_p)
-{
-    int res;
-    char *buf_p;
-    Py_ssize_t size;
-    int32_t *suffix_array_p;
-    PyObject *byte_array_p;
-
-    /* Input argument conversion. */
-    res = PyBytes_AsStringAndSize(arg_p, &buf_p, &size);
-
-    if (res == -1) {
-        return (NULL);
-    }
-
-    if (size > 0x7fffffff) {
-        PyErr_SetString(PyExc_ValueError, "SA-IS data too long (over 0x7fffffff).");
-
-        return (NULL);
-    }
-
-    byte_array_p = PyByteArray_FromStringAndSize("", 1);
-
-    if (byte_array_p == NULL) {
-        return (NULL);
-    }
-
-    res = PyByteArray_Resize(byte_array_p, (size + 1) * sizeof(*suffix_array_p));
-
-    if (res != 0) {
-        goto err1;
-    }
-
-    suffix_array_p = (int32_t *)PyByteArray_AsString(byte_array_p);
-    suffix_array_p[0] = (int32_t)size;
-
-    /* Execute the SA-IS algorithm. */
-    res = sais((uint8_t *)buf_p, &suffix_array_p[1], (int32_t)size);
-
-    if (res != 0) {
-        goto err1;
-    }
-
-    return (byte_array_p);
-
- err1:
-    Py_DECREF(byte_array_p);
-
-    return (NULL);
-}
-
-static PyMethodDef module_methods[] = {
-    { "sais", m_sais, METH_O },
-    { NULL }
-};
-
-static PyModuleDef module = {
-    PyModuleDef_HEAD_INIT,
-    .m_name = "sais",
-    .m_doc = NULL,
-    .m_size = -1,
-    .m_methods = module_methods
-};
-
-PyMODINIT_FUNC PyInit_sais(void)
-{
-    PyObject *m_p;
-
-    /* Module creation. */
-    m_p = PyModule_Create(&module);
-
-    if (m_p == NULL) {
-        return (NULL);
-    }
-
-    return (m_p);
 }

@@ -53,10 +53,10 @@ setup(name='detools',
           'heatshrink2'
       ],
       ext_modules=[
-          Extension(name="detools.sais", sources=["detools/sais.c"]),
-          Extension(name="detools.divsufsort",
+          Extension(name="detools.suffix_array",
                     sources=[
-                        "detools/divsufsort.c",
+                        "detools/suffix_array.c",
+                        "detools/sais/sais.c",
                         "detools/libdivsufsort/divsufsort.c",
                         "detools/libdivsufsort/divsufsort64.c"
                     ]),

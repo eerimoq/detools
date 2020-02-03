@@ -22,8 +22,8 @@ from .common import pack_size
 from .common import DataSegment
 from .common import unpack_size_bytes
 from .data_format import encode as data_format_encode
-from . import sais as sais
-from . import divsufsort as divsufsort
+from .suffix_array import sais
+from .suffix_array import divsufsort
 from . import cbsdiff as bsdiff
 from . import hdiffpatch as hdiffpatch
 
@@ -90,9 +90,9 @@ def create_patch_normal_data(ffrom,
     from_data = file_read(ffrom)
 
     if suffix_array_algorithm == 'sais':
-        suffix_array = sais.sais(from_data)
+        suffix_array = sais(from_data)
     elif suffix_array_algorithm == 'divsufsort':
-        suffix_array = divsufsort.divsufsort(from_data)
+        suffix_array = divsufsort(from_data)
 
     chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
 
@@ -225,7 +225,7 @@ def offtout(x):
 def create_patch_bsdiff(ffrom, fto, fpatch):
     to_size = file_size(fto)
     from_data = file_read(ffrom)
-    suffix_array = sais.sais(from_data)
+    suffix_array = sais(from_data)
     chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
 
     fctrl = BytesIO()
