@@ -1,3 +1,4 @@
+import time
 import logging
 import sys
 import argparse
@@ -7,6 +8,7 @@ import binascii
 
 from humanfriendly import format_size
 from humanfriendly import parse_size
+from humanfriendly import format_timespan
 from elftools.elf.elffile import ELFFile
 
 from .create import create_patch
@@ -213,7 +215,14 @@ def data_format_args(args):
     }
 
 
+def print_successful(filename, start_time):
+    print("Successfully created '{}' in {}!".format(
+        filename,
+        format_timespan(time.time() - start_time)))
+
+
 def _do_create_patch(args):
+    start_time = time.time()
     create_patch_filenames(args.fromfile,
                            args.tofile,
                            args.patchfile,
@@ -221,11 +230,11 @@ def _do_create_patch(args):
                            'normal',
                            args.suffix_array_algorithm,
                            **data_format_args(args))
-
-    print("Successfully created patch '{}'!".format(args.patchfile))
+    print_successful(args.patchfile, start_time)
 
 
 def _do_create_patch_in_place(args):
+    start_time = time.time()
     create_patch_filenames(args.fromfile,
                            args.tofile,
                            args.patchfile,
@@ -236,20 +245,20 @@ def _do_create_patch_in_place(args):
                            args.segment_size,
                            args.minimum_shift_size,
                            **data_format_args(args))
-
-    print("Successfully created patch '{}'!".format(args.patchfile))
+    print_successful(args.patchfile, start_time)
 
 
 def _do_create_patch_bsdiff(args):
+    start_time = time.time()
     create_patch_filenames(args.fromfile,
                            args.tofile,
                            args.patchfile,
                            patch_type='bsdiff')
-
-    print("Successfully created patch '{}'!".format(args.patchfile))
+    print_successful(args.patchfile, start_time)
 
 
 def _do_create_patch_hdiffpatch(args):
+    start_time = time.time()
     create_patch_filenames(args.fromfile,
                            args.tofile,
                            args.patchfile,
@@ -257,20 +266,25 @@ def _do_create_patch_hdiffpatch(args):
                            'hdiffpatch',
                            match_score=args.match_score,
                            match_block_size=args.match_block_size)
-
-    print("Successfully created patch '{}'!".format(args.patchfile))
+    print_successful(args.patchfile, start_time)
 
 
 def _do_apply_patch(args):
+    start_time = time.time()
     apply_patch_filenames(args.fromfile, args.patchfile, args.tofile)
+    print_successful(args.tofile, start_time)
 
 
 def _do_apply_patch_in_place(args):
+    start_time = time.time()
     apply_patch_in_place_filenames(args.memfile, args.patchfile)
+    print_successful(args.tofile, start_time)
 
 
 def _do_apply_patch_bsdiff(args):
+    start_time = time.time()
     apply_patch_bsdiff_filenames(args.fromfile, args.patchfile, args.tofile)
+    print_successful(args.tofile, start_time)
 
 
 def _format_size(value):

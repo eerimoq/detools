@@ -10,11 +10,17 @@ echo "Python: $PYTHON"
 export PYTHONPATH=$SCRIPT_DIR/..
 
 function create_patch() {
-    echo "=== $1 ==="
+    echo "===== $1 ====="
     echo
     \time -f "RSS=%M elapsed=%E" \
-          $PYTHON -m detools $1 $from_file $to_file $patch_file
+          $PYTHON -m detools -l info $1 $from_file $to_file $patch_file
     ls -lh $patch_file
+    echo
+    echo "----- $2 -----"
+    echo
+    \time -f "RSS=%M elapsed=%E" \
+          $PYTHON -m detools -l info $2 $from_file $patch_file to.tar
+    cmp $to_file to.tar
     echo
 }
 
@@ -32,10 +38,10 @@ if [ ! -e Python-3.8.1.tar ] ; then
     gunzip Python-3.8.1.tgz
 fi
 
-create_patch "create_patch"
-create_patch "create_patch_bsdiff"
-create_patch "create_patch_hdiffpatch"
-create_patch "create_patch_hdiffpatch --match-block-size 64"
-create_patch "create_patch_hdiffpatch --match-block-size 1k"
-create_patch "create_patch_hdiffpatch -c none --match-block-size 64"
-create_patch "create_patch_hdiffpatch -c none  --match-block-size 1k"
+create_patch "create_patch" "apply_patch"
+create_patch "create_patch_bsdiff" "apply_patch_bsdiff"
+create_patch "create_patch_hdiffpatch" "apply_patch"
+create_patch "create_patch_hdiffpatch --match-block-size 64" "apply_patch"
+create_patch "create_patch_hdiffpatch --match-block-size 1k" "apply_patch"
+create_patch "create_patch_hdiffpatch -c none --match-block-size 64" "apply_patch"
+create_patch "create_patch_hdiffpatch -c none --match-block-size 1k" "apply_patch"
