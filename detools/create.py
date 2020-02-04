@@ -1,8 +1,12 @@
+import time
+import logging
 import lzma
 from bz2 import BZ2Compressor
 from io import BytesIO
 import struct
 import bitstruct
+from humanfriendly import format_timespan
+from humanfriendly import format_size
 from .errors import Error
 from .compression.crle import CrleCompressor
 from .compression.none import NoneCompressor
@@ -26,6 +30,9 @@ from .suffix_array import sais
 from .suffix_array import divsufsort
 from . import cbsdiff as bsdiff
 from . import hdiffpatch as hdiffpatch
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def pack_header(patch_type, compression):
@@ -88,23 +95,37 @@ def create_patch_normal_data(ffrom,
 
     fpatch.write(compressor.compress(dfpatch))
     from_data = file_read(ffrom)
+    start_time = time.time()
 
     if suffix_array_algorithm == 'sais':
         suffix_array = sais(from_data)
     elif suffix_array_algorithm == 'divsufsort':
         suffix_array = divsufsort(from_data)
 
+    LOGGER.info('Suffix array of %s created in %s.',
+                format_size(len(suffix_array)),
+                format_timespan(time.time() - start_time))
+
+    start_time = time.time()
     chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
+
+    LOGGER.info('Bsdiff algorithm completed in %s.',
+                format_timespan(time.time() - start_time))
 
     # with open('data-to.patch', 'wb') as fout:
     #     for i in range(0, len(chunks), 5):
     #         fout.write(chunks[i + 1])
     #         fout.write(b'\xff' * len(chunks[i + 3]))
 
+    start_time = time.time()
+
     for chunk in chunks:
         fpatch.write(compressor.compress(chunk))
 
     fpatch.write(compressor.flush())
+
+    LOGGER.info('Compression completed in %s.',
+                format_timespan(time.time() - start_time))
 
 
 def create_patch_normal(ffrom,
@@ -225,12 +246,18 @@ def offtout(x):
 def create_patch_bsdiff(ffrom, fto, fpatch):
     to_size = file_size(fto)
     from_data = file_read(ffrom)
-    suffix_array = sais(from_data)
+    start_time = time.time()
+    suffix_array = divsufsort(from_data)
     chunks = bsdiff.create_patch(suffix_array, from_data, file_read(fto))
+
+    LOGGER.info('Bsdiff algorithm completed in %s.',
+                format_timespan(time.time() - start_time))
 
     fctrl = BytesIO()
     fdiff = BytesIO()
     fextra = BytesIO()
+
+    start_time = time.time()
 
     ctrl_compressor = BZ2Compressor()
     diff_compressor = BZ2Compressor()
@@ -250,6 +277,9 @@ def create_patch_bsdiff(ffrom, fto, fpatch):
     fdiff.write(diff_compressor.flush())
     fextra.write(extra_compressor.flush())
 
+    LOGGER.info('Compression completed in %s.',
+                format_timespan(time.time() - start_time))
+
     # Write everything to the patch file.
     fpatch.write(b'BSDIFF40')
     fpatch.write(offtout(fctrl.tell()))
@@ -266,10 +296,16 @@ def create_patch_hdiffpatch(ffrom,
                             compression,
                             match_score,
                             match_block_size):
+    start_time = time.time()
     patch = hdiffpatch.create_patch(file_read(ffrom),
                                     file_read(fto),
                                     match_score,
                                     match_block_size)
+
+    LOGGER.info('Hdiffpatch algorithm completed in %s.',
+                format_timespan(time.time() - start_time))
+
+    start_time = time.time()
     compressor = create_compressor(compression)
     fpatch.write(pack_header(PATCH_TYPE_HDIFFPATCH,
                              compression_string_to_number(compression)))
@@ -277,6 +313,9 @@ def create_patch_hdiffpatch(ffrom,
     fpatch.write(pack_size(len(patch)))
     fpatch.write(compressor.compress(patch))
     fpatch.write(compressor.flush())
+
+    LOGGER.info('Compression completed in %s.',
+                format_timespan(time.time() - start_time))
 
 
 def create_patch(ffrom,

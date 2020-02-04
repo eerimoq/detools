@@ -1,3 +1,4 @@
+import logging
 import sys
 import argparse
 from statistics import mean
@@ -516,6 +517,12 @@ def _main():
     parser = argparse.ArgumentParser(description='Binary delta encoding utility.')
 
     parser.add_argument('-d', '--debug', action='store_true')
+    parser.add_argument('-l', '--log-level',
+                        default='error',
+                        choices=[
+                            'debug', 'info', 'warning', 'error', 'critical'
+                        ],
+                        help='Set the logging level (default: %(default)s).')
     parser.add_argument('--version',
                         action='version',
                         version=__version__,
@@ -638,6 +645,9 @@ def _main():
     subparser.set_defaults(func=_do_patch_info)
 
     args = parser.parse_args()
+
+    level = logging.getLevelName(args.log_level.upper())
+    logging.basicConfig(level=level, format='%(asctime)s %(message)s')
 
     if args.debug:
         args.func(args)
