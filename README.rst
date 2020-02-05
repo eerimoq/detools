@@ -25,6 +25,8 @@ differences:
 
 - `Normal`_ or `in-place`_ (resumable) updates.
 
+- Current maximum file size is 2 GB.
+
 - Optional experimental data format aware algorithm for potentially
   smaller patches. I don't recommend anyone to use this functionality
   as the gain is small in relation to memory usage and code
