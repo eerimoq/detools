@@ -278,8 +278,7 @@ def _do_apply_patch(args):
 def _do_apply_patch_in_place(args):
     start_time = time.time()
     apply_patch_in_place_filenames(args.memfile, args.patchfile)
-    print_successful(args.tofile, start_time)
-
+    print_successful(args.memfile, start_time)
 
 def _do_apply_patch_bsdiff(args):
     start_time = time.time()
