@@ -831,6 +831,12 @@ class DetoolsTest(unittest.TestCase):
                                            'tests/files/foo/hdiffpatch.patch',
                                            patch_type='hdiffpatch')
 
+    def test_create_and_apply_patch_random_bsdiff(self):
+        self.assert_create_and_apply_patch('tests/files/random/from.bin',
+                                           'tests/files/random/to.bin',
+                                           'tests/files/random/patch-bsdiff.bin',
+                                           patch_type='bsdiff')
+
 
 # This file is not '__main__' when executed via 'python setup.py3
 # test'.

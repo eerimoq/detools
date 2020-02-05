@@ -480,21 +480,23 @@ def apply_patch_bsdiff(ffrom, fpatch, fto):
         if to_pos + diff_size > to_size:
             raise Error("Patch diff data too long.")
 
-        diff_data = diff_decompressor.decompress(b'', diff_size)
-        from_data = ffrom.read(diff_size)
-        data = bytearray(
-            (db + fb) & 0xff for db, fb in zip(diff_data, from_data)
-        )
-        fto.write(data)
-        to_pos += diff_size
+        if diff_size > 0:
+            diff_data = diff_decompressor.decompress(b'', diff_size)
+            from_data = ffrom.read(diff_size)
+            data = bytearray(
+                (db + fb) & 0xff for db, fb in zip(diff_data, from_data)
+            )
+            fto.write(data)
+            to_pos += diff_size
 
         # Extra data.
         if to_pos + extra_size > to_size:
             raise Error("Patch extra data too long.")
 
-        extra_data = extra_decompressor.decompress(b'', extra_size)
-        fto.write(extra_data)
-        to_pos += extra_size
+        if extra_size > 0:
+            extra_data = extra_decompressor.decompress(b'', extra_size)
+            fto.write(extra_data)
+            to_pos += extra_size
 
         # Adjustment.
         ffrom.seek(adjustment, os.SEEK_CUR)
