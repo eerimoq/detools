@@ -48,8 +48,8 @@ original `HDiffPatch`_ implementation as of today.
 
 - See `HDiffPatch`_ for characteristics.
 
-- Suitable for large files when matching blocks instead of using a
-  suffix array.
+- Suitable for large files when matching blocks
+  (``--match-block-size``).
 
 - Often slightly smaller patches than bsdiff.
 
