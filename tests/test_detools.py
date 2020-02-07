@@ -71,6 +71,7 @@ class DetoolsTest(unittest.TestCase):
         # open('actual-to.bin', 'wb').write(actual)
 
         self.assertEqual(to_size, len(expected))
+        self.assertEqual(len(actual), len(expected))
         self.assertEqual(actual, expected)
 
     def assert_create_and_apply_patch(self,
@@ -572,7 +573,9 @@ class DetoolsTest(unittest.TestCase):
                 with self.assertRaises(detools.Error) as cm:
                     detools.create_patch(fold, fnew, fpatch, patch_type='bad')
 
-                self.assertEqual(str(cm.exception), "Bad patch type 'bad'.")
+                self.assertEqual(
+                    str(cm.exception),
+                    "Bad patch type 'bad' and algorithm 'bsdiff' combination.")
 
     def test_apply_patch_foo_bad_compression(self):
         fnew = BytesIO()
@@ -830,6 +833,25 @@ class DetoolsTest(unittest.TestCase):
                                            'tests/files/foo/new',
                                            'tests/files/foo/hdiffpatch.patch',
                                            patch_type='hdiffpatch')
+
+    def test_create_and_apply_patch_foo_hdiffpatch_normal_none(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            'tests/files/foo/hdiffpatch-normal-none.patch',
+            patch_type='normal',
+            algorithm='hdiffpatch',
+            compression='none',
+            match_block_size=8)
+
+    def test_create_and_apply_patch_foo_hdiffpatch_normal(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            'tests/files/foo/hdiffpatch-normal.patch',
+            patch_type='normal',
+            algorithm='hdiffpatch',
+            match_block_size=8)
 
     def test_create_and_apply_patch_random_bsdiff(self):
         self.assert_create_and_apply_patch('tests/files/random/from.bin',

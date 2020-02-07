@@ -18,11 +18,40 @@ Normal
 ------
 
 A normal patch uses two memory regions or files. One contains the
-from-data and the to-data is written to the other.
+from-data and the to-data is written to the other. The patch is
+accesses sequentially from the beginning to the end when applying the
+patch.
 
 .. code-block:: text
 
    $ detools create_patch tests/files/foo.old tests/files/foo.new foo.patch
+
+Patch layout:
+
++--------+--------+---------+--------+--------+---------+--------+-----
+| header | diff 1 | extra 1 | adj. 1 | diff 2 | extra 2 | adj. 2 | ...
++--------+--------+---------+--------+--------+---------+--------+-----
+
+The header is not compressed. The rest of the patch is compressed.
+
+HDiffPatch
+----------
+
+Patches of this type are slightly smaller than normal patches.
+
+.. code-block:: text
+
+   $ detools create_patch --patch-type hdiffpatch \
+       tests/files/foo.old tests/files/foo.new foo.patch
+
+Patch layout:
+
++--------+--------+------------------+-----------------------+
+| header | covers | RLE diff control | RLE diff code | extra |
++--------+--------+------------------+-----------------------+
+
+The header is not compressed. The other four parts are compressed
+separately.
 
 In-place
 --------

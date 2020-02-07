@@ -228,6 +228,7 @@ def _do_create_patch(args):
                            args.patchfile,
                            args.compression,
                            'normal',
+                           'bsdiff',
                            args.suffix_array_algorithm,
                            **data_format_args(args))
     print_successful(args.patchfile, start_time)
@@ -240,6 +241,7 @@ def _do_create_patch_in_place(args):
                            args.patchfile,
                            args.compression,
                            'in-place',
+                           'bsdiff',
                            args.suffix_array_algorithm,
                            args.memory_size,
                            args.segment_size,
@@ -263,6 +265,7 @@ def _do_create_patch_hdiffpatch(args):
                            args.tofile,
                            args.patchfile,
                            args.compression,
+                           args.patch_type,
                            'hdiffpatch',
                            match_score=args.match_score,
                            match_block_size=args.match_block_size)
@@ -616,6 +619,10 @@ def _main():
                            type=to_binary_size,
                            default=0,
                            help='Match block size (default: %(default)s).')
+    subparser.add_argument('--patch-type',
+                           choices=('normal', 'hdiffpatch'),
+                           default='hdiffpatch',
+                           help='Patch type (default: %(default)s).')
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
     subparser.add_argument('patchfile', help='Created patch file.')

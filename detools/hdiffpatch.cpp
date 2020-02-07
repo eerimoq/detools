@@ -36,18 +36,20 @@ static int parse_create_patch_args(PyObject *args_p,
                                    Py_ssize_t *from_size_p,
                                    Py_ssize_t *to_size_p,
                                    unsigned int *match_score_p,
-                                   unsigned int *block_size_p)
+                                   unsigned int *block_size_p,
+                                   int *patch_type_p)
 {
     int res;
     PyObject *from_bytes_p;
     PyObject *to_bytes_p;
 
     res = PyArg_ParseTuple(args_p,
-                           "OOII",
+                           "OOIIi",
                            &from_bytes_p,
                            &to_bytes_p,
                            match_score_p,
-                           block_size_p);
+                           block_size_p,
+                           patch_type_p);
 
     if (res == 0) {
         return (-1);
@@ -68,11 +70,12 @@ static int parse_create_patch_args(PyObject *args_p,
     return (res);
 }
 
-static PyObject *create_patch_memory(uint8_t *from_p,
-                                     uint8_t *to_p,
-                                     Py_ssize_t from_size,
-                                     Py_ssize_t to_size,
-                                     unsigned int match_score)
+static PyObject *create_patch_suffix_array(uint8_t *from_p,
+                                           uint8_t *to_p,
+                                           Py_ssize_t from_size,
+                                           Py_ssize_t to_size,
+                                           unsigned int match_score,
+                                           int patch_type)
 {
     std::vector<unsigned char> diff;
 
@@ -83,7 +86,8 @@ static PyObject *create_patch_memory(uint8_t *from_p,
                                &from_p[from_size],
                                diff,
                                NULL,
-                               match_score);
+                               match_score,
+                               patch_type);
     } catch (const std::exception& e) {
         PyErr_SetString(PyExc_RuntimeError, e.what());
 
@@ -94,11 +98,12 @@ static PyObject *create_patch_memory(uint8_t *from_p,
                                           diff.size()));
 }
 
-static PyObject *create_patch_stream(uint8_t *from_p,
-                                     uint8_t *to_p,
-                                     Py_ssize_t from_size,
-                                     Py_ssize_t to_size,
-                                     unsigned int match_block_size)
+static PyObject *create_patch_match_blocks(uint8_t *from_p,
+                                           uint8_t *to_p,
+                                           Py_ssize_t from_size,
+                                           Py_ssize_t to_size,
+                                           unsigned int match_block_size,
+                                           int patch_type)
 {
     int res;
     hpatch_TStreamInput from_data;
@@ -116,7 +121,8 @@ static PyObject *create_patch_stream(uint8_t *from_p,
                                   &from_data,
                                   &patch_data.base,
                                   NULL,
-                                  match_block_size);
+                                  match_block_size,
+                                  patch_type);
 
     byte_array_p = PyByteArray_FromStringAndSize("", 1);
 
@@ -167,7 +173,11 @@ static PyObject *create_patch_stream(uint8_t *from_p,
 }
 
 /**
- * def create_patch(from_data, to_data, match_score, match_block_size) -> patch_data
+ * def create_patch(from_data,
+ *                  to_data,
+ *                  match_score,
+ *                  match_block_size,
+ *                  patch_type) -> patch_data
  */
 static PyObject *m_create_patch(PyObject *self_p, PyObject* args_p)
 {
@@ -178,6 +188,7 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject* args_p)
     Py_ssize_t to_size;
     unsigned int match_score;
     unsigned int match_block_size;
+    int patch_type;
 
     res = parse_create_patch_args(args_p,
                                   (char **)&from_p,
@@ -185,24 +196,27 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject* args_p)
                                   &from_size,
                                   &to_size,
                                   &match_score,
-                                  &match_block_size);
+                                  &match_block_size,
+                                  &patch_type);
 
     if (res != 0) {
         return (NULL);
     }
 
     if (match_block_size == 0) {
-        return (create_patch_memory(from_p,
-                                    to_p,
-                                    from_size,
-                                    to_size,
-                                    match_score));
+        return (create_patch_suffix_array(from_p,
+                                          to_p,
+                                          from_size,
+                                          to_size,
+                                          match_score,
+                                          patch_type));
     } else {
-        return (create_patch_stream(from_p,
-                                    to_p,
-                                    from_size,
-                                    to_size,
-                                    match_block_size));
+        return (create_patch_match_blocks(from_p,
+                                          to_p,
+                                          from_size,
+                                          to_size,
+                                          match_block_size,
+                                          patch_type));
     }
 }
 

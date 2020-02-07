@@ -99,7 +99,7 @@ Create a patch ``foo.patch`` from ``tests/files/foo/old`` to
 .. code-block:: text
 
    $ detools create_patch tests/files/foo/old tests/files/foo/new foo.patch
-   Successfully created patch 'foo.patch'!
+   Successfully created 'foo.patch' in 0.01 seconds!
    $ ls -l foo.patch
    -rw-rw-r-- 1 erik erik 127 feb  2 10:35 foo.patch
 
@@ -109,7 +109,7 @@ Create the same patch as above, but without compression.
 
    $ detools create_patch --compression none \
          tests/files/foo/old tests/files/foo/new foo-no-compression.patch
-   Successfully created patch 'foo-no-compression.patch'!
+   Successfully created 'foo-no-compression.patch' in 0 seconds!
    $ ls -l foo-no-compression.patch
    -rw-rw-r-- 1 erik erik 2792 feb  2 10:35 foo-no-compression.patch
 
@@ -122,7 +122,7 @@ Create an in-place patch ``foo-in-place.patch``.
 
    $ detools create_patch_in_place --memory-size 3000 --segment-size 500 \
          tests/files/foo/old tests/files/foo/new foo-in-place.patch
-   Successfully created patch 'foo-in-place.patch'!
+   Successfully created 'foo-in-place.patch' in 0.01 seconds!
    $ ls -l foo-in-place.patch
    -rw-rw-r-- 1 erik erik 672 feb  2 10:36 foo-in-place.patch
 
@@ -136,7 +136,7 @@ original bsdiff program.
 
    $ detools create_patch_bsdiff \
          tests/files/foo/old tests/files/foo/new foo-bsdiff.patch
-   Successfully created patch 'foo-bsdiff.patch'!
+   Successfully created 'foo-bsdiff.patch' in 0 seconds!
    $ ls -l foo-bsdiff.patch
    -rw-rw-r-- 1 erik erik 261 feb  2 10:36 foo-bsdiff.patch
 
@@ -149,7 +149,7 @@ Create a hdiffpatch patch ``foo-hdiffpatch.patch``.
 
    $ detools create_patch_hdiffpatch \
          tests/files/foo/old tests/files/foo/new foo-hdiffpatch.patch
-   Successfully created patch 'foo-hdiffpatch.patch'!
+   Successfully created patch 'foo-hdiffpatch.patch' in 0.01 seconds!
    $ ls -l foo-hdiffpatch.patch
    -rw-rw-r-- 1 erik erik 146 feb  2 10:37 foo-hdiffpatch.patch
 
@@ -160,9 +160,20 @@ files. Creates slightly bigger patches.
 
    $ detools create_patch_hdiffpatch --match-block-size 64 \
          tests/files/foo/old tests/files/foo/new foo-hdiffpatch-64.patch
-   Successfully created patch 'foo-hdiffpatch.patch'!
+   Successfully created patch 'foo-hdiffpatch-64.patch' in 0.01 seconds!
    $ ls -l foo-hdiffpatch-64.patch
    -rw-rw-r-- 1 erik erik 389 feb  2 10:38 foo-hdiffpatch-64.patch
+
+Normal (sequential read) patch type with ``--patch-type normal``.
+
+.. code-block:: text
+
+   $ detools create_patch_hdiffpatch \
+         --patch-type normal --match-block-size 64 \
+         tests/files/foo/old tests/files/foo/new foo-hdiffpatch-normal.patch
+   Successfully created 'foo-hdiffpatch-normal.patch' in 0.01 seconds!
+   $ ls -l foo-hdiffpatch-normal.patch
+   -rw-rw-r-- 1 erik erik 404 feb  2 10:38 foo-hdiffpatch-normal.patch
 
 The apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -173,6 +184,7 @@ Apply the patch ``foo.patch`` to ``tests/files/foo/old`` to create
 .. code-block:: text
 
    $ detools apply_patch tests/files/foo/old foo.patch foo.new
+   Successfully created 'foo.new' in 0 seconds!
    $ ls -l foo.new
    -rw-rw-r-- 1 erik erik 2780 feb  2 10:38 foo.new
 
@@ -185,6 +197,7 @@ Apply the in-place patch ``foo-in-place.patch`` to ``foo.mem``.
 
    $ cp tests/files/foo/in-place-3000-500.mem foo.mem
    $ detools apply_patch_in_place foo.mem foo-in-place.patch
+   Successfully created 'foo.mem' in 0 seconds!
    $ ls -l foo.mem
    -rw-rw-r-- 1 erik erik 3000 feb  2 10:40 foo.mem
 
@@ -197,6 +210,7 @@ create ``foo.new``.
 .. code-block:: text
 
    $ detools apply_patch_bsdiff tests/files/foo/old foo-bsdiff.patch foo.new
+   Successfully created 'foo.new' in 0 seconds!
    $ ls -l foo.new
    -rw-rw-r-- 1 erik erik 2780 feb  2 10:41 foo.new
 

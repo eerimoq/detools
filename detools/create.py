@@ -17,6 +17,7 @@ from .common import PATCH_TYPE_NORMAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import PATCH_TYPE_HDIFFPATCH
 from .common import DATA_FORMATS
+from .common import PATCH_TYPES
 from .common import format_bad_compression_string
 from .common import compression_string_to_number
 from .common import div_ceil
@@ -294,23 +295,35 @@ def create_patch_hdiffpatch(ffrom,
                             fto,
                             fpatch,
                             compression,
+                            patch_type,
                             match_score,
                             match_block_size):
     start_time = time.time()
     patch = hdiffpatch.create_patch(file_read(ffrom),
                                     file_read(fto),
                                     match_score,
-                                    match_block_size)
+                                    match_block_size,
+                                    PATCH_TYPES[patch_type])
 
     LOGGER.info('Hdiffpatch algorithm completed in %s.',
                 format_timespan(time.time() - start_time))
 
     start_time = time.time()
     compressor = create_compressor(compression)
-    fpatch.write(pack_header(PATCH_TYPE_HDIFFPATCH,
-                             compression_string_to_number(compression)))
-    fpatch.write(pack_size(file_size(fto)))
-    fpatch.write(pack_size(len(patch)))
+
+    if patch_type == 'hdiffpatch':
+        fpatch.write(pack_header(PATCH_TYPE_HDIFFPATCH,
+                                 compression_string_to_number(compression)))
+        fpatch.write(pack_size(file_size(fto)))
+        fpatch.write(pack_size(len(patch)))
+    elif patch_type == 'normal':
+        fpatch.write(pack_header(PATCH_TYPE_NORMAL,
+                                 compression_string_to_number(compression)))
+        fpatch.write(pack_size(file_size(fto)))
+        fpatch.write(compressor.compress(pack_size(0)))
+    else:
+        raise Error('Bad patch type {}.'.format(patch_type))
+
     fpatch.write(compressor.compress(patch))
     fpatch.write(compressor.flush())
 
@@ -323,6 +336,7 @@ def create_patch(ffrom,
                  fpatch,
                  compression='lzma',
                  patch_type='normal',
+                 algorithm='bsdiff',
                  suffix_array_algorithm='divsufsort',
                  memory_size=None,
                  segment_size=None,
@@ -349,6 +363,8 @@ def create_patch(ffrom,
     ``'zstd'``, ``'lz4'`` or ``'none'``.
 
     `patch_type` must be ``'normal'``, ``'in-place'`` or ``'bsdiff'``.
+
+    `algorithm` must be ``'normal'`` or ``'hdiffpatch'``.
 
     `suffix_array_algorithm` must be ``'sais'`` or ``'divsufsort'``.
 
@@ -382,7 +398,7 @@ def create_patch(ffrom,
                                to_code_begin,
                                to_code_end)
 
-    if patch_type == 'normal':
+    if algorithm == 'bsdiff' and patch_type == 'normal':
         create_patch_normal(ffrom,
                             fto,
                             fpatch,
@@ -390,7 +406,7 @@ def create_patch(ffrom,
                             suffix_array_algorithm,
                             data_format,
                             data_segment)
-    elif patch_type == 'in-place':
+    elif algorithm == 'bsdiff' and patch_type == 'in-place':
         create_patch_in_place(ffrom,
                               fto,
                               fpatch,
@@ -403,15 +419,19 @@ def create_patch(ffrom,
                               data_segment)
     elif patch_type == 'bsdiff':
         create_patch_bsdiff(ffrom, fto, fpatch)
-    elif patch_type == 'hdiffpatch':
+    elif algorithm == 'hdiffpatch' or patch_type == 'hdiffpatch':
         create_patch_hdiffpatch(ffrom,
                                 fto,
                                 fpatch,
                                 compression,
+                                patch_type,
                                 match_score,
                                 match_block_size)
     else:
-        raise Error("Bad patch type '{}'.".format(patch_type))
+        raise Error(
+            "Bad patch type '{}' and algorithm '{}' combination.".format(
+                patch_type,
+                algorithm))
 
 
 def create_patch_filenames(fromfile,
@@ -419,6 +439,7 @@ def create_patch_filenames(fromfile,
                            patchfile,
                            compression='lzma',
                            patch_type='normal',
+                           algorithm='bsdiff',
                            suffix_array_algorithm='divsufsort',
                            memory_size=None,
                            segment_size=None,
@@ -453,6 +474,7 @@ def create_patch_filenames(fromfile,
                              fpatch,
                              compression,
                              patch_type,
+                             algorithm,
                              suffix_array_algorithm,
                              memory_size,
                              segment_size,
