@@ -69,18 +69,31 @@ Installation
 Statistics
 ==========
 
-The percentages are calculated as "patch size" / "to size". Lower is
-better.
+Patch sizes, memory usage (RSS) and elapsed times when creating a
+patch from Python-3.7.3.tar (79M) to Python-3.8.1.tar (84M) for
+various algorithm, patch type and compression combinations.
 
-+-----------------------+----------+---------+------------+
-| Update                |  To size | normal  | hdiffpatch |
-+=======================+==========+=========+============+
-| upy v1.9.4 -> v1.10   |   615388 |  11.7 % |     10.7 % |
-+-----------------------+----------+---------+------------+
-| python.tar 3.7 -> 3.8 | 87091200 |   4.1 % |      2.8 % |
-+-----------------------+----------+---------+------------+
-| foo old -> new        |     2780 |   4.6 % |      5.3 % |
-+-----------------------+----------+---------+------------+
+See `tests/benchmark.sh`_ for details on how the data was collected.
+
++--------------+------------+--------+------------+------+---------+
+| Algorithm    | Patch type | Compr. | Patch size |  RSS |    Time |
++==============+============+========+============+======+=========+
+| bsdiff       | normal     | lzma   |       3,5M | 662M | 0:24.29 |
++--------------+------------+--------+------------+------+---------+
+| bsdiff       | normal     | none   |        86M | 646M | 0:15.20 |
++--------------+------------+--------+------------+------+---------+
+| hdiffpatch   | hdiffpatch | lzma   |       2,4M | 523M | 0:13.74 |
++--------------+------------+--------+------------+------+---------+
+| hdiffpatch   | hdiffpatch | none   |       7,2M | 523M | 0:10.24 |
++--------------+------------+--------+------------+------+---------+
+| match-blocks | normal     | lzma   |       2,9M | 273M | 0:08.57 |
++--------------+------------+--------+------------+------+---------+
+| match-blocks | normal     | none   |        84M | 273M | 0:01.72 |
++--------------+------------+--------+------------+------+---------+
+| match-blocks | hdiffpatch | lzma   |       2,6M | 212M | 0:06.07 |
++--------------+------------+--------+------------+------+---------+
+| match-blocks | hdiffpatch | none   |       9,7M | 212M | 0:01.30 |
++--------------+------------+--------+------------+------+---------+
 
 Example usage
 =============
@@ -291,3 +304,5 @@ Contributing
 .. _in-place: https://detools.readthedocs.io/en/latest/#id3
 
 .. _src/c: https://github.com/eerimoq/detools/tree/master/src/c
+
+.. _tests/benchmark.sh: https://github.com/eerimoq/detools/tree/master/tests/benchmark.sh
