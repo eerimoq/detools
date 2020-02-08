@@ -88,7 +88,7 @@ patch_file=benchmark.patch
 
 print_title
 run_patch "create_patch -a bsdiff" "apply_patch"
-run_patch "create_patch -a hdiffpatch" "apply_patch"
+run_patch "create_patch -a hdiffpatch -t hdiffpatch" "apply_patch"
 run_patch "create_patch -a match-blocks" "apply_patch"
 
 from_file=Random-3.7.3.bin
@@ -97,7 +97,7 @@ patch_file=benchmark.patch
 
 print_title
 run_patch "create_patch -a bsdiff" "apply_patch"
-run_patch "create_patch -a hdiffpatch" "apply_patch"
+run_patch "create_patch -a hdiffpatch -t hdiffpatch" "apply_patch"
 run_patch "create_patch -a match-blocks" "apply_patch"
 
 from_file=Zeros-3.7.3.bin
@@ -106,7 +106,7 @@ patch_file=benchmark.patch
 
 print_title
 run_patch "create_patch -a bsdiff" "apply_patch"
-run_patch "create_patch -a hdiffpatch" "apply_patch"
+run_patch "create_patch -a hdiffpatch -t hdiffpatch" "apply_patch"
 run_patch "create_patch -a match-blocks" "apply_patch"
 
 #
@@ -120,7 +120,7 @@ patch_file=benchmark.patch
 print_title
 run_patch "create_patch" "apply_patch"
 run_patch "create_patch_bsdiff" "apply_patch_bsdiff"
-run_patch "create_patch -a hdiffpatch" "apply_patch"
+run_patch "create_patch -a hdiffpatch -t hdiffpatch" "apply_patch"
 run_patch "create_patch -a match-blocks --match-block-size 64" "apply_patch"
 run_patch "create_patch -a match-blocks --match-block-size 1k" "apply_patch"
 run_patch "create_patch -a match-blocks -c none --match-block-size 64" "apply_patch"
