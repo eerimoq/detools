@@ -386,12 +386,12 @@ def create_patch(ffrom,
     `memory_size`, `segment_size` and `minimum_shift_size` are used
     when creating an in-place patch.
 
-    `match_score` is used by hdiffpatch. Default 6. Recommended 0-4
-    for binary files and 4-9 for text files.
+    `match_score` is used by the hdiffpatch algorithm. Default
+    6. Recommended 0-4 for binary files and 4-9 for text files.
 
-    `match_block_size` is used by hdiffpatch. If 0, whole files are
-    loaded into memory. If greater than 0, less memory is needed to
-    create the patch, but the patch will be bigger.
+    `match_block_size` is used by the match-blocks algorithm. Default
+    64. Less memory is needed to create the patch, but the patch will
+    be bigger.
 
     >>> ffrom = open('foo.old', 'rb')
     >>> fto = open('foo.new', 'rb')
