@@ -227,9 +227,11 @@ def _do_create_patch(args):
                            args.tofile,
                            args.patchfile,
                            args.compression,
-                           'normal',
-                           'bsdiff',
+                           args.patch_type,
+                           args.algorithm,
                            args.suffix_array_algorithm,
+                           match_score=args.match_score,
+                           match_block_size=args.match_block_size,
                            **data_format_args(args))
     print_successful(args.patchfile, start_time)
 
@@ -256,19 +258,6 @@ def _do_create_patch_bsdiff(args):
                            args.tofile,
                            args.patchfile,
                            patch_type='bsdiff')
-    print_successful(args.patchfile, start_time)
-
-
-def _do_create_patch_hdiffpatch(args):
-    start_time = time.time()
-    create_patch_filenames(args.fromfile,
-                           args.tofile,
-                           args.patchfile,
-                           args.compression,
-                           args.patch_type,
-                           'hdiffpatch',
-                           match_score=args.match_score,
-                           match_block_size=args.match_block_size)
     print_successful(args.patchfile, start_time)
 
 
@@ -552,14 +541,39 @@ def _main():
     # Create normal patch subparser.
     subparser = subparsers.add_parser('create_patch',
                                       description='Create a normal patch.')
-    subparser.add_argument('-c', '--compression',
-                           choices=sorted(_COMPRESSIONS),
-                           default='lzma',
-                           help='Compression algorithm (default: %(default)s).')
-    subparser.add_argument('-s', '--suffix-array-algorithm',
-                           choices=('sais', 'divsufsort'),
-                           default='divsufsort',
-                           help='Suffix array algorithm (default: %(default)s).')
+    subparser.add_argument(
+        '-c', '--compression',
+        choices=sorted(_COMPRESSIONS),
+        default='lzma',
+        help='Compression algorithm (default: %(default)s).')
+    subparser.add_argument(
+        '-t', '--patch-type',
+        choices=('normal', 'hdiffpatch'),
+        default='normal',
+        help=('Patch type. Normal is sequential, hdiffpatch smaller '
+              '(default: %(default)s).'))
+    subparser.add_argument(
+        '-a', '--algorithm',
+        choices=('bsdiff', 'hdiffpatch', 'match-blocks'),
+        default='bsdiff',
+        help='Diff algorithm (default: %(default)s).')
+    subparser.add_argument(
+        '-s', '--suffix-array-algorithm',
+        choices=('sais', 'divsufsort'),
+        default='divsufsort',
+        help=('Suffix array algorithm used by bsdiff algorithm '
+              '(default: %(default)s).'))
+    subparser.add_argument(
+        '--match-score',
+        type=int,
+        default=6,
+        help='Match score used by hdiffpatch algorithm (default: %(default)s).')
+    subparser.add_argument(
+        '--match-block-size',
+        type=to_binary_size,
+        default=64,
+        help=('Match block size used by match-blocks algorithm '
+              '(default: %(default)s).'))
     add_data_format_args(subparser)
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
@@ -603,30 +617,6 @@ def _main():
     subparser.add_argument('tofile', help='To file.')
     subparser.add_argument('patchfile', help='Created patch file.')
     subparser.set_defaults(func=_do_create_patch_bsdiff)
-
-    # Create hdiffpatch patch subparser.
-    subparser = subparsers.add_parser('create_patch_hdiffpatch',
-                                      description='Create a hdiffpatch patch.')
-    subparser.add_argument('-c', '--compression',
-                           choices=sorted(_COMPRESSIONS),
-                           default='lzma',
-                           help='Compression algorithm (default: %(default)s).')
-    subparser.add_argument('--match-score',
-                           type=int,
-                           default=6,
-                           help='Match score (default: %(default)s).')
-    subparser.add_argument('--match-block-size',
-                           type=to_binary_size,
-                           default=0,
-                           help='Match block size (default: %(default)s).')
-    subparser.add_argument('--patch-type',
-                           choices=('normal', 'hdiffpatch'),
-                           default='hdiffpatch',
-                           help='Patch type (default: %(default)s).')
-    subparser.add_argument('fromfile', help='From file.')
-    subparser.add_argument('tofile', help='To file.')
-    subparser.add_argument('patchfile', help='Created patch file.')
-    subparser.set_defaults(func=_do_create_patch_hdiffpatch)
 
     # Apply patch subparser.
     subparser = subparsers.add_parser(

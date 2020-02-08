@@ -23,7 +23,7 @@ differences:
 - `Incremental apply patch`_ implemented in C, suitable for memory
   constrained embedded devices.
 
-- `Normal`_ or `in-place`_ (resumable) updates.
+- `normal`_, hdiffpatch or `in-place`_ (resumable) patch types.
 
 - Current maximum file size is 2 GB.
 
@@ -49,7 +49,7 @@ original `HDiffPatch`_ implementation as of today.
 - See `HDiffPatch`_ for characteristics.
 
 - Suitable for large files when matching blocks
-  (``--match-block-size``).
+  (``--algorithm match-blocks``).
 
 - Often slightly smaller patches than bsdiff.
 
@@ -113,6 +113,39 @@ Create the same patch as above, but without compression.
    $ ls -l foo-no-compression.patch
    -rw-rw-r-- 1 erik erik 2792 feb  2 10:35 foo-no-compression.patch
 
+Create a hdiffpatch patch ``foo-hdiffpatch.patch``.
+
+.. code-block:: text
+
+   $ detools create_patch --algorithm hdiffpatch --patch-type hdiffpatch \
+         tests/files/foo/old tests/files/foo/new foo-hdiffpatch.patch
+   Successfully created patch 'foo-hdiffpatch.patch' in 0.01 seconds!
+   $ ls -l foo-hdiffpatch.patch
+   -rw-rw-r-- 1 erik erik 146 feb  2 10:37 foo-hdiffpatch.patch
+
+Lower memory usage with ``--algorithm match-blocks`` algorithm. Mainly
+useful for big files. Creates slightly bigger patches than ``bsdiff``
+and ``hdiffpatch``.
+
+.. code-block:: text
+
+   $ detools create_patch --algorithm match-blocks \
+         tests/files/foo/old tests/files/foo/new foo-hdiffpatch-64.patch
+   Successfully created patch 'foo-hdiffpatch-64.patch' in 0.01 seconds!
+   $ ls -l foo-hdiffpatch-64.patch
+   -rw-rw-r-- 1 erik erik 404 feb  8 11:03 foo-hdiffpatch-64.patch
+
+Non-sequential but smaller patch with ``--patch-type hdiffpatch``.
+
+.. code-block:: text
+
+   $ detools create_patch \
+         --algorithm match-blocks --patch-type hdiffpatch \
+         tests/files/foo/old tests/files/foo/new foo-hdiffpatch-normal.patch
+   Successfully created 'foo-hdiffpatch-normal.patch' in 0.01 seconds!
+   $ ls -l foo-hdiffpatch-normal.patch
+   -rw-rw-r-- 1 erik erik 389 feb  8 11:05 foo-hdiffpatch-normal.patch
+
 The create in-place patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -139,41 +172,6 @@ original bsdiff program.
    Successfully created 'foo-bsdiff.patch' in 0 seconds!
    $ ls -l foo-bsdiff.patch
    -rw-rw-r-- 1 erik erik 261 feb  2 10:36 foo-bsdiff.patch
-
-The create hdiffpatch patch subcommand
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Create a hdiffpatch patch ``foo-hdiffpatch.patch``.
-
-.. code-block:: text
-
-   $ detools create_patch_hdiffpatch \
-         tests/files/foo/old tests/files/foo/new foo-hdiffpatch.patch
-   Successfully created patch 'foo-hdiffpatch.patch' in 0.01 seconds!
-   $ ls -l foo-hdiffpatch.patch
-   -rw-rw-r-- 1 erik erik 146 feb  2 10:37 foo-hdiffpatch.patch
-
-Lower memory usage with ``--match-block-size``. Mainly useful for big
-files. Creates slightly bigger patches.
-
-.. code-block:: text
-
-   $ detools create_patch_hdiffpatch --match-block-size 64 \
-         tests/files/foo/old tests/files/foo/new foo-hdiffpatch-64.patch
-   Successfully created patch 'foo-hdiffpatch-64.patch' in 0.01 seconds!
-   $ ls -l foo-hdiffpatch-64.patch
-   -rw-rw-r-- 1 erik erik 389 feb  2 10:38 foo-hdiffpatch-64.patch
-
-Normal (sequential read) patch type with ``--patch-type normal``.
-
-.. code-block:: text
-
-   $ detools create_patch_hdiffpatch \
-         --patch-type normal --match-block-size 64 \
-         tests/files/foo/old tests/files/foo/new foo-hdiffpatch-normal.patch
-   Successfully created 'foo-hdiffpatch-normal.patch' in 0.01 seconds!
-   $ ls -l foo-hdiffpatch-normal.patch
-   -rw-rw-r-- 1 erik erik 404 feb  2 10:38 foo-hdiffpatch-normal.patch
 
 The apply patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -288,7 +286,7 @@ Contributing
 
 .. _Zstandard: https://facebook.github.io/zstd
 
-.. _Normal: https://detools.readthedocs.io/en/latest/#id1
+.. _normal: https://detools.readthedocs.io/en/latest/#id1
 
 .. _in-place: https://detools.readthedocs.io/en/latest/#id2
 

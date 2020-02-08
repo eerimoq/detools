@@ -296,8 +296,12 @@ def create_patch_hdiffpatch(ffrom,
                             fpatch,
                             compression,
                             patch_type,
+                            algorithm,
                             match_score,
                             match_block_size):
+    if algorithm == 'hdiffpatch':
+        match_block_size = 0
+
     start_time = time.time()
     patch = hdiffpatch.create_patch(file_read(ffrom),
                                     file_read(fto),
@@ -419,12 +423,13 @@ def create_patch(ffrom,
                               data_segment)
     elif patch_type == 'bsdiff':
         create_patch_bsdiff(ffrom, fto, fpatch)
-    elif algorithm == 'hdiffpatch' or patch_type == 'hdiffpatch':
+    elif algorithm in ['hdiffpatch', 'match-blocks'] or patch_type == 'hdiffpatch':
         create_patch_hdiffpatch(ffrom,
                                 fto,
                                 fpatch,
                                 compression,
                                 patch_type,
+                                algorithm,
                                 match_score,
                                 match_block_size)
     else:
