@@ -29,7 +29,7 @@ from .common import unpack_size_bytes
 from .data_format import encode as data_format_encode
 from .suffix_array import sais
 from .suffix_array import divsufsort
-from . import cbsdiff as bsdiff
+from . import bsdiff as bsdiff
 from . import hdiffpatch as hdiffpatch
 
 

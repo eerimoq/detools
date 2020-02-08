@@ -528,13 +528,13 @@ static PyMethodDef module_methods[] = {
 
 static PyModuleDef module = {
    PyModuleDef_HEAD_INIT,
-   .m_name = "cbsdiff",
+   .m_name = "bsdiff",
    .m_doc = NULL,
    .m_size = -1,
    .m_methods = module_methods
 };
 
-PyMODINIT_FUNC PyInit_cbsdiff(void)
+PyMODINIT_FUNC PyInit_bsdiff(void)
 {
     PyObject *m_p;
 

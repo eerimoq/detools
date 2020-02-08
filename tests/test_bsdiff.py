@@ -1,7 +1,7 @@
 import unittest
 import struct
 
-import detools.cbsdiff
+import detools.bsdiff
 
 
 def read_file(filename):
@@ -66,7 +66,7 @@ class DetoolsBsdiffTest(unittest.TestCase):
         for suffix_array, from_data, to_data, chunks in datas:
             suffix_array = suffix_array_list_to_bytearray(suffix_array)
             self.assertEqual(
-                detools.cbsdiff.create_patch(suffix_array, from_data, to_data),
+                detools.bsdiff.create_patch(suffix_array, from_data, to_data),
                 chunks)
 
 

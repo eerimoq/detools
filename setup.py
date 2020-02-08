@@ -59,7 +59,7 @@ setup(name='detools',
                         "detools/sais/sais.c",
                         "detools/libdivsufsort/divsufsort.c"
                     ]),
-          Extension(name="detools.cbsdiff", sources=["detools/bsdiff.c"]),
+          Extension(name="detools.bsdiff", sources=["detools/bsdiff.c"]),
           Extension(name="detools.hdiffpatch", sources=HDIFFPATCH_SOURCES)
       ],
       test_suite="tests",

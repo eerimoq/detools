@@ -3,11 +3,7 @@ import struct
 from io import BytesIO
 import bitstruct
 from .errors import Error
-
-try:
-    from .cbsdiff import pack_size
-except ImportError:
-    from .bsdiff import pack_size
+from .bsdiff import pack_size
 
 
 PATCH_TYPE_NORMAL      = 0
@@ -17,7 +13,7 @@ PATCH_TYPE_HDIFFPATCH  = 2
 PATCH_TYPES = {
     'normal': PATCH_TYPE_NORMAL,
     'in-place': PATCH_TYPE_IN_PLACE,
-    'hdiffpatch': PATCH_TYPE_HDIFFPATCH 
+    'hdiffpatch': PATCH_TYPE_HDIFFPATCH
 }
 
 COMPRESSION_NONE        = 0
