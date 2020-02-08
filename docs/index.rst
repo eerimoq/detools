@@ -28,9 +28,9 @@ patch.
 
 Patch layout:
 
-+--------+--------+---------+--------+--------+---------+--------+-----
-| header | diff 1 | extra 1 | adj. 1 | diff 2 | extra 2 | adj. 2 | ...
-+--------+--------+---------+--------+--------+---------+--------+-----
++--------+--------+---------+--------+--------+---------+--------+-----+
+| header | diff 1 | extra 1 | adj. 1 | diff 2 | extra 2 | adj. 2 | ... |
++--------+--------+---------+--------+--------+---------+--------+-----+
 
 The header is not compressed. The rest of the patch is compressed.
 
@@ -46,9 +46,9 @@ Patches of this type are slightly smaller than normal patches.
 
 Patch layout:
 
-+--------+--------+------------------+-----------------------+
++--------+--------+------------------+---------------+-------+
 | header | covers | RLE diff control | RLE diff code | extra |
-+--------+--------+------------------+-----------------------+
++--------+--------+------------------+---------------+-------+
 
 The header is not compressed. The other four parts are compressed
 separately.

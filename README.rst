@@ -23,7 +23,7 @@ differences:
 - `Incremental apply patch`_ implemented in C, suitable for memory
   constrained embedded devices.
 
-- `normal`_, hdiffpatch or `in-place`_ (resumable) patch types.
+- `normal`_, `hdiffpatch`_ or `in-place`_ (resumable) patch types.
 
 - Current maximum file size is 2 GB.
 
@@ -288,6 +288,8 @@ Contributing
 
 .. _normal: https://detools.readthedocs.io/en/latest/#id1
 
-.. _in-place: https://detools.readthedocs.io/en/latest/#id2
+.. _hdiffpatch: https://detools.readthedocs.io/en/latest/#id2
+
+.. _in-place: https://detools.readthedocs.io/en/latest/#id3
 
 .. _src/c: https://github.com/eerimoq/detools/tree/master/src/c
