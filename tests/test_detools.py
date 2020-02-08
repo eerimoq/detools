@@ -575,7 +575,7 @@ class DetoolsTest(unittest.TestCase):
 
                 self.assertEqual(
                     str(cm.exception),
-                    "Bad patch type 'bad' and algorithm 'bsdiff' combination.")
+                    "Bad algorithm (bsdiff) and patch type (bad) combination.")
 
     def test_apply_patch_foo_bad_compression(self):
         fnew = BytesIO()

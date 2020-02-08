@@ -295,32 +295,45 @@ def create_patch_hdiffpatch(ffrom,
                             fto,
                             fpatch,
                             compression,
-                            patch_type,
-                            algorithm,
-                            match_score,
-                            match_block_size):
+                            match_score):
     start_time = time.time()
+    patch = hdiffpatch.create_patch(file_read(ffrom),
+                                    file_read(fto),
+                                    match_score,
+                                    0,
+                                    PATCH_TYPE_HDIFFPATCH)
 
-    if algorithm == 'hdiffpatch':
-        patch_type = 'hdiffpatch'
-        algorithm_string = 'Hdiffpatch'
-        patch = hdiffpatch.create_patch(file_read(ffrom),
-                                        file_read(fto),
-                                        match_score,
-                                        0,
-                                        PATCH_TYPES[patch_type])
-    elif algorithm == 'match-blocks':
-        algorithm_string = 'Match blocks'
-        patch = hdiffpatch.create_patch(file_read(ffrom),
-                                        file_read(fto),
-                                        match_score,
-                                        match_block_size,
-                                        PATCH_TYPES[patch_type])
-    else:
-        raise Error('Bad algorithm {}'.format(algorithm))
+    LOGGER.info('Hdiffpatch algorithm completed in %s.',
+                format_timespan(time.time() - start_time))
 
-    LOGGER.info('%s algorithm completed in %s.',
-                algorithm_string,
+    start_time = time.time()
+    compressor = create_compressor(compression)
+
+    fpatch.write(pack_header(PATCH_TYPE_HDIFFPATCH,
+                             compression_string_to_number(compression)))
+    fpatch.write(pack_size(file_size(fto)))
+    fpatch.write(pack_size(len(patch)))
+    fpatch.write(compressor.compress(patch))
+    fpatch.write(compressor.flush())
+
+    LOGGER.info('Compression completed in %s.',
+                format_timespan(time.time() - start_time))
+
+
+def create_patch_match_blocks(ffrom,
+                              fto,
+                              fpatch,
+                              compression,
+                              patch_type,
+                              match_block_size):
+    start_time = time.time()
+    patch = hdiffpatch.create_patch(file_read(ffrom),
+                                    file_read(fto),
+                                    0,
+                                    match_block_size,
+                                    PATCH_TYPES[patch_type])
+
+    LOGGER.info('Match blocks algorithm completed in %s.',
                 format_timespan(time.time() - start_time))
 
     start_time = time.time()
@@ -432,22 +445,26 @@ def create_patch(ffrom,
                               minimum_shift_size,
                               data_format,
                               data_segment)
-    elif patch_type == 'bsdiff':
+    elif algorithm == 'bsdiff' and patch_type == 'bsdiff':
         create_patch_bsdiff(ffrom, fto, fpatch)
-    elif algorithm in ['hdiffpatch', 'match-blocks'] or patch_type == 'hdiffpatch':
+    elif algorithm == 'hdiffpatch' and patch_type == 'hdiffpatch':
         create_patch_hdiffpatch(ffrom,
                                 fto,
                                 fpatch,
                                 compression,
-                                patch_type,
-                                algorithm,
-                                match_score,
-                                match_block_size)
+                                match_score)
+    elif algorithm == 'match-blocks':
+        create_patch_match_blocks(ffrom,
+                                  fto,
+                                  fpatch,
+                                  compression,
+                                  patch_type,
+                                  match_block_size)
     else:
         raise Error(
-            "Bad patch type '{}' and algorithm '{}' combination.".format(
-                patch_type,
-                algorithm))
+            "Bad algorithm ({}) and patch type ({}) combination.".format(
+                algorithm,
+                patch_type))
 
 
 def create_patch_filenames(fromfile,
