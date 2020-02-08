@@ -832,6 +832,7 @@ class DetoolsTest(unittest.TestCase):
         self.assert_create_and_apply_patch('tests/files/foo/old',
                                            'tests/files/foo/new',
                                            'tests/files/foo/hdiffpatch.patch',
+                                           algorithm='hdiffpatch',
                                            patch_type='hdiffpatch')
 
     def test_create_and_apply_patch_foo_match_blocks_normal_none(self):
@@ -852,6 +853,25 @@ class DetoolsTest(unittest.TestCase):
             patch_type='normal',
             algorithm='match-blocks',
             match_block_size=8)
+
+    def test_create_and_apply_patch_random_match_blocks_normal_none(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/random/from.bin',
+            'tests/files/random/to.bin',
+            'tests/files/random/match-blocks-normal-none.patch',
+            compression='none',
+            patch_type='normal',
+            algorithm='match-blocks',
+            match_block_size=64)
+
+    def test_create_and_apply_patch_random_match_blocks_hdiffpatch(self):
+        self.assert_create_and_apply_patch(
+            'tests/files/random/from.bin',
+            'tests/files/random/to.bin',
+            'tests/files/random/match-blocks-hdiffpatch.patch',
+            patch_type='hdiffpatch',
+            algorithm='match-blocks',
+            match_block_size=64)
 
     def test_create_and_apply_patch_random_bsdiff(self):
         self.assert_create_and_apply_patch('tests/files/random/from.bin',

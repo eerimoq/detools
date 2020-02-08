@@ -299,17 +299,28 @@ def create_patch_hdiffpatch(ffrom,
                             algorithm,
                             match_score,
                             match_block_size):
-    if algorithm == 'hdiffpatch':
-        match_block_size = 0
-
     start_time = time.time()
-    patch = hdiffpatch.create_patch(file_read(ffrom),
-                                    file_read(fto),
-                                    match_score,
-                                    match_block_size,
-                                    PATCH_TYPES[patch_type])
 
-    LOGGER.info('Hdiffpatch algorithm completed in %s.',
+    if algorithm == 'hdiffpatch':
+        patch_type = 'hdiffpatch'
+        algorithm_string = 'Hdiffpatch'
+        patch = hdiffpatch.create_patch(file_read(ffrom),
+                                        file_read(fto),
+                                        match_score,
+                                        0,
+                                        PATCH_TYPES[patch_type])
+    elif algorithm == 'match-blocks':
+        algorithm_string = 'Match blocks'
+        patch = hdiffpatch.create_patch(file_read(ffrom),
+                                        file_read(fto),
+                                        match_score,
+                                        match_block_size,
+                                        PATCH_TYPES[patch_type])
+    else:
+        raise Error('Bad algorithm {}'.format(algorithm))
+
+    LOGGER.info('%s algorithm completed in %s.',
+                algorithm_string,
                 format_timespan(time.time() - start_time))
 
     start_time = time.time()
