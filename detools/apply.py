@@ -2,7 +2,6 @@ import os
 import struct
 from lzma import LZMADecompressor
 from bz2 import BZ2Decompressor
-import bitstruct
 from .errors import Error
 from .compression.crle import CrleDecompressor
 from .compression.none import NoneDecompressor
@@ -27,7 +26,7 @@ from .common import unpack_size
 from .common import peek_header_type
 from .common import unpack_header
 from .data_format import create_readers
-from . import hdiffpatch as hdiffpatch
+from . import hdiffpatch
 
 
 class PatchReader(object):
