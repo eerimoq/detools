@@ -102,6 +102,8 @@ def create_patch_normal_data(ffrom,
         suffix_array = sais(from_data)
     elif suffix_array_algorithm == 'divsufsort':
         suffix_array = divsufsort(from_data)
+    else:
+        raise Error('Bad suffix array algorithm {}.'.format(suffix_array_algorithm))
 
     LOGGER.info('Suffix array of %s created in %s.',
                 format_size(len(suffix_array)),
