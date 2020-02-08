@@ -370,7 +370,7 @@ def create_patch(ffrom,
                  to_code_begin=0,
                  to_code_end=0,
                  match_score=6,
-                 match_block_size=0):
+                 match_block_size=64):
     """Create a patch from `ffrom` to `fto` and write it to `fpatch`. All
     three arguments are file-like objects.
 
@@ -474,7 +474,7 @@ def create_patch_filenames(fromfile,
                            to_code_begin=0,
                            to_code_end=0,
                            match_score=6,
-                           match_block_size=0):
+                           match_block_size=64):
     """Same as :func:`~detools.create_patch()`, but with filenames instead
     of file-like objects.
 
