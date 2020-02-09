@@ -61,6 +61,15 @@ def create_compressor(compression):
     return compressor
 
 
+def create_suffix_array(data, suffix_array_algorithm):
+    if suffix_array_algorithm == 'sais':
+        return sais(data)
+    elif suffix_array_algorithm == 'divsufsort':
+        return divsufsort(data)
+    else:
+        raise Error('Bad suffix array algorithm {}.'.format(suffix_array_algorithm))
+
+
 def create_patch_normal_data(ffrom,
                              fto,
                              fpatch,
@@ -97,13 +106,7 @@ def create_patch_normal_data(ffrom,
     fpatch.write(compressor.compress(dfpatch))
     from_data = file_read(ffrom)
     start_time = time.time()
-
-    if suffix_array_algorithm == 'sais':
-        suffix_array = sais(from_data)
-    elif suffix_array_algorithm == 'divsufsort':
-        suffix_array = divsufsort(from_data)
-    else:
-        raise Error('Bad suffix array algorithm {}.'.format(suffix_array_algorithm))
+    suffix_array = create_suffix_array(from_data, suffix_array_algorithm)
 
     LOGGER.info('Suffix array of %s created in %s.',
                 format_size(len(suffix_array)),

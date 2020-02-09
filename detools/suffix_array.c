@@ -52,7 +52,8 @@ static PyObject *create(PyObject *self_p,
     }
 
     if (size > 0x7fffffff) {
-        PyErr_SetString(PyExc_ValueError, "SA-IS data too long (over 0x7fffffff).");
+        PyErr_SetString(PyExc_ValueError,
+                        "Suffix array input data too long (over 2 GiB).");
 
         return (NULL);
     }
