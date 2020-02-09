@@ -31,22 +31,20 @@
 #include "HDiffPatch/file_for_patch.h"
 
 static int parse_create_patch_args(PyObject *args_p,
-                                   char **from_pp,
-                                   char **to_pp,
-                                   Py_ssize_t *from_size_p,
-                                   Py_ssize_t *to_size_p,
+                                   Py_buffer *from_view_p,
+                                   Py_buffer *to_view_p,
                                    unsigned int *match_score_p,
                                    unsigned int *block_size_p,
                                    int *patch_type_p)
 {
     int res;
-    PyObject *from_bytes_p;
-    PyObject *to_bytes_p;
+    PyObject *from_p;
+    PyObject *to_p;
 
     res = PyArg_ParseTuple(args_p,
                            "OOIIi",
-                           &from_bytes_p,
-                           &to_bytes_p,
+                           &from_p,
+                           &to_p,
                            match_score_p,
                            block_size_p,
                            patch_type_p);
@@ -55,17 +53,22 @@ static int parse_create_patch_args(PyObject *args_p,
         return (-1);
     }
 
-    res = PyBytes_AsStringAndSize(from_bytes_p, from_pp, from_size_p);
+    res = PyObject_GetBuffer(from_p, from_view_p, PyBUF_CONTIG_RO);
 
-    if (res != 0) {
-        return (-1);
+    if (res == -1) {
+        return (res);
     }
 
-    res = PyBytes_AsStringAndSize(to_bytes_p, to_pp, to_size_p);
+    res = PyObject_GetBuffer(to_p, to_view_p, PyBUF_CONTIG_RO);
 
-    if (res != 0) {
-        return (-1);
+    if (res == -1) {
+        goto err1;
     }
+
+    return (res);
+
+ err1:
+    PyBuffer_Release(from_view_p);
 
     return (res);
 }
@@ -182,19 +185,16 @@ static PyObject *create_patch_match_blocks(uint8_t *from_p,
 static PyObject *m_create_patch(PyObject *self_p, PyObject* args_p)
 {
     int res;
-    uint8_t *from_p;
-    uint8_t *to_p;
-    Py_ssize_t from_size;
-    Py_ssize_t to_size;
+    Py_buffer from_view;
+    Py_buffer to_view;
     unsigned int match_score;
     unsigned int match_block_size;
     int patch_type;
+    PyObject *patch_p;
 
     res = parse_create_patch_args(args_p,
-                                  (char **)&from_p,
-                                  (char **)&to_p,
-                                  &from_size,
-                                  &to_size,
+                                  &from_view,
+                                  &to_view,
                                   &match_score,
                                   &match_block_size,
                                   &patch_type);
@@ -204,20 +204,25 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject* args_p)
     }
 
     if (match_block_size == 0) {
-        return (create_patch_suffix_array(from_p,
-                                          to_p,
-                                          from_size,
-                                          to_size,
-                                          match_score,
-                                          patch_type));
+        patch_p = create_patch_suffix_array((uint8_t *)from_view.buf,
+                                            (uint8_t *)to_view.buf,
+                                            from_view.len,
+                                            to_view.len,
+                                            match_score,
+                                            patch_type);
     } else {
-        return (create_patch_match_blocks(from_p,
-                                          to_p,
-                                          from_size,
-                                          to_size,
-                                          match_block_size,
-                                          patch_type));
+        patch_p = create_patch_match_blocks((uint8_t *)from_view.buf,
+                                            (uint8_t *)to_view.buf,
+                                            from_view.len,
+                                            to_view.len,
+                                            match_block_size,
+                                            patch_type);
     }
+
+    PyBuffer_Release(&from_view);
+    PyBuffer_Release(&to_view);
+
+    return (patch_p);
 }
 
 static int parse_apply_patch_args(PyObject *args_p,

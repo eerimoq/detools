@@ -369,17 +369,41 @@ def create_patch_bsdiff(ffrom, fto, fpatch):
     fpatch.write(fextra.getvalue())
 
 
+def create_patch_hdiffpatch_generic(ffrom,
+                                    fto,
+                                    match_score,
+                                    match_block_size,
+                                    patch_type,
+                                    use_mmap):
+    if use_mmap:
+        with mmap_read_only(ffrom) as from_mmap:
+            with mmap_read_only(fto) as to_mmap:
+                return hdiffpatch.create_patch(from_mmap,
+                                               to_mmap,
+                                               match_score,
+                                               match_block_size,
+                                               patch_type)
+    else:
+        return hdiffpatch.create_patch(file_read(ffrom),
+                                       file_read(fto),
+                                       match_score,
+                                       match_block_size,
+                                       patch_type)
+
+
 def create_patch_hdiffpatch(ffrom,
                             fto,
                             fpatch,
                             compression,
-                            match_score):
+                            match_score,
+                            use_mmap):
     start_time = time.time()
-    patch = hdiffpatch.create_patch(file_read(ffrom),
-                                    file_read(fto),
-                                    match_score,
-                                    0,
-                                    PATCH_TYPE_HDIFFPATCH)
+    patch = create_patch_hdiffpatch_generic(ffrom,
+                                            fto,
+                                            match_score,
+                                            0,
+                                            PATCH_TYPE_HDIFFPATCH,
+                                            use_mmap)
 
     LOGGER.info('Hdiffpatch algorithm completed in %s.',
                 format_timespan(time.time() - start_time))
@@ -403,13 +427,15 @@ def create_patch_match_blocks(ffrom,
                               fpatch,
                               compression,
                               patch_type,
-                              match_block_size):
+                              match_block_size,
+                              use_mmap):
     start_time = time.time()
-    patch = hdiffpatch.create_patch(file_read(ffrom),
-                                    file_read(fto),
-                                    0,
-                                    match_block_size,
-                                    PATCH_TYPES[patch_type])
+    patch = create_patch_hdiffpatch_generic(ffrom,
+                                            fto,
+                                            0,
+                                            match_block_size,
+                                            PATCH_TYPES[patch_type],
+                                            use_mmap)
 
     LOGGER.info('Match blocks algorithm completed in %s.',
                 format_timespan(time.time() - start_time))
@@ -533,14 +559,16 @@ def create_patch(ffrom,
                                 fto,
                                 fpatch,
                                 compression,
-                                match_score)
+                                match_score,
+                                use_mmap)
     elif algorithm == 'match-blocks':
         create_patch_match_blocks(ffrom,
                                   fto,
                                   fpatch,
                                   compression,
                                   patch_type,
-                                  match_block_size)
+                                  match_block_size,
+                                  use_mmap)
     else:
         raise Error(
             "Bad algorithm ({}) and patch type ({}) combination.".format(
