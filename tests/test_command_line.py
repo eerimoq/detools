@@ -13,6 +13,15 @@ def read_file(filename):
 
 class DetoolsCommandLineTest(unittest.TestCase):
 
+    def execute_and_assert(self, argv, actual_file, expected_file):
+        if os.path.exists(actual_file):
+            os.remove(actual_file)
+
+        with patch('sys.argv', argv):
+            detools._main()
+
+        self.assertEqual(read_file(actual_file), read_file(expected_file))
+
     def test_create_patch_foo(self):
         foo_patch = 'foo.patch'
         argv = [
@@ -23,14 +32,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_patch
         ]
 
-        if os.path.exists(foo_patch):
-            os.remove(foo_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_patch),
-                         read_file('tests/files/foo/patch'))
+        self.execute_and_assert(argv, foo_patch, 'tests/files/foo/patch')
 
     def test_create_patch_foo_hdiffpatch_no_mmap(self):
         foo_patch = 'foo.patch'
@@ -45,14 +47,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_patch
         ]
 
-        if os.path.exists(foo_patch):
-            os.remove(foo_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_patch),
-                         read_file('tests/files/foo/hdiffpatch.patch'))
+        self.execute_and_assert(argv, foo_patch, 'tests/files/foo/hdiffpatch.patch')
 
     def test_create_patch_foo_no_mmap(self):
         foo_patch = 'foo.patch'
@@ -65,14 +60,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_patch
         ]
 
-        if os.path.exists(foo_patch):
-            os.remove(foo_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_patch),
-                         read_file('tests/files/foo/patch'))
+        self.execute_and_assert(argv, foo_patch, 'tests/files/foo/patch')
 
     def test_create_patch_empty_from_non_empty_to_mmap(self):
         nonempty_patch = 'nonempty.patch'
@@ -84,14 +72,9 @@ class DetoolsCommandLineTest(unittest.TestCase):
             nonempty_patch
         ]
 
-        if os.path.exists(nonempty_patch):
-            os.remove(nonempty_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(nonempty_patch),
-                         read_file('tests/files/empty/nonempty.patch'))
+        self.execute_and_assert(argv,
+                                nonempty_patch,
+                                'tests/files/empty/nonempty.patch')
 
     def test_create_patch_foo_sais(self):
         foo_patch = 'foo.patch'
@@ -104,14 +87,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_patch
         ]
 
-        if os.path.exists(foo_patch):
-            os.remove(foo_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_patch),
-                         read_file('tests/files/foo/patch'))
+        self.execute_and_assert(argv, foo_patch, 'tests/files/foo/patch')
 
     def test_apply_patch_foo(self):
         foo_new = 'foo.new'
@@ -124,14 +100,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_new
         ]
 
-        if os.path.exists(foo_new):
-            os.remove(foo_new)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_new),
-                         read_file('tests/files/foo/new'))
+        self.execute_and_assert(argv, foo_new, 'tests/files/foo/new')
 
     def test_patch_info_foo(self):
         argv = [
@@ -273,14 +242,9 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_patch
         ]
 
-        if os.path.exists(foo_patch):
-            os.remove(foo_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_patch),
-                         read_file('tests/files/foo/in-place-3000-1500.patch'))
+        self.execute_and_assert(argv,
+                                foo_patch,
+                                'tests/files/foo/in-place-3000-1500.patch')
 
     def test_apply_patch_foo_in_place(self):
         foo_mem = 'foo.mem'
@@ -754,16 +718,10 @@ class DetoolsCommandLineTest(unittest.TestCase):
             pybv11_patch
         ]
 
-        if os.path.exists(pybv11_patch):
-            os.remove(pybv11_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(
-            read_file(pybv11_patch),
-            read_file('tests/files/pybv11/1f5d945af--1f5d945af-dirty-'
-                      'arm-cortex-m4-elf-data-sections.patch'))
+        self.execute_and_assert(argv,
+                                pybv11_patch,
+                                'tests/files/pybv11/1f5d945af--1f5d945af-dirty-'
+                                'arm-cortex-m4-elf-data-sections.patch')
 
     def test_create_patch_pybv11_swapped_elfs_error(self):
         argv = [
@@ -803,16 +761,10 @@ class DetoolsCommandLineTest(unittest.TestCase):
             pybv11_patch
         ]
 
-        if os.path.exists(pybv11_patch):
-            os.remove(pybv11_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(
-            read_file(pybv11_patch),
-            read_file('tests/files/pybv11/1f5d945af--1f5d945af-dirty-'
-                      'arm-cortex-m4-elf-data-sections.patch'))
+        self.execute_and_assert(argv,
+                                pybv11_patch,
+                                'tests/files/pybv11/1f5d945af--1f5d945af-dirty-'
+                                'arm-cortex-m4-elf-data-sections.patch')
 
     def test_apply_patch_pybv11_elf_data_sections(self):
         pybv11_new = 'pybv11-elf-data-sections.new'
@@ -826,15 +778,9 @@ class DetoolsCommandLineTest(unittest.TestCase):
             pybv11_new
         ]
 
-        if os.path.exists(pybv11_new):
-            os.remove(pybv11_new)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(
-            read_file(pybv11_new),
-            read_file('tests/files/pybv11/1f5d945af-dirty/firmware1.bin'))
+        self.execute_and_assert(argv,
+                                pybv11_new,
+                                'tests/files/pybv11/1f5d945af-dirty/firmware1.bin')
 
     def test_parse_range_errors(self):
         with self.assertRaises(detools.Error) as cm:
@@ -2041,14 +1987,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_patch
         ]
 
-        if os.path.exists(foo_patch):
-            os.remove(foo_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_patch),
-                         read_file('tests/files/foo/bsdiff.patch'))
+        self.execute_and_assert(argv, foo_patch, 'tests/files/foo/bsdiff.patch')
 
     def test_apply_patch_foo_bsdiff(self):
         foo_new = 'foo.new'
@@ -2060,14 +1999,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_new
         ]
 
-        if os.path.exists(foo_new):
-            os.remove(foo_new)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_new),
-                         read_file('tests/files/foo/new'))
+        self.execute_and_assert(argv, foo_new, 'tests/files/foo/new')
 
     def test_create_patch_foo_hdiffpatch(self):
         foo_patch = 'foo.patch'
@@ -2081,14 +2013,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_patch
         ]
 
-        if os.path.exists(foo_patch):
-            os.remove(foo_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_patch),
-                         read_file('tests/files/foo/hdiffpatch.patch'))
+        self.execute_and_assert(argv, foo_patch, 'tests/files/foo/hdiffpatch.patch')
 
     def test_create_patch_foo_hdiffpatch_none(self):
         foo_patch = 'foo.patch'
@@ -2103,14 +2028,9 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_patch
         ]
 
-        if os.path.exists(foo_patch):
-            os.remove(foo_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_patch),
-                         read_file('tests/files/foo/hdiffpatch-none.patch'))
+        self.execute_and_assert(argv,
+                                foo_patch,
+                                'tests/files/foo/hdiffpatch-none.patch')
 
     def test_create_patch_foo_hdiffpatch_match_score_0(self):
         foo_patch = 'foo.patch'
@@ -2125,15 +2045,9 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_patch
         ]
 
-        if os.path.exists(foo_patch):
-            os.remove(foo_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(
-            read_file(foo_patch),
-            read_file('tests/files/foo/hdiffpatch-match-score-0.patch'))
+        self.execute_and_assert(argv,
+                                foo_patch,
+                                'tests/files/foo/hdiffpatch-match-score-0.patch')
 
     def test_create_patch_foo_hdiffpatch_match_block_size_64(self):
         foo_patch = 'foo.patch'
@@ -2148,15 +2062,10 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_patch
         ]
 
-        if os.path.exists(foo_patch):
-            os.remove(foo_patch)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(
-            read_file(foo_patch),
-            read_file('tests/files/foo/hdiffpatch-match-block-size-64.patch'))
+        self.execute_and_assert(
+            argv,
+            foo_patch,
+            'tests/files/foo/hdiffpatch-match-block-size-64.patch')
 
     def test_apply_patch_foo_hdiffpatch(self):
         foo_new = 'foo.new'
@@ -2168,14 +2077,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_new
         ]
 
-        if os.path.exists(foo_new):
-            os.remove(foo_new)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_new),
-                         read_file('tests/files/foo/new'))
+        self.execute_and_assert(argv, foo_new, 'tests/files/foo/new')
 
     def test_apply_patch_foo_hdiffpatch_none(self):
         foo_new = 'foo.new'
@@ -2187,14 +2089,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
             foo_new
         ]
 
-        if os.path.exists(foo_new):
-            os.remove(foo_new)
-
-        with patch('sys.argv', argv):
-            detools._main()
-
-        self.assertEqual(read_file(foo_new),
-                         read_file('tests/files/foo/new'))
+        self.execute_and_assert(argv, foo_new, 'tests/files/foo/new')
 
     def test_patch_info_foo_hdiffpatch(self):
         argv = [
