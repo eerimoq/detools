@@ -90,7 +90,7 @@ static int32_t search(int32_t *sa_p,
     }
 }
 
-static int pack_size(uint8_t *buf_p, ssize_t value, size_t size)
+static int pack_size(uint8_t *buf_p, int64_t value, size_t size)
 {
     int res;
 
@@ -429,17 +429,17 @@ static int create_patch_loop(PyObject *list_p,
 static PyObject *m_pack_size(PyObject *self_p, PyObject *arg_p)
 {
     int res;
-    ssize_t size;
+    long long size;
     uint8_t buf[10];
     PyObject *bytes_p;
 
-    size = PyLong_AsSsize_t(arg_p);
+    size = PyLong_AsLongLong(arg_p);
 
     if ((size == -1) && PyErr_Occurred()) {
         return (NULL);
     }
 
-    res = pack_size(&buf[0], size, sizeof(buf));
+    res = pack_size(&buf[0], (int64_t)size, sizeof(buf));
 
     if (res <= 0) {
         PyErr_Format(PyExc_ValueError, "Pack size failed with %d.", res);
