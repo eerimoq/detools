@@ -3,6 +3,8 @@ import unittest
 from io import BytesIO
 
 import detools
+from detools.common import pack_size
+from detools.common import unpack_size_bytes
 
 
 class DetoolsTest(unittest.TestCase):
@@ -878,6 +880,25 @@ class DetoolsTest(unittest.TestCase):
                                            'tests/files/random/to.bin',
                                            'tests/files/random/patch-bsdiff.bin',
                                            patch_type='bsdiff')
+
+    def test_pack_unpack_size(self):
+        datas = [
+            (-16_000_000_000, b'\xc0\x80\xe5\x9aw'),
+            ( -5_000_000_000, b'\xc0\xc8\xaf\xa0%'),
+            ( -2_000_000_000, b'\xc0\xd0\xac\xf3\x0e'),
+            (       -100_000, b'\xe0\x9a\x0c'),
+            (             -5, b'E'),
+            (              0, b'\x00'),
+            (              5, b'\x05'),
+            (        100_000, b'\xa0\x9a\x0c'),
+            (  2_000_000_000, b'\x80\xd0\xac\xf3\x0e'),
+            (  5_000_000_000, b'\x80\xc8\xaf\xa0%'),
+            ( 16_000_000_000, b'\x80\x80\xe5\x9aw')
+        ]
+
+        for value, packed in datas:
+            self.assertEqual(pack_size(value), packed)
+            self.assertEqual(unpack_size_bytes(packed), value)
 
 
 # This file is not '__main__' when executed via 'python setup.py3
