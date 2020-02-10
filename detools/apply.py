@@ -362,15 +362,11 @@ def apply_patch_normal(ffrom, fpatch, fto):
                                                        to_pos,
                                                        to_size):
             from_data = ffrom.read(chunk_size)
+            data = bsdiff.add_bytes(patch_data, from_data)
 
             if dfdiff is not None:
                 dfdiff_data = dfdiff.read(chunk_size)
-                data = bytearray(
-                    (pb + fb + db) & 0xff for pb, fb, db in zip(patch_data,
-                                                                from_data,
-                                                                dfdiff_data))
-            else:
-                data = bsdiff.add_bytes(patch_data, from_data)
+                data = bsdiff.add_bytes(data, dfdiff_data)
 
             fto.write(data)
             to_pos += chunk_size
@@ -379,13 +375,11 @@ def apply_patch_normal(ffrom, fpatch, fto):
         for chunk_size, patch_data in iter_extra_chunks(patch_reader,
                                                         to_pos,
                                                         to_size):
+            data = patch_data
+
             if dfdiff is not None:
                 dfdiff_data = dfdiff.read(chunk_size)
-                data = bytearray(
-                    (dd + db) & 0xff for dd, db in zip(patch_data, dfdiff_data)
-                )
-            else:
-                data = patch_data
+                data = bsdiff.add_bytes(data, dfdiff_data)
 
             fto.write(data)
             to_pos += chunk_size
@@ -478,10 +472,7 @@ def apply_patch_bsdiff(ffrom, fpatch, fto):
         if diff_size > 0:
             diff_data = diff_decompressor.decompress(b'', diff_size)
             from_data = ffrom.read(diff_size)
-            data = bytearray(
-                (db + fb) & 0xff for db, fb in zip(diff_data, from_data)
-            )
-            fto.write(data)
+            fto.write(bsdiff.add_bytes(diff_data, from_data))
             to_pos += diff_size
 
         # Extra data.
