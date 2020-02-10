@@ -26,6 +26,13 @@ function apply_patch() {
     cmp Python.tar $to_file
 }
 
+function print_files() {
+    echo "***************************************************************"
+    echo "* From: $from_file"
+    echo "* To:   $to_file"
+    echo "***************************************************************"
+}
+
 if [ ! -e Python-3.7.3.tar ] ; then
     wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tgz
     gunzip Python-3.7.3.tgz
@@ -38,6 +45,31 @@ fi
 
 from_file=Python-3.7.3.tar
 to_file=Python-3.8.1.tar
+
+print_files
+
+for algorithm in bsdiff hdiffpatch match-blocks ; do
+    for patch_type in normal hdiffpatch ; do
+        for compression in lzma none ; do
+            create_patch \
+                "-a $algorithm -t $patch_type -c $compression" \
+                "$algorithm-$patch_type-$compression.patch"
+        done
+    done
+done
+
+for algorithm in bsdiff hdiffpatch match-blocks ; do
+    for patch_type in normal hdiffpatch ; do
+        for compression in lzma none ; do
+            apply_patch "$algorithm-$patch_type-$compression.patch"
+        done
+    done
+done
+
+from_file=tests/files/micropython/esp8266-20180511-v1.9.4.bin
+to_file=tests/files/micropython/esp8266-20190125-v1.10.bin
+
+print_files
 
 for algorithm in bsdiff hdiffpatch match-blocks ; do
     for patch_type in normal hdiffpatch ; do
