@@ -116,4 +116,7 @@ release-to-pypi:
 	twine upload dist/*
 
 benchmark:
+	$(MAKE) -C src/c
+	python3 setup.py test -s \
+	    tests.test_detools.DetoolsTest.test_create_and_apply_patch_foo
 	tests/benchmark.sh

@@ -529,18 +529,111 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
     return (NULL);
 }
 
+static int parse_add_bytes_args(PyObject *args_p,
+                                Py_buffer *first_view_p,
+                                Py_buffer *second_view_p)
+{
+    int res;
+    PyObject *first_p;
+    PyObject *second_p;
+
+    res = PyArg_ParseTuple(args_p, "OO", &first_p, &second_p);
+
+    if (res == 0) {
+        return (-1);
+    }
+
+    res = PyObject_GetBuffer(first_p, first_view_p, PyBUF_CONTIG_RO);
+
+    if (res == -1) {
+        return (res);
+    }
+
+    res = PyObject_GetBuffer(second_p, second_view_p, PyBUF_CONTIG_RO);
+
+    if (res == -1) {
+        goto err1;
+    }
+
+    return (res);
+
+ err1:
+    PyBuffer_Release(first_view_p);
+
+    return (res);
+}
+
+static PyObject *m_add_bytes(PyObject *self_p, PyObject *args_p)
+{
+    int res;
+    Py_buffer first_view;
+    Py_buffer second_view;
+    uint8_t *dst_p;
+    uint8_t *first_p;
+    uint8_t *second_p;
+    Py_ssize_t i;
+    PyObject *byte_array_p;
+
+    res = parse_add_bytes_args(args_p, &first_view, &second_view);
+
+    if (res != 0) {
+        return (NULL);
+    }
+
+    if (first_view.len != second_view.len) {
+        PyErr_SetString(PyExc_ValueError, "Lengths must be equal.");
+
+        return (NULL);
+    }
+
+    byte_array_p = PyByteArray_FromStringAndSize("", 1);
+
+    if (byte_array_p == NULL) {
+        goto err1;
+    }
+
+    res = PyByteArray_Resize(byte_array_p, first_view.len);
+
+    if (res != 0) {
+        goto err2;
+    }
+
+    dst_p = (uint8_t *)PyByteArray_AsString(byte_array_p);
+    first_p = (uint8_t *)first_view.buf;
+    second_p = (uint8_t *)second_view.buf;
+
+    for (i = 0; i < first_view.len; i++) {
+        dst_p[i] = (first_p[i] + second_p[i]);
+    }
+
+    PyBuffer_Release(&first_view);
+    PyBuffer_Release(&second_view);
+
+    return (byte_array_p);
+
+ err2:
+    Py_DECREF(byte_array_p);
+
+ err1:
+    PyBuffer_Release(&first_view);
+    PyBuffer_Release(&second_view);
+
+    return (NULL);
+}
+
 static PyMethodDef module_methods[] = {
     { "pack_size", m_pack_size, METH_O },
     { "create_patch", m_create_patch, METH_VARARGS },
+    { "add_bytes", m_add_bytes, METH_VARARGS },
     { NULL }
 };
 
 static PyModuleDef module = {
-   PyModuleDef_HEAD_INIT,
-   .m_name = "bsdiff",
-   .m_doc = NULL,
-   .m_size = -1,
-   .m_methods = module_methods
+    PyModuleDef_HEAD_INIT,
+    .m_name = "bsdiff",
+    .m_doc = NULL,
+    .m_size = -1,
+    .m_methods = module_methods
 };
 
 PyMODINIT_FUNC PyInit_bsdiff(void)

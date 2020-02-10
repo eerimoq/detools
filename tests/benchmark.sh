@@ -21,6 +21,9 @@ function apply_patch() {
           $PYTHON -m detools apply_patch $from_file $1 Python.tar \
           > /dev/null
     cmp Python.tar $to_file
+    \time -f "RSS=%M elapsed=%E" \
+          src/c/detools apply_patch $from_file $1 Python.tar
+    cmp Python.tar $to_file
 }
 
 if [ ! -e Python-3.7.3.tar ] ; then
@@ -53,3 +56,5 @@ for algorithm in bsdiff hdiffpatch match-blocks ; do
         done
     done
 done
+
+exit 0

@@ -26,6 +26,7 @@ from .common import unpack_size
 from .common import peek_header_type
 from .common import unpack_header
 from .data_format import create_readers
+from . import bsdiff
 from . import hdiffpatch
 
 
@@ -287,9 +288,7 @@ def apply_patch_in_place_segment(fmem,
             from_data = fmem.read(chunk_size)
             from_offset += chunk_size
             fmem.seek(to_offset + to_pos, os.SEEK_SET)
-            fmem.write(bytearray(
-                (pb + fb) & 0xff for pb, fb in zip(patch_data, from_data)
-            ))
+            fmem.write(bsdiff.add_bytes(patch_data, from_data))
             to_pos += chunk_size
 
         # Extra data.
@@ -369,12 +368,9 @@ def apply_patch_normal(ffrom, fpatch, fto):
                 data = bytearray(
                     (pb + fb + db) & 0xff for pb, fb, db in zip(patch_data,
                                                                 from_data,
-                                                                dfdiff_data)
-                )
+                                                                dfdiff_data))
             else:
-                data = bytearray(
-                    (pb + fb) & 0xff for pb, fb in zip(patch_data, from_data)
-                )
+                data = bsdiff.add_bytes(patch_data, from_data)
 
             fto.write(data)
             to_pos += chunk_size
