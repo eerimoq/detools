@@ -345,18 +345,18 @@ def _patch_info_in_place_segment(fsize,
     print()
 
 
-def _patch_info_normal(detailed,
-                       fsize,
-                       patch_size,
-                       compression,
-                       dfpatch_size,
-                       data_format,
-                       dfpatch_info,
-                       to_size,
-                       diff_sizes,
-                       extra_sizes,
-                       adjustment_sizes,
-                       number_of_size_bytes):
+def _patch_info_sequential(detailed,
+                           fsize,
+                           patch_size,
+                           compression,
+                           dfpatch_size,
+                           data_format,
+                           dfpatch_info,
+                           to_size,
+                           diff_sizes,
+                           extra_sizes,
+                           adjustment_sizes,
+                           number_of_size_bytes):
     del adjustment_sizes
 
     number_of_diff_bytes = sum(diff_sizes)
@@ -380,7 +380,7 @@ def _patch_info_normal(detailed,
         mean_extra_size = '-'
         median_extra_size = '-'
 
-    print('Type:               normal')
+    print('Type:               sequential')
     print('Patch size:         {}'.format(fsize(patch_size)))
     print('To size:            {}'.format(fsize(to_size)))
     print('Patch/to ratio:     {} % (lower is better)'.format(patch_to_ratio))
@@ -433,7 +433,7 @@ def _patch_info_in_place(fsize,
     print('Compression:        {}'.format(compression))
     print()
 
-    for i, (dfpatch_size, data_format, normal_info) in enumerate(segments):
+    for i, (dfpatch_size, data_format, sequential_info) in enumerate(segments):
         from_offset_begin = max(segment_size * (i + 1) - from_shift_size, 0)
         from_offset_end = min(from_size, memory_size - from_shift_size)
         to_offset_begin = (segment_size * i)
@@ -446,7 +446,7 @@ def _patch_info_in_place(fsize,
                                      to_offset_end,
                                      dfpatch_size,
                                      data_format,
-                                     *normal_info)
+                                     *sequential_info)
 
 
 def _patch_info_hdiffpatch(fsize,
@@ -470,8 +470,8 @@ def _do_patch_info(args):
 
     patch_type, info = patch_info_filename(args.patchfile, fsize)
 
-    if patch_type == 'normal':
-        _patch_info_normal(args.detailed, fsize, *info)
+    if patch_type == 'sequential':
+        _patch_info_sequential(args.detailed, fsize, *info)
     elif patch_type == 'in-place':
         _patch_info_in_place(fsize, *info)
     elif patch_type == 'hdiffpatch':
@@ -541,9 +541,9 @@ def _main():
                                        dest='subcommand')
     subparsers.required = True
 
-    # Create normal patch subparser.
+    # Create sequential patch subparser.
     subparser = subparsers.add_parser('create_patch',
-                                      description='Create a normal patch.')
+                                      description='Create a sequential patch.')
     subparser.add_argument(
         '-c', '--compression',
         choices=sorted(_COMPRESSIONS),
@@ -551,9 +551,9 @@ def _main():
         help='Compression algorithm (default: %(default)s).')
     subparser.add_argument(
         '-t', '--patch-type',
-        choices=('normal', 'hdiffpatch'),
-        default='normal',
-        help=('Patch type. Normal is sequential, hdiffpatch smaller '
+        choices=('sequential', 'hdiffpatch'),
+        default='sequential',
+        help=('Patch type. Sequential is sequential, hdiffpatch smaller '
               '(default: %(default)s).'))
     subparser.add_argument(
         '-a', '--algorithm',
@@ -630,7 +630,7 @@ def _main():
     # Apply patch subparser.
     subparser = subparsers.add_parser(
         'apply_patch',
-        description='Apply given normal or hdiffpatch patch.')
+        description='Apply given sequential or hdiffpatch patch.')
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('patchfile', help='Patch file.')
     subparser.add_argument('tofile', help='Created to file.')

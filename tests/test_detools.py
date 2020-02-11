@@ -33,9 +33,9 @@ class DetoolsTest(unittest.TestCase):
                            to_filename,
                            patch_filename,
                            **kwargs):
-        patch_type = kwargs.get('patch_type', 'normal')
+        patch_type = kwargs.get('patch_type', 'sequential')
 
-        if patch_type in ['normal', 'hdiffpatch']:
+        if patch_type in ['sequential', 'hdiffpatch']:
             fto = BytesIO()
 
             with open(from_filename, 'rb') as ffrom:
@@ -837,32 +837,32 @@ class DetoolsTest(unittest.TestCase):
                                            algorithm='hdiffpatch',
                                            patch_type='hdiffpatch')
 
-    def test_create_and_apply_patch_foo_match_blocks_normal_none(self):
+    def test_create_and_apply_patch_foo_match_blocks_sequential_none(self):
         self.assert_create_and_apply_patch(
             'tests/files/foo/old',
             'tests/files/foo/new',
-            'tests/files/foo/match-blocks-normal-none.patch',
-            patch_type='normal',
+            'tests/files/foo/match-blocks-sequential-none.patch',
+            patch_type='sequential',
             algorithm='match-blocks',
             compression='none',
             match_block_size=8)
 
-    def test_create_and_apply_patch_foo_match_blocks_normal(self):
+    def test_create_and_apply_patch_foo_match_blocks_sequential(self):
         self.assert_create_and_apply_patch(
             'tests/files/foo/old',
             'tests/files/foo/new',
-            'tests/files/foo/match-blocks-normal.patch',
-            patch_type='normal',
+            'tests/files/foo/match-blocks-sequential.patch',
+            patch_type='sequential',
             algorithm='match-blocks',
             match_block_size=8)
 
-    def test_create_and_apply_patch_random_match_blocks_normal_none(self):
+    def test_create_and_apply_patch_random_match_blocks_sequential_none(self):
         self.assert_create_and_apply_patch(
             'tests/files/random/from.bin',
             'tests/files/random/to.bin',
-            'tests/files/random/match-blocks-normal-none.patch',
+            'tests/files/random/match-blocks-sequential-none.patch',
             compression='none',
-            patch_type='normal',
+            patch_type='sequential',
             algorithm='match-blocks',
             match_block_size=64)
 

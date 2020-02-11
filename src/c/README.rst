@@ -25,7 +25,7 @@ Build the command line utility.
 
    $ make
 
-Apply a normal patch.
+Apply a sequential patch.
 
 .. code-block:: text
 

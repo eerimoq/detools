@@ -34,7 +34,7 @@
 #include "detools.h"
 
 /* Patch types. */
-#define PATCH_TYPE_NORMAL                                   0
+#define PATCH_TYPE_SEQUENTIAL                               0
 #define PATCH_TYPE_IN_PLACE                                 1
 
 /* Compressions. */
@@ -925,7 +925,7 @@ static int common_process_size(
 }
 
 /*
- * Low level normal patch type functionality.
+ * Low level sequential patch type functionality.
  */
 
 static int process_init(struct detools_apply_patch_t *self_p)
@@ -943,7 +943,7 @@ static int process_init(struct detools_apply_patch_t *self_p)
     patch_type = ((byte >> 4) & 0x7);
     compression = (byte & 0xf);
 
-    if (patch_type != PATCH_TYPE_NORMAL) {
+    if (patch_type != PATCH_TYPE_SEQUENTIAL) {
         return (-DETOOLS_BAD_PATCH_TYPE);
     }
 

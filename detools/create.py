@@ -16,7 +16,7 @@ from .compression.none import NoneCompressor
 from .compression.heatshrink import HeatshrinkCompressor
 from .compression.zstd import ZstdCompressor
 from .compression.lz4 import Lz4Compressor
-from .common import PATCH_TYPE_NORMAL
+from .common import PATCH_TYPE_SEQUENTIAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import PATCH_TYPE_HDIFFPATCH
 from .common import DATA_FORMATS
@@ -157,14 +157,14 @@ def create_chunks(ffrom, fto, suffix_array_algorithm, use_mmap):
         return create_chunks_heap(ffrom, fto, suffix_array_algorithm)
 
 
-def create_patch_normal_data(ffrom,
-                             fto,
-                             fpatch,
-                             compression,
-                             suffix_array_algorithm,
-                             data_format,
-                             data_segment,
-                             use_mmap):
+def create_patch_sequential_data(ffrom,
+                                 fto,
+                                 fpatch,
+                                 compression,
+                                 suffix_array_algorithm,
+                                 data_format,
+                                 data_segment,
+                                 use_mmap):
     to_size = file_size(fto)
 
     if to_size == 0:
@@ -199,18 +199,18 @@ def create_patch_normal_data(ffrom,
                 format_timespan(time.time() - start_time))
 
 
-def create_patch_normal(ffrom,
-                        fto,
-                        fpatch,
-                        compression,
-                        suffix_array_algorithm,
-                        data_format,
-                        data_segment,
-                        use_mmap):
-    fpatch.write(pack_header(PATCH_TYPE_NORMAL,
+def create_patch_sequential(ffrom,
+                            fto,
+                            fpatch,
+                            compression,
+                            suffix_array_algorithm,
+                            data_format,
+                            data_segment,
+                            use_mmap):
+    fpatch.write(pack_header(PATCH_TYPE_SEQUENTIAL,
                              compression_string_to_number(compression)))
     fpatch.write(pack_size(file_size(fto)))
-    create_patch_normal_data(ffrom,
+    create_patch_sequential_data(ffrom,
                              fto,
                              fpatch,
                              compression,
@@ -275,14 +275,14 @@ def create_patch_in_place(ffrom,
     from_data = from_data[:shifted_size]
     number_of_to_segments = div_ceil(to_size, segment_size)
 
-    # Create a normal patch for each segment.
+    # Create a sequential patch for each segment.
     fsegments = BytesIO()
 
     for segment in range(number_of_to_segments):
         to_offset = (segment * segment_size)
         from_offset = max(to_offset + segment_size - shift_size, 0)
         fsegment = BytesIO()
-        create_patch_normal_data(
+        create_patch_sequential_data(
             BytesIO(from_data[from_offset:]),
             BytesIO(to_data[to_offset:to_offset + segment_size]),
             fsegment,
@@ -448,8 +448,8 @@ def create_patch_match_blocks(ffrom,
                                  compression_string_to_number(compression)))
         fpatch.write(pack_size(file_size(fto)))
         fpatch.write(pack_size(len(patch)))
-    elif patch_type == 'normal':
-        fpatch.write(pack_header(PATCH_TYPE_NORMAL,
+    elif patch_type == 'sequential':
+        fpatch.write(pack_header(PATCH_TYPE_SEQUENTIAL,
                                  compression_string_to_number(compression)))
         fpatch.write(pack_size(file_size(fto)))
         fpatch.write(compressor.compress(pack_size(0)))
@@ -467,7 +467,7 @@ def create_patch(ffrom,
                  fto,
                  fpatch,
                  compression='lzma',
-                 patch_type='normal',
+                 patch_type='sequential',
                  algorithm='bsdiff',
                  suffix_array_algorithm='divsufsort',
                  memory_size=None,
@@ -495,9 +495,10 @@ def create_patch(ffrom,
     `compression` must be ``'bz2'``, ``'crle'``, ``'lzma'``,
     ``'zstd'``, ``'lz4'`` or ``'none'``.
 
-    `patch_type` must be ``'normal'``, ``'in-place'`` or ``'bsdiff'``.
+    `patch_type` must be ``'sequential'``, ``'in-place'`` or
+    ``'bsdiff'``.
 
-    `algorithm` must be ``'normal'`` or ``'hdiffpatch'``.
+    `algorithm` must be ``'sequential'`` or ``'hdiffpatch'``.
 
     `suffix_array_algorithm` must be ``'sais'`` or ``'divsufsort'``.
 
@@ -531,15 +532,15 @@ def create_patch(ffrom,
                                to_code_begin,
                                to_code_end)
 
-    if algorithm == 'bsdiff' and patch_type == 'normal':
-        create_patch_normal(ffrom,
-                            fto,
-                            fpatch,
-                            compression,
-                            suffix_array_algorithm,
-                            data_format,
-                            data_segment,
-                            use_mmap)
+    if algorithm == 'bsdiff' and patch_type == 'sequential':
+        create_patch_sequential(ffrom,
+                                fto,
+                                fpatch,
+                                compression,
+                                suffix_array_algorithm,
+                                data_format,
+                                data_segment,
+                                use_mmap)
     elif algorithm == 'bsdiff' and patch_type == 'in-place':
         create_patch_in_place(ffrom,
                               fto,
@@ -580,7 +581,7 @@ def create_patch_filenames(fromfile,
                            tofile,
                            patchfile,
                            compression='lzma',
-                           patch_type='normal',
+                           patch_type='sequential',
                            algorithm='bsdiff',
                            suffix_array_algorithm='divsufsort',
                            memory_size=None,

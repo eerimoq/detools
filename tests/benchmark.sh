@@ -49,7 +49,7 @@ to_file=Python-3.8.1.tar
 print_files
 
 for algorithm in bsdiff hdiffpatch match-blocks ; do
-    for patch_type in normal hdiffpatch ; do
+    for patch_type in sequential hdiffpatch ; do
         for compression in lzma none ; do
             create_patch \
                 "-a $algorithm -t $patch_type -c $compression" \
@@ -59,7 +59,7 @@ for algorithm in bsdiff hdiffpatch match-blocks ; do
 done
 
 for algorithm in bsdiff hdiffpatch match-blocks ; do
-    for patch_type in normal hdiffpatch ; do
+    for patch_type in sequential hdiffpatch ; do
         for compression in lzma none ; do
             apply_patch "$algorithm-$patch_type-$compression.patch"
         done
@@ -72,7 +72,7 @@ to_file=tests/files/micropython/esp8266-20190125-v1.10.bin
 print_files
 
 for algorithm in bsdiff hdiffpatch match-blocks ; do
-    for patch_type in normal hdiffpatch ; do
+    for patch_type in sequential hdiffpatch ; do
         for compression in lzma none ; do
             create_patch \
                 "-a $algorithm -t $patch_type -c $compression" \
@@ -82,7 +82,7 @@ for algorithm in bsdiff hdiffpatch match-blocks ; do
 done
 
 for algorithm in bsdiff hdiffpatch match-blocks ; do
-    for patch_type in normal hdiffpatch ; do
+    for patch_type in sequential hdiffpatch ; do
         for compression in lzma none ; do
             apply_patch "$algorithm-$patch_type-$compression.patch"
         done

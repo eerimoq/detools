@@ -115,7 +115,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
-                         'Type:               normal\n'
+                         'Type:               sequential\n'
                          'Patch size:         127 bytes\n'
                          'To size:            2.71 KiB\n'
                          'Patch/to ratio:     4.6 % (lower is better)\n'
@@ -147,7 +147,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
-                         'Type:               normal\n'
+                         'Type:               sequential\n'
                          'Patch size:         49 bytes\n'
                          'To size:            2.71 KiB\n'
                          'Patch/to ratio:     1.8 % (lower is better)\n'
@@ -179,7 +179,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
-                         'Type:               normal\n'
+                         'Type:               sequential\n'
                          'Patch size:         2.73 KiB\n'
                          'To size:            2.71 KiB\n'
                          'Patch/to ratio:     100.4 % (lower is better)\n'
@@ -211,7 +211,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
                 detools._main()
 
         self.assertEqual(stdout.getvalue(),
-                         'Type:               normal\n'
+                         'Type:               sequential\n'
                          'Patch size:         190 bytes\n'
                          'To size:            2.71 KiB\n'
                          'Patch/to ratio:     6.8 % (lower is better)\n'
@@ -510,7 +510,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(
             stdout.getvalue(),
-            'Type:               normal\n'
+            'Type:               sequential\n'
             'Patch size:         2 bytes\n'
             'To size:            0 bytes\n'
             'Patch/to ratio:     inf % (lower is better)\n'
@@ -569,7 +569,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(
             stdout.getvalue(),
-            'Type:               normal\n'
+            'Type:               sequential\n'
             'Patch size:         1.7 KiB\n'
             'To size:            138.48 KiB\n'
             'Patch/to ratio:     1.2 % (lower is better)\n'
@@ -602,7 +602,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(
             stdout.getvalue(),
-            'Type:               normal\n'
+            'Type:               sequential\n'
             'Patch size:         925 bytes\n'
             'To size:            138.48 KiB\n'
             'Patch/to ratio:     0.7 % (lower is better)\n'
@@ -636,7 +636,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(
             stdout.getvalue(),
-            'Type:               normal\n'
+            'Type:               sequential\n'
             'Patch size:         1.55 KiB\n'
             'To size:            138.48 KiB\n'
             'Patch/to ratio:     1.1 % (lower is better)\n'
@@ -836,7 +836,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(
             stdout.getvalue(),
-            'Type:               normal\n'
+            'Type:               sequential\n'
             'Patch size:         3 KiB\n'
             'To size:            312.49 KiB\n'
             'Patch/to ratio:     1.0 % (lower is better)\n'
@@ -1629,7 +1629,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(
             stdout.getvalue(),
-            'Type:               normal\n'
+            'Type:               sequential\n'
             'Patch size:         619 bytes\n'
             'To size:            109.94 KiB\n'
             'Patch/to ratio:     0.5 % (lower is better)\n'
@@ -1800,7 +1800,7 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         self.assertEqual(
             stdout.getvalue(),
-            'Type:               normal\n'
+            'Type:               sequential\n'
             'Patch size:         631 bytes\n'
             'To size:            109.94 KiB\n'
             'Patch/to ratio:     0.6 % (lower is better)\n'

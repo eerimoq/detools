@@ -6,12 +6,12 @@ from .errors import Error
 from .bsdiff import pack_size
 
 
-PATCH_TYPE_NORMAL      = 0
+PATCH_TYPE_SEQUENTIAL  = 0
 PATCH_TYPE_IN_PLACE    = 1
 PATCH_TYPE_HDIFFPATCH  = 2
 
 PATCH_TYPES = {
-    'normal': PATCH_TYPE_NORMAL,
+    'sequential': PATCH_TYPE_SEQUENTIAL,
     'in-place': PATCH_TYPE_IN_PLACE,
     'hdiffpatch': PATCH_TYPE_HDIFFPATCH
 }

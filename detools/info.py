@@ -1,10 +1,10 @@
 import os
 from .errors import Error
-from .apply import read_header_normal
+from .apply import read_header_sequential
 from .apply import read_header_in_place
 from .apply import read_header_hdiffpatch
 from .apply import PatchReader
-from .common import PATCH_TYPE_NORMAL
+from .common import PATCH_TYPE_SEQUENTIAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import PATCH_TYPE_HDIFFPATCH
 from .common import file_size
@@ -15,7 +15,7 @@ from .common import peek_header_type
 from .data_format import info as data_format_info
 
 
-def patch_info_normal_inner(patch_reader, to_size):
+def patch_info_sequential_inner(patch_reader, to_size):
     to_pos = 0
     number_of_size_bytes = 0
     diff_sizes = []
@@ -57,9 +57,9 @@ def patch_info_normal_inner(patch_reader, to_size):
             number_of_size_bytes)
 
 
-def patch_info_normal(fpatch, fsize):
+def patch_info_sequential(fpatch, fsize):
     patch_size = file_size(fpatch)
-    compression, to_size = read_header_normal(fpatch)
+    compression, to_size = read_header_sequential(fpatch)
     dfpatch_size = 0
     data_format = None
     dfpatch_info = None
@@ -76,7 +76,7 @@ def patch_info_normal(fpatch, fsize):
             dfpatch_info = data_format_info(data_format, patch, fsize)
             data_format = data_format_number_to_string(data_format)
 
-        info = patch_info_normal_inner(patch_reader, to_size)
+        info = patch_info_sequential_inner(patch_reader, to_size)
 
         if not patch_reader.eof:
             raise Error('End of patch not found.')
@@ -113,7 +113,7 @@ def patch_info_in_place(fpatch):
             else:
                 data_format = None
 
-            info = patch_info_normal_inner(patch_reader, segment_to_size)
+            info = patch_info_sequential_inner(patch_reader, segment_to_size)
             segments.append((dfpatch_size, data_format, info))
 
     return (patch_size,
@@ -143,8 +143,8 @@ def patch_info(fpatch, fsize=None):
 
     patch_type = peek_header_type(fpatch)
 
-    if patch_type == PATCH_TYPE_NORMAL:
-        return 'normal', patch_info_normal(fpatch, fsize)
+    if patch_type == PATCH_TYPE_SEQUENTIAL:
+        return 'sequential', patch_info_sequential(fpatch, fsize)
     elif patch_type == PATCH_TYPE_IN_PLACE:
         return 'in-place', patch_info_in_place(fpatch)
     elif patch_type == PATCH_TYPE_HDIFFPATCH:

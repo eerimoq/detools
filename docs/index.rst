@@ -14,10 +14,10 @@ Binary delta encoding utility
 Patch types
 ===========
 
-Normal
+Sequential
 ------
 
-A normal patch uses two memory regions or files. One contains the
+A sequential patch uses two memory regions or files. One contains the
 from-data and the to-data is written to the other. The patch is
 accesses sequentially from the beginning to the end when applying the
 patch.
@@ -38,7 +38,7 @@ is compressed.
 HDiffPatch
 ----------
 
-Patches of this type are slightly smaller than normal patches.
+Patches of this type are slightly smaller than sequential patches.
 
 .. code-block:: text
 

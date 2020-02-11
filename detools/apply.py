@@ -15,7 +15,7 @@ from .common import COMPRESSION_BZ2
 from .common import COMPRESSION_HEATSHRINK
 from .common import COMPRESSION_ZSTD
 from .common import COMPRESSION_LZ4
-from .common import PATCH_TYPE_NORMAL
+from .common import PATCH_TYPE_SEQUENTIAL
 from .common import PATCH_TYPE_IN_PLACE
 from .common import PATCH_TYPE_HDIFFPATCH
 from .common import format_bad_compression_string
@@ -141,8 +141,8 @@ def convert_compression(compression):
     return compression
 
 
-def read_header_normal(fpatch):
-    """Read a normal header.
+def read_header_sequential(fpatch):
+    """Read a sequential header.
 
     """
 
@@ -153,9 +153,9 @@ def read_header_normal(fpatch):
 
     patch_type, compression  = unpack_header(header)
 
-    if patch_type != PATCH_TYPE_NORMAL:
+    if patch_type != PATCH_TYPE_SEQUENTIAL:
         raise Error(
-            "Expected patch type {}, but got {}.".format(PATCH_TYPE_NORMAL,
+            "Expected patch type {}, but got {}.".format(PATCH_TYPE_SEQUENTIAL,
                                                          patch_type))
 
     compression = convert_compression(compression)
@@ -323,7 +323,7 @@ def create_data_format_readers(patch_reader, ffrom, to_size):
 
 
 def apply_patch(ffrom, fpatch, fto):
-    """Apply given normal or hdiffpatch patch `fpatch` to `ffrom` to
+    """Apply given sequential or hdiffpatch patch `fpatch` to `ffrom` to
     create `fto`. Returns the size of the created to-data.
 
     All arguments are file-like objects.
@@ -338,16 +338,16 @@ def apply_patch(ffrom, fpatch, fto):
 
     patch_type = peek_header_type(fpatch)
 
-    if patch_type == PATCH_TYPE_NORMAL:
-        return apply_patch_normal(ffrom, fpatch, fto)
+    if patch_type == PATCH_TYPE_SEQUENTIAL:
+        return apply_patch_sequential(ffrom, fpatch, fto)
     elif patch_type == PATCH_TYPE_HDIFFPATCH:
         return apply_patch_hdiffpatch(ffrom, fpatch, fto)
     else:
         raise Error('Bad patch type {}.'.format(patch_type))
 
 
-def apply_patch_normal(ffrom, fpatch, fto):
-    compression, to_size = read_header_normal(fpatch)
+def apply_patch_sequential(ffrom, fpatch, fto):
+    compression, to_size = read_header_sequential(fpatch)
 
     if to_size == 0:
         return to_size

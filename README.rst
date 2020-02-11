@@ -23,7 +23,7 @@ differences:
 - `Incremental apply patch`_ implemented in C, suitable for memory
   constrained embedded devices.
 
-- `normal`_, hdiffpatch or `in-place`_ (resumable) patch types.
+- `sequential`_, hdiffpatch or `in-place`_ (resumable) patch types.
 
 - Current maximum file size is 2 GB.
 
@@ -78,17 +78,17 @@ See `tests/benchmark.sh`_ for details on how the data was collected.
 +--------------+------------+--------+------------+------+---------+
 | Algorithm    | Patch type | Compr. | Patch size |  RSS |    Time |
 +==============+============+========+============+======+=========+
-| bsdiff       | normal     | lzma   |       3,5M | 662M | 0:24.29 |
+| bsdiff       | sequential | lzma   |       3,5M | 662M | 0:24.29 |
 +--------------+------------+--------+------------+------+---------+
-| bsdiff       | normal     | none   |        86M | 646M | 0:15.20 |
+| bsdiff       | sequential | none   |        86M | 646M | 0:15.20 |
 +--------------+------------+--------+------------+------+---------+
 | hdiffpatch   | hdiffpatch | lzma   |       2,4M | 523M | 0:13.74 |
 +--------------+------------+--------+------------+------+---------+
 | hdiffpatch   | hdiffpatch | none   |       7,2M | 523M | 0:10.24 |
 +--------------+------------+--------+------------+------+---------+
-| match-blocks | normal     | lzma   |       2,9M | 273M | 0:08.57 |
+| match-blocks | sequential | lzma   |       2,9M | 273M | 0:08.57 |
 +--------------+------------+--------+------------+------+---------+
-| match-blocks | normal     | none   |        84M | 273M | 0:01.72 |
+| match-blocks | sequential | none   |        84M | 273M | 0:01.72 |
 +--------------+------------+--------+------------+------+---------+
 | match-blocks | hdiffpatch | lzma   |       2,6M | 212M | 0:06.07 |
 +--------------+------------+--------+------------+------+---------+
@@ -101,17 +101,17 @@ to 615k).
 +--------------+------------+--------+------------+------+---------+
 | Algorithm    | Patch type | Compr. | Patch size |  RSS |    Time |
 +==============+============+========+============+======+=========+
-| bsdiff       | normal     | lzma   |        71K |  46M | 0:00.64 |
+| bsdiff       | sequential | lzma   |        71K |  46M | 0:00.64 |
 +--------------+------------+--------+------------+------+---------+
-| bsdiff       | normal     | none   |       609K |  27M | 0:00.33 |
+| bsdiff       | sequential | none   |       609K |  27M | 0:00.33 |
 +--------------+------------+--------+------------+------+---------+
 | hdiffpatch   | hdiffpatch | lzma   |        65K |  42M | 0:00.37 |
 +--------------+------------+--------+------------+------+---------+
 | hdiffpatch   | hdiffpatch | none   |       123K |  25M | 0:00.32 |
 +--------------+------------+--------+------------+------+---------+
-| match-blocks | normal     | lzma   |       194K |  46M | 0:00.44 |
+| match-blocks | sequential | lzma   |       194K |  46M | 0:00.44 |
 +--------------+------------+--------+------------+------+---------+
-| match-blocks | normal     | none   |       606K |  25M | 0:00.22 |
+| match-blocks | sequential | none   |       606K |  25M | 0:00.22 |
 +--------------+------------+--------+------------+------+---------+
 | match-blocks | hdiffpatch | lzma   |       189K |  43M | 0:00.38 |
 +--------------+------------+--------+------------+------+---------+
@@ -177,10 +177,10 @@ Non-sequential but smaller patch with ``--patch-type hdiffpatch``.
 
    $ detools create_patch \
          --algorithm match-blocks --patch-type hdiffpatch \
-         tests/files/foo/old tests/files/foo/new foo-hdiffpatch-normal.patch
-   Successfully created 'foo-hdiffpatch-normal.patch' in 0.01 seconds!
-   $ ls -l foo-hdiffpatch-normal.patch
-   -rw-rw-r-- 1 erik erik 389 feb  8 11:05 foo-hdiffpatch-normal.patch
+         tests/files/foo/old tests/files/foo/new foo-hdiffpatch-sequential.patch
+   Successfully created 'foo-hdiffpatch-sequential.patch' in 0.01 seconds!
+   $ ls -l foo-hdiffpatch-sequential.patch
+   -rw-rw-r-- 1 erik erik 389 feb  8 11:05 foo-hdiffpatch-sequential.patch
 
 The create in-place patch subcommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -256,7 +256,7 @@ Print information about the patch ``foo.patch``.
 .. code-block:: text
 
    $ detools patch_info foo.patch
-   Type:               normal
+   Type:               sequential
    Patch size:         127 bytes
    To size:            2.71 KiB
    Patch/to ratio:     4.6 % (lower is better)
@@ -322,7 +322,7 @@ Contributing
 
 .. _Zstandard: https://facebook.github.io/zstd
 
-.. _normal: https://detools.readthedocs.io/en/latest/#id1
+.. _sequential: https://detools.readthedocs.io/en/latest/#id1
 
 .. _in-place: https://detools.readthedocs.io/en/latest/#id3
 
