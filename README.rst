@@ -25,7 +25,8 @@ differences:
 
 - `sequential`_, hdiffpatch or `in-place`_ (resumable) patch types.
 
-- Current maximum file size is 2 GB.
+- Maximum file size is 2 GB for the bsdiff algorithm and practically
+  no limit for the hdiffpatch and match-blocks algorithms.
 
 - Optional experimental data format aware algorithm for potentially
   smaller patches. I don't recommend anyone to use this functionality
