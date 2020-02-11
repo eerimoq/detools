@@ -8,25 +8,25 @@ About
 
 Binary `delta encoding`_ in Python 3 and C.
 
-Based on http://www.daemonology.net/bsdiff/, with the following
-differences:
+Based on http://www.daemonology.net/bsdiff/ and `HDiffPatch`_, with
+the following features:
 
-- BZ2, LZ4, LZMA, `Zstandard`_, `heatshrink`_ or CRLE compression.
-
-- Linear patch file access pattern to allow streaming and less RAM
-  usage.
-
-- `SA-IS`_ or divsufsort instead of qsufsort.
-
-- Variable length size fields.
-
-- `Incremental apply patch`_ implemented in C, suitable for memory
-  constrained embedded devices.
+- bsdiff, hdiffpatch and match-blocks algorithms.
 
 - `sequential`_, hdiffpatch or `in-place`_ (resumable) patch types.
 
-- Maximum file size is 2 GB for the bsdiff algorithm and practically
-  no limit for the hdiffpatch and match-blocks algorithms.
+- BZ2, LZ4, LZMA, `Zstandard`_, `heatshrink`_ or CRLE compression.
+
+- Sequential patches allow streaming.
+
+- Maximum file size is 2 GB for the bsdiff algorithm. There is
+  practically no limit for the hdiffpatch and match-blocks algorithms.
+
+- `Incremental apply patch`_ implemented in C, suitable for memory
+  constrained embedded devices. Only the sequential patch type is
+  supported.
+
+- `SA-IS`_ or divsufsort instead of qsufsort for bsdiff.
 
 - Optional experimental data format aware algorithm for potentially
   smaller patches. I don't recommend anyone to use this functionality
@@ -42,19 +42,6 @@ differences:
   - ARM Cortex-M4
 
   - AArch64
-
-There is also a wrapper of `HDiffPatch`_, implementing basic
-operations. Adds a custom header, so it is not compatible with
-original `HDiffPatch`_ implementation as of today.
-
-- See `HDiffPatch`_ for characteristics.
-
-- Suitable for large files when matching blocks
-  (``--algorithm match-blocks``).
-
-- Often slightly smaller patches than bsdiff.
-
-- Often faster than bsdiff.
 
 Project homepage: https://github.com/eerimoq/detools
 
