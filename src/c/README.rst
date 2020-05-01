@@ -3,6 +3,17 @@ About
 
 An implementation of detools in the C programming language.
 
+Features:
+
+- Incremental apply of `sequential`_ and `in-place`_ patches.
+
+- bsdiff algorithm.
+
+- LZMA, `heatshrink`_ or CRLE compression.
+
+- Dump (and store) the apply patch state at any time. Restore it
+  later, possibly after a system reboot.
+
 Goals:
 
 - Low RAM usage.
@@ -136,3 +147,9 @@ Only CRLE decompression.
    $ make -s -C examples/in-place crle
         text    data     bss     dec     hex filename
         5651     544       8    6203    183b in-place-crle
+
+.. _heatshrink: https://github.com/atomicobject/heatshrink
+
+.. _sequential: https://detools.readthedocs.io/en/latest/#id1
+
+.. _in-place: https://detools.readthedocs.io/en/latest/#id3
