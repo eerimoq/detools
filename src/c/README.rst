@@ -12,9 +12,8 @@ Features:
 - LZMA, `heatshrink`_ or CRLE compression.
 
 - Dump (and store) the apply patch state at any time. Restore it
-  later, possibly after a system reboot or program crash.
-
-  Only `heatshrink`_ and CRLE compressions are currently supported.
+  later, possibly after a system reboot or program crash. Only
+  `heatshrink`_ and CRLE compressions are currently supported.
 
 Goals:
 
