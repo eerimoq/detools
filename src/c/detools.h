@@ -387,7 +387,9 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
  * the dumped state.
  *
  * The user must save the patch and to positions and restore them
- * before processing any data.
+ * before processing any data. ToDo: Make them part of the dump
+ * created by this function. Requires a new to-write-callback and a
+ * new function to get the patch position (or equivalent).
  *
  * @param[in,out] self_p Apply patch object to dump.
  * @param[in] write Write callback.
