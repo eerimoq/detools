@@ -76,21 +76,6 @@ test-c:
 	$(CC) $(CFLAGS) $(C_SOURCES) -llzma -o main
 	./main
 	$(MAKE) -C src/c library
-	$(MAKE) -C src/c
-	src/c/detools apply_patch tests/files/foo/old tests/files/foo/patch foo.new
-	cmp foo.new tests/files/foo/new
-	rm foo.new
-	cp tests/files/foo/old foo.mem
-	src/c/detools apply_patch_in_place foo.mem tests/files/foo/in-place-3000-500.patch
-	cmp foo.mem tests/files/foo/in-place-3000-500.mem
-	src/c/detools apply_patch \
-	    tests/files/foo/old tests/files/foo/heatshrink.patch foo.new
-	cmp foo.new tests/files/foo/new
-	! src/c/detools
-	! src/c/detools apply_patch
-	! src/c/detools apply_patch tests/files/foo/old tests/files/foo/patch
-	! src/c/detools apply_patch_in_place
-	! src/c/detools apply_patch_in_place tests/files/foo/old
 	$(MAKE) -C src/c/examples/in-place all
 	$(MAKE) -C src/c/examples/in-place heatshrink
 	$(MAKE) -C src/c/examples/in-place crle
