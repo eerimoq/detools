@@ -158,3 +158,30 @@ TEST(foo_crle_at_offset_100_101_164_and_189)
 
     utils_files_destroy();
 }
+
+TEST(foo_heatshrink_at_offset_57_and_101)
+{
+    struct detools_apply_patch_t apply_patch;
+
+    utils_files_init("../../../tests/files/foo/old",
+                     "../../../tests/files/foo/heatshrink.patch");
+
+    /* Init, process 57 bytes and dump. */
+    init(&apply_patch, utils_files.patch.size);
+    process(&apply_patch, utils_files.patch.buf_p, 57);
+    dump(&apply_patch);
+
+    /* Init again, restore, process 44 bytes and dump again. */
+    init(&apply_patch, 0);
+    restore(&apply_patch);
+    process(&apply_patch, &utils_files.patch.buf_p[57], 44);
+    dump(&apply_patch);
+
+    /* Init once again, restore and process remaining 24 bytes. */
+    init(&apply_patch, 0);
+    restore(&apply_patch);
+    process(&apply_patch, &utils_files.patch.buf_p[101], 24);
+    finalize(&apply_patch, 2780);
+
+    utils_files_destroy();
+}

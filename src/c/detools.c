@@ -851,6 +851,11 @@ static int patch_reader_dump(struct detools_apply_patch_patch_reader_t *self_p,
         break;
 #endif
 
+#if DETOOLS_CONFIG_COMPRESSION_HEATSHRINK == 1
+    case COMPRESSION_HEATSHRINK:
+        break;
+#endif
+
     default:
         res = -DETOOLS_NOT_IMPLEMENTED;
         break;
@@ -886,6 +891,13 @@ static int patch_reader_restore(struct detools_apply_patch_patch_reader_t *self_
     case COMPRESSION_CRLE:
         self_p->destroy = patch_reader_crle_destroy;
         self_p->decompress = patch_reader_crle_decompress;
+        break;
+#endif
+
+#if DETOOLS_CONFIG_COMPRESSION_HEATSHRINK == 1
+    case COMPRESSION_HEATSHRINK:
+        self_p->destroy = patch_reader_heatshrink_destroy;
+        self_p->decompress = patch_reader_heatshrink_decompress;
         break;
 #endif
 
