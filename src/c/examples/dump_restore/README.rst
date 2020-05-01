@@ -10,7 +10,7 @@ Command line tool to test the dump and restore feature.
          ../../../../tests/files/foo/heatshrink.patch \
          foo.new \
          0 10
-   Processing 1 byte(s) patch data starting at offset 0.
+   Processing 10 byte(s) patch data starting at offset 0.
    State stored in 'state.bin'.
    $ ./dump-and-restore \
          ../../../../tests/files/foo/old \
@@ -28,4 +28,5 @@ Command line tool to test the dump and restore feature.
    Restoring state from 'state.bin'.
    Processing 25 byte(s) patch data starting at offset 100.
    Patch successfully applied.
+   $ cmp foo.new ../../../../tests/files/foo/new
    $
