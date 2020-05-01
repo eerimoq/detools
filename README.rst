@@ -2,6 +2,7 @@
 |appveyor|_
 |coverage|_
 |codecov|_
+|nala|_
 
 About
 =====
@@ -297,6 +298,9 @@ Contributing
 
 .. |codecov| image:: https://codecov.io/gh/eerimoq/detools/branch/master/graph/badge.svg
 .. _codecov: https://codecov.io/gh/eerimoq/detools
+
+.. |nala| image:: https://img.shields.io/badge/nala-test-blue.svg
+.. _nala: https://github.com/eerimoq/nala
 
 .. _SA-IS: https://sites.google.com/site/yuta256/sais
 
