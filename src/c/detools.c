@@ -828,6 +828,62 @@ static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
     return (res);
 }
 
+static int patch_reader_dump(struct detools_apply_patch_patch_reader_t *self_p,
+                             int compression,
+                             detools_state_write_t state_write)
+{
+    (void)self_p;
+    (void)state_write;
+
+    int res;
+
+    switch (compression) {
+
+#if DETOOLS_CONFIG_COMPRESSION_NONE == 1
+    case COMPRESSION_NONE:
+        res = 0;
+        break;
+#endif
+
+    default:
+        res = -DETOOLS_NOT_IMPLEMENTED;
+        break;
+    }
+
+    return (res);
+}
+
+static int patch_reader_restore(struct detools_apply_patch_patch_reader_t *self_p,
+                                struct detools_apply_patch_patch_reader_t *dumped_p,
+                                struct detools_apply_patch_chunk_t *patch_chunk_p,
+                                int compression,
+                                detools_state_read_t state_read)
+{
+    (void)state_read;
+
+    int res;
+
+    *self_p = *dumped_p;
+    self_p->patch_chunk_p = patch_chunk_p;
+
+    switch (compression) {
+
+#if DETOOLS_CONFIG_COMPRESSION_NONE == 1
+    case COMPRESSION_NONE:
+        self_p->destroy = patch_reader_none_destroy;
+        self_p->decompress = patch_reader_none_decompress;
+        res = 0;
+        break;
+#endif
+
+    default:
+        res = -DETOOLS_NOT_IMPLEMENTED;
+        break;
+    }
+
+    return (res);
+}
+
 /**
  * Try to decompress given number of bytes.
  *
@@ -931,7 +987,6 @@ static int common_process_size(
 static int process_init(struct detools_apply_patch_t *self_p)
 {
     int patch_type;
-    int compression;
     uint8_t byte;
     int res;
     int to_size;
@@ -941,7 +996,7 @@ static int process_init(struct detools_apply_patch_t *self_p)
     }
 
     patch_type = ((byte >> 4) & 0x7);
-    compression = (byte & 0xf);
+    self_p->compression = (byte & 0xf);
 
     if (patch_type != PATCH_TYPE_SEQUENTIAL) {
         return (-DETOOLS_BAD_PATCH_TYPE);
@@ -956,7 +1011,7 @@ static int process_init(struct detools_apply_patch_t *self_p)
     res = patch_reader_init(&self_p->patch_reader,
                             &self_p->chunk,
                             self_p->patch_size - self_p->chunk.offset,
-                            compression);
+                            self_p->compression);
 
     if (res != 0) {
         return (res);
@@ -1212,6 +1267,57 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
     self_p->patch_reader.destroy = NULL;
 
     return (0);
+}
+
+int detools_apply_patch_dump(struct detools_apply_patch_t *self_p,
+                             detools_state_write_t state_write)
+{
+    int res;
+
+    res = state_write(self_p->arg_p, self_p, sizeof(*self_p));
+
+    if (res != 0) {
+        return (-DETOOLS_IO_FAILED);
+    }
+
+    if (self_p->state == detools_apply_patch_state_init_t) {
+        return (0);
+    }
+
+    return (patch_reader_dump(&self_p->patch_reader,
+                              self_p->compression,
+                              state_write));
+}
+
+int detools_apply_patch_restore(struct detools_apply_patch_t *self_p,
+                                detools_state_read_t state_read)
+{
+    int res;
+    struct detools_apply_patch_t dumped;
+
+    res = state_read(self_p->arg_p, &dumped, sizeof(dumped));
+
+    if (res != 0) {
+        return (-DETOOLS_IO_FAILED);
+    }
+
+    self_p->state = dumped.state;
+    self_p->patch_size = dumped.patch_size;
+
+    if (self_p->state == detools_apply_patch_state_init_t) {
+        return (0);
+    }
+
+    self_p->compression = dumped.compression;
+    self_p->to_pos = dumped.to_pos;
+    self_p->to_size = dumped.to_size;
+    self_p->chunk_size = dumped.chunk_size;
+
+    return (patch_reader_restore(&self_p->patch_reader,
+                                 &dumped.patch_reader,
+                                 &self_p->chunk,
+                                 self_p->compression,
+                                 state_read));
 }
 
 int detools_apply_patch_process(struct detools_apply_patch_t *self_p,

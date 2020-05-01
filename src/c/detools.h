@@ -163,6 +163,28 @@ typedef int (*detools_mem_write_t)(void *arg_p,
 typedef int (*detools_mem_erase_t)(void *arg_p, uintptr_t addr, size_t size);
 
 /**
+ * State read callback.
+ *
+ * @param[in] arg_p User data passed to detools_apply_patch_init().
+ * @param[out] buf_p Buffer to read into.
+ * @param[in] size Number of bytes to read.
+ *
+ * @return zero(0) or negative error code.
+ */
+typedef int (*detools_state_read_t)(void *arg_p, void *buf_p, size_t size);
+
+/**
+ * State write callback.
+ *
+ * @param[in] arg_p User data passed to detools_apply_patch_init().
+ * @param[in] buf_p Buffer to write.
+ * @param[in] size Number of bytes to write.
+ *
+ * @return zero(0) or negative error code.
+ */
+typedef int (*detools_state_write_t)(void *arg_p, const void *buf_p, size_t size);
+
+/**
  * Step set callback.
  *
  * @param[in] arg_p User data passed to detools_apply_patch_init().
@@ -302,6 +324,7 @@ struct detools_apply_patch_t {
     detools_write_t to_write;
     void *arg_p;
     enum detools_apply_patch_state_t state;
+    int compression;
     size_t to_pos;
     size_t to_size;
     size_t chunk_size;
@@ -356,6 +379,30 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
                              size_t patch_size,
                              detools_write_t to_write,
                              void *arg_p);
+
+/**
+ * Dump given apply patch object state. Call
+ * `detools_apply_patch_restore()` to restore an apply patch object to
+ * the dumped state.
+ *
+ * @param[in,out] self_p Apply patch object to dump.
+ * @param[in] write Write callback.
+ *
+ * @return zero(0) or negative error code.
+ */
+int detools_apply_patch_dump(struct detools_apply_patch_t *self_p,
+                             detools_state_write_t state_write);
+
+/**
+ * Restore given apply patch object to given dumped state.
+ *
+ * @param[in,out] self_p Apply patch object to restore.
+ * @param[in] read Callback to read the dumped state.
+ *
+ * @return zero(0) or negative error code.
+ */
+int detools_apply_patch_restore(struct detools_apply_patch_t *self_p,
+                                detools_state_read_t state_read);
 
 /**
  * Call this function repeatedly until all patch data has been
