@@ -8,6 +8,8 @@ static void init(struct detools_apply_patch_t *apply_patch_p,
 {
     int res;
 
+    memset(apply_patch_p, 0, sizeof(*apply_patch_p));
+
     res = detools_apply_patch_init(apply_patch_p,
                                    utils_from_read,
                                    utils_from_seek,
