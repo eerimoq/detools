@@ -837,11 +837,17 @@ static int patch_reader_dump(struct detools_apply_patch_patch_reader_t *self_p,
 
     int res;
 
+    res = 0;
+
     switch (compression) {
 
 #if DETOOLS_CONFIG_COMPRESSION_NONE == 1
     case COMPRESSION_NONE:
-        res = 0;
+        break;
+#endif
+
+#if DETOOLS_CONFIG_COMPRESSION_CRLE == 1
+    case COMPRESSION_CRLE:
         break;
 #endif
 
@@ -863,6 +869,7 @@ static int patch_reader_restore(struct detools_apply_patch_patch_reader_t *self_
 
     int res;
 
+    res = 0;
     *self_p = *dumped_p;
     self_p->patch_chunk_p = patch_chunk_p;
 
@@ -872,7 +879,13 @@ static int patch_reader_restore(struct detools_apply_patch_patch_reader_t *self_
     case COMPRESSION_NONE:
         self_p->destroy = patch_reader_none_destroy;
         self_p->decompress = patch_reader_none_decompress;
-        res = 0;
+        break;
+#endif
+
+#if DETOOLS_CONFIG_COMPRESSION_CRLE == 1
+    case COMPRESSION_CRLE:
+        self_p->destroy = patch_reader_crle_destroy;
+        self_p->decompress = patch_reader_crle_decompress;
         break;
 #endif
 

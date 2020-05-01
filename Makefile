@@ -48,7 +48,7 @@ test-sdist:
 	python3 setup.py test
 
 test-c:
-	$(MAKE) -C src/c/tst
+	$(MAKE) -C src/c/tst SANITIZE=yes
 	$(CC) $(CFLAGS) -DDETOOLS_CONFIG_FILE_IO=0 -Isrc/c/heatshrink \
 	    -c src/c/detools.c -o detools.no-file-io.o
 	$(CC) $(CFLAGS) -DDETOOLS_CONFIG_COMPRESSION_NONE=0 -Isrc/c/heatshrink \

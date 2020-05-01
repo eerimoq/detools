@@ -91,15 +91,13 @@ TEST(foo_none_at_offset_100_and_2791)
     /* Init again, restore, apply all but one byte and dump again. */
     init(&apply_patch, 0);
     restore(&apply_patch);
-    process(&apply_patch,
-            &utils_files.patch.buf_p[100],
-            utils_files.patch.size - 100 - 1);
+    process(&apply_patch, &utils_files.patch.buf_p[100], 2691);
     dump(&apply_patch);
 
     /* Init once again, restore and apply the last byte. */
     init(&apply_patch, 0);
     restore(&apply_patch);
-    process(&apply_patch, &utils_files.patch.buf_p[utils_files.patch.size - 1], 1);
+    process(&apply_patch, &utils_files.patch.buf_p[2791], 1);
     finalize(&apply_patch, 2780);
 
     utils_files_destroy();
@@ -118,6 +116,45 @@ TEST(foo_none_dump_state_write_error)
     utils_state_write_mock_once(sizeof(apply_patch), -1);
     res = detools_apply_patch_dump(&apply_patch, utils_state_write);
     ASSERT_EQ(res, -DETOOLS_IO_FAILED);
+
+    utils_files_destroy();
+}
+
+TEST(foo_crle_at_offset_100_101_164_and_189)
+{
+    struct detools_apply_patch_t apply_patch;
+
+    utils_files_init("../../../tests/files/foo/old",
+                     "../../../tests/files/foo/crle.patch");
+
+    /* Init, process 100 bytes and dump. */
+    init(&apply_patch, utils_files.patch.size);
+    process(&apply_patch, utils_files.patch.buf_p, 100);
+    dump(&apply_patch);
+
+    /* Init again, restore, process one byte and dump again. */
+    init(&apply_patch, 0);
+    restore(&apply_patch);
+    process(&apply_patch, &utils_files.patch.buf_p[100], 1);
+    dump(&apply_patch);
+
+    /* Init again, restore, process 63 bytes and dump again. */
+    init(&apply_patch, 0);
+    restore(&apply_patch);
+    process(&apply_patch, &utils_files.patch.buf_p[101], 63);
+    dump(&apply_patch);
+
+    /* Init again, restore, apply all but one byte and dump again. */
+    init(&apply_patch, 0);
+    restore(&apply_patch);
+    process(&apply_patch, &utils_files.patch.buf_p[164], 25);
+    dump(&apply_patch);
+
+    /* Init once again, restore and apply the last byte. */
+    init(&apply_patch, 0);
+    restore(&apply_patch);
+    process(&apply_patch, &utils_files.patch.buf_p[189], 1);
+    finalize(&apply_patch, 2780);
 
     utils_files_destroy();
 }
