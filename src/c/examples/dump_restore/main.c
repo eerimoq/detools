@@ -275,11 +275,11 @@ static void restore(struct detools_apply_patch_t *apply_patch_p,
 {
     int res;
 
-    printf("Restoring state from 'state.bin'.\n");
-
     state_file_p = fopen("state.bin", "rb");
 
     if (state_file_p != NULL) {
+        printf("Restoring state from 'state.bin'.\n");
+
         /* Restore patch and to positions. */
         res = state_read(NULL, patch_offset_p, sizeof(*patch_offset_p));
 
@@ -305,6 +305,7 @@ static void restore(struct detools_apply_patch_t *apply_patch_p,
 
         fclose(state_file_p);
     } else {
+        printf("No state to restore.\n");
         *patch_offset_p = 0;
         to_offset = 0;
     }
@@ -376,6 +377,11 @@ int main(int argc, const char *argv[])
 
         /* Process any patch data after dump. */
         if (size_after_dump > 0) {
+            printf("Processing %d byte(s) patch data after dump starting at "
+                   "offset %d.\n",
+                   size_after_dump,
+                   offset + size);
+
             free(patch_buf_p);
             patch_buf_p = read_file(patch_file_p, offset + size, size_after_dump);
 
