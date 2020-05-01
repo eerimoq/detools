@@ -7,7 +7,7 @@ SRC += utils.c
 CFLAGS += -DDETOOLS_CONFIG_COMPRESSION_LZMA=0
 
 default:
-	$(MAKE) -C ..
+	$(MAKE) -C .. CFLAGS_EXTRA="-coverage"
 	$(MAKE) all
 
 include test.mk
