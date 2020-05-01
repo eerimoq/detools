@@ -6,4 +6,4 @@ SRC += main.c
 SRC += ../../heatshrink/heatshrink_decoder.c
 
 all:
-	gcc $(CFLAGS) $(SRC) -llzma -o dump-and-restore
+	gcc $(CFLAGS) $(SRC) -llzma -o dump-restore

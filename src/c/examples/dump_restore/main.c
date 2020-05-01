@@ -42,12 +42,25 @@ static FILE *from_file_p;
 static FILE *patch_file_p;
 static FILE *to_file_p;
 static FILE *state_file_p;
+static size_t to_offset;
+
+static void remove_state(void)
+{
+    printf("Removing state 'state.bin'.\n");
+    remove("state.bin");
+}
+
+static void clean_and_exit(void)
+{
+    remove_state();
+    exit(1);
+}
 
 static void print_usage_and_exit(const char *name_p)
 {
-    printf("Usage: %s <from-file> <patch-file> <to-file> <offset> <size>\n",
+    printf("Usage: %s <from-file> <patch-file> <to-file> <size> <size-after-dump\n",
            name_p);
-    exit(1);
+    clean_and_exit();
 }
 
 static FILE *open_file(const char *filename_p,
@@ -61,7 +74,7 @@ static FILE *open_file(const char *filename_p,
         printf("error: Failed to open '%s' with '%s'.\n",
                filename_p,
                strerror(errno));
-        exit(1);
+        clean_and_exit();
     }
 
     return (file_p);
@@ -75,7 +88,7 @@ static int parse_non_negative_integer(const char *value_p)
 
     if (value_p < 0) {
         printf("error: Non-negative integer expected.\n");
-        exit(1);
+        clean_and_exit();
     }
 
     return (value);
@@ -90,21 +103,21 @@ static size_t get_file_size(FILE *file_p)
 
     if (res != 0) {
         printf("error: Seek failed.\n");
-        exit(1);
+        clean_and_exit();
     }
 
     size = ftell(file_p);
 
     if (size <= 0) {
         printf("error: Tell failed.\n");
-        exit(1);
+        clean_and_exit();
     }
 
     res = fseek(file_p, 0, SEEK_SET);
 
     if (res != 0) {
         printf("error: Seek failed.\n");
-        exit(1);
+        clean_and_exit();
     }
 
     return ((size_t)size);
@@ -139,6 +152,8 @@ static int to_write(void *arg_p, const uint8_t *buf_p, size_t size)
     res = 0;
 
     if (size > 0) {
+        to_offset += size;
+
         if (fwrite(buf_p, size, 1, to_file_p) != 1) {
             res = -1;
         }
@@ -155,17 +170,17 @@ static void *read_file(FILE *file_p, int offset, int size)
 
     if (buf_p == NULL) {
         printf("error: Alloc failed.\n");
-        exit(1);
+        clean_and_exit();
     }
 
     if (fseek(file_p, offset, SEEK_SET) != 0) {
         printf("error: Seek failed.\n");
-        exit(1);
+        clean_and_exit();
     }
 
     if (fread(buf_p, size, 1, file_p) != 1) {
         printf("error: Read failed.\n");
-        exit(1);
+        clean_and_exit();
     }
 
     return (buf_p);
@@ -176,8 +191,8 @@ static void parse_args(int argc,
                        FILE **from_file_pp,
                        FILE **patch_file_pp,
                        FILE **to_file_pp,
-                       int *offset_p,
-                       int *size_p)
+                       int *size_p,
+                       int *size_after_dump_p)
 {
     if (argc != 6) {
         print_usage_and_exit(argv[0]);
@@ -186,8 +201,8 @@ static void parse_args(int argc,
     *from_file_pp = open_file(argv[1], "rb");
     *patch_file_pp = open_file(argv[2], "rb");
     *to_file_pp = open_file(argv[3], "ab");
-    *offset_p = parse_non_negative_integer(argv[4]);
-    *size_p = parse_non_negative_integer(argv[5]);
+    *size_p = parse_non_negative_integer(argv[4]);
+    *size_after_dump_p = parse_non_negative_integer(argv[5]);
 }
 
 static int state_read(void *arg_p, void *buf_p, size_t size)
@@ -220,40 +235,81 @@ static int state_write(void *arg_p, const void *buf_p, size_t size)
     return (0);
 }
 
-static void dump(struct detools_apply_patch_t *apply_patch_p)
+static void dump(struct detools_apply_patch_t *apply_patch_p,
+                 int patch_offset)
 {
     int res;
 
-    printf("State stored in 'state.bin'.\n");
+    printf("Storing state in 'state.bin'.\n");
 
     state_file_p = open_file("state.bin", "wb");
 
+    /* Save patch and to positions. */
+    res = state_write(NULL, &patch_offset, sizeof(patch_offset));
+
+    if (res != 0) {
+        printf("error: Patch offset save failed.\n");
+        clean_and_exit();
+    }
+
+    res = state_write(NULL, &to_offset, sizeof(to_offset));
+
+    if (res != 0) {
+        printf("error: To offset save failed.\n");
+        clean_and_exit();
+    }
+
+    /* Save the apply patch state. */
     res = detools_apply_patch_dump(apply_patch_p, state_write);
 
     if (res != DETOOLS_OK) {
         printf("error: Dump failed with '%s'.\n", detools_error_as_string(-res));
-        exit(1);
+        clean_and_exit();
     }
 
     fclose(state_file_p);
 }
 
-static void restore(struct detools_apply_patch_t *apply_patch_p)
+static void restore(struct detools_apply_patch_t *apply_patch_p,
+                    int *patch_offset_p)
 {
     int res;
 
     printf("Restoring state from 'state.bin'.\n");
 
-    state_file_p = open_file("state.bin", "rb");
+    state_file_p = fopen("state.bin", "rb");
 
-    res = detools_apply_patch_restore(apply_patch_p, state_read);
+    if (state_file_p != NULL) {
+        /* Restore patch and to positions. */
+        res = state_read(NULL, patch_offset_p, sizeof(*patch_offset_p));
 
-    if (res != DETOOLS_OK) {
-        printf("error: Restore failed.\n");
-        exit(1);
+        if (res != 0) {
+            printf("error: Patch offset restore failed.\n");
+            clean_and_exit();
+        }
+
+        res = state_read(NULL, &to_offset, sizeof(to_offset));
+
+        if (res != 0) {
+            printf("error: To offset restore failed.\n");
+            clean_and_exit();
+        }
+
+        /* Restore the apply patch state. */
+        res = detools_apply_patch_restore(apply_patch_p, state_read);
+
+        if (res != DETOOLS_OK) {
+            printf("error: Restore failed.\n");
+            clean_and_exit();
+        }
+
+        fclose(state_file_p);
+    } else {
+        *patch_offset_p = 0;
+        to_offset = 0;
     }
 
-    fclose(state_file_p);
+    ftruncate(fileno(to_file_p), to_offset);
 }
 
 int main(int argc, const char *argv[])
@@ -262,6 +318,7 @@ int main(int argc, const char *argv[])
     struct detools_apply_patch_t apply_patch;
     int offset;
     int size;
+    int size_after_dump;
     size_t patch_size;
     void *patch_buf_p;
 
@@ -270,12 +327,8 @@ int main(int argc, const char *argv[])
                &from_file_p,
                &patch_file_p,
                &to_file_p,
-               &offset,
-               &size);
-
-    if (offset == 0) {
-        ftruncate(fileno(to_file_p), 0);
-    }
+               &size,
+               &size_after_dump);
 
     patch_size = get_file_size(patch_file_p);
 
@@ -288,12 +341,10 @@ int main(int argc, const char *argv[])
 
     if (res != 0) {
         printf("error: Init failed.\n");
-        exit(1);
+        clean_and_exit();
     }
 
-    if (offset > 0) {
-        restore(&apply_patch);
-    }
+    restore(&apply_patch, &offset);
 
     printf("Processing %d byte(s) patch data starting at offset %d.\n",
            size,
@@ -306,7 +357,7 @@ int main(int argc, const char *argv[])
     if (res < 0) {
         printf("error: Process failed with '%s'.\n",
                detools_error_as_string(-res));
-        exit(1);
+        clean_and_exit();
     }
 
     if ((offset + size) == patch_size) {
@@ -315,12 +366,29 @@ int main(int argc, const char *argv[])
         if (res < 0) {
             printf("error: Finalize failed with '%s'.\n",
                    detools_error_as_string(-res));
-            exit(1);
+            clean_and_exit();
         }
 
+        remove_state();
         printf("Patch successfully applied.\n");
     } else {
-        dump(&apply_patch);
+        dump(&apply_patch, offset + size);
+
+        /* Process any patch data after dump. */
+        if (size_after_dump > 0) {
+            free(patch_buf_p);
+            patch_buf_p = read_file(patch_file_p, offset + size, size_after_dump);
+
+            res = detools_apply_patch_process(&apply_patch,
+                                              patch_buf_p,
+                                              size_after_dump);
+
+            if (res < 0) {
+                printf("error: Process after dump failed with '%s'.\n",
+                       detools_error_as_string(-res));
+                clean_and_exit();
+            }
+        }
     }
 
     fclose(from_file_p);

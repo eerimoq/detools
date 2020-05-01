@@ -94,6 +94,7 @@ test-c:
 	$(MAKE) -C src/c/examples/in-place all
 	$(MAKE) -C src/c/examples/in-place heatshrink
 	$(MAKE) -C src/c/examples/in-place crle
+	$(MAKE) -C src/c/examples/dump_restore
 
 test-c-fuzzer:
 	clang $(FUZZER_CFLAGS) \
