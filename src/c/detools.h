@@ -327,6 +327,7 @@ struct detools_apply_patch_t {
     int compression;
     size_t to_pos;
     size_t to_size;
+    int from_offset;
     size_t chunk_size;
     struct detools_apply_patch_patch_reader_t patch_reader;
     struct detools_apply_patch_chunk_t chunk;
@@ -384,6 +385,9 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
  * Dump given apply patch object state. Call
  * `detools_apply_patch_restore()` to restore an apply patch object to
  * the dumped state.
+ *
+ * The user must save the patch and to positions and restore them
+ * before processing any data.
  *
  * @param[in,out] self_p Apply patch object to dump.
  * @param[in] write Write callback.

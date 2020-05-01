@@ -11,6 +11,8 @@ struct files_t {
         FILE *file_p;
         char *buf_p;
         size_t size;
+        int offset;
+        int saved_offset;
     } to;
     struct {
         FILE *file_p;
@@ -21,6 +23,10 @@ struct files_t {
         const uint8_t *buf_p;
         size_t size;
     } patch;
+    struct {
+        const uint8_t *buf_p;
+        size_t size;
+    } expected_new;
 };
 
 extern struct files_t utils_files;
@@ -38,8 +44,17 @@ int utils_state_read(void *arg_p, void *buf_p, size_t size);
 const uint8_t *utils_read_file(const char *filename_p, size_t *size_p);
 
 void utils_files_init(const char *from_filename_p,
-                      const char *patch_filename_p);
+                      const char *patch_filename_p,
+                      const char *expected_new_filename_p);
 
 void utils_files_destroy(void);
+
+void utils_files_assert_and_destroy(void);
+
+void utils_files_reopen_from(void);
+
+void utils_files_save_to_offset(void);
+
+void utils_files_restore_to_offset(void);
 
 #endif
