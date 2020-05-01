@@ -400,7 +400,7 @@ int detools_apply_patch_dump(struct detools_apply_patch_t *self_p,
 /**
  * Restore given apply patch object to given dumped state.
  *
- * @param[in,out] self_p Apply patch object to restore.
+ * @param[in,out] self_p Initialized apply patch object to restore.
  * @param[in] read Callback to read the dumped state.
  *
  * @return zero(0) or negative error code.
