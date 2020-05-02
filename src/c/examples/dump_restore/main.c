@@ -339,7 +339,7 @@ static void restore(struct detools_apply_patch_t *apply_patch_p,
 
 int main(int argc, const char *argv[])
 {
-    int res;
+    int to_size;
     struct detools_apply_patch_t apply_patch;
     int offset;
     int size;
@@ -360,10 +360,9 @@ int main(int argc, const char *argv[])
     process(&apply_patch, offset, size);
 
     if ((offset + size) == (int)patch_size) {
-        res = finalize(&apply_patch);
+        to_size = finalize(&apply_patch);
         remove_state();
-        printf("Patch successfully applied. To-file is %d bytes.\n", res);
-        res = 0;
+        printf("Patch successfully applied. To-file is %d bytes.\n", to_size);
     } else {
         dump(&apply_patch);
 
@@ -376,5 +375,5 @@ int main(int argc, const char *argv[])
     fclose(patch_file_p);
     fclose(to_file_p);
 
-    return (res);
+    return (0);
 }
