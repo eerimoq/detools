@@ -42,7 +42,6 @@ static FILE *from_file_p;
 static FILE *patch_file_p;
 static FILE *to_file_p;
 static FILE *state_file_p;
-static size_t to_offset;
 
 static void remove_state(void)
 {
@@ -156,8 +155,6 @@ static int to_write(void *arg_p, const uint8_t *buf_p, size_t size)
     res = 0;
 
     if (size > 0) {
-        to_offset += size;
-
         if (fwrite(buf_p, size, 1, to_file_p) != 1) {
             res = -1;
         }
@@ -330,16 +327,14 @@ static void restore(struct detools_apply_patch_t *apply_patch_p,
             clean_and_exit();
         }
 
-        *patch_offset_p = (int)detools_apply_patch_get_patch_offset(apply_patch_p);
-        to_offset = detools_apply_patch_get_to_offset(apply_patch_p);
         fclose(state_file_p);
     } else {
         printf("No state to restore.\n");
-        *patch_offset_p = 0;
-        to_offset = 0;
     }
 
-    ftruncate(fileno(to_file_p), to_offset);
+    *patch_offset_p = (int)detools_apply_patch_get_patch_offset(apply_patch_p);
+    ftruncate(fileno(to_file_p),
+              detools_apply_patch_get_to_offset(apply_patch_p));
 }
 
 int main(int argc, const char *argv[])
