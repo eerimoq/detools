@@ -8,7 +8,7 @@ TEST(apply_patch_foo)
                      "../../../tests/files/foo/patch "
                      "build/foo.new"),
               0);
-    ASSERT_EQ(system("cmp build/foo.new ../../../tests/files/foo/new"), 0);
+    ASSERT_FILE_EQ("build/foo.new", "../../../tests/files/foo/new");
 }
 
 TEST(apply_patch_foo_heatshrink)
@@ -18,8 +18,7 @@ TEST(apply_patch_foo_heatshrink)
                      "../../../tests/files/foo/heatshrink.patch "
                      "build/heatshrink.foo.new"),
               0);
-    ASSERT_EQ(system("cmp build/heatshrink.foo.new ../../../tests/files/foo/new"),
-              0);
+    ASSERT_FILE_EQ("build/heatshrink.foo.new", "../../../tests/files/foo/new");
 }
 
 TEST(apply_patch_in_place_foo)
@@ -28,10 +27,8 @@ TEST(apply_patch_in_place_foo)
     ASSERT_EQ(system("../detools apply_patch_in_place "
                      "build/foo.mem "
                      "../../../tests/files/foo/in-place-3000-500.patch"), 0);
-    ASSERT_EQ(system("cmp "
-                     "build/foo.mem "
-                     "../../../tests/files/foo/in-place-3000-500.mem"),
-              0);
+    ASSERT_FILE_EQ("build/foo.mem",
+                   "../../../tests/files/foo/in-place-3000-500.mem");
 }
 
 TEST(usage)
