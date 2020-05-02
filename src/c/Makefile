@@ -4,6 +4,7 @@ AR = $(CROSS_COMPILE)ar
 # Install prefix.
 PREFIX ?= /usr/local
 
+OPT ?= -O2
 CFLAGS := \
 	-Wall \
 	-Wextra \
@@ -13,7 +14,7 @@ CFLAGS := \
 	-Wshadow \
 	-Werror \
 	-std=c99 \
-	-O2 \
+	$(OPT) \
 	-Iheatshrink
 CFLAGS += $(CFLAGS_EXTRA)
 
