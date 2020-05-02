@@ -367,7 +367,6 @@ int main(int argc, const char *argv[])
     } else {
         dump(&apply_patch);
 
-        /* Process any patch data after dump. */
         if (size_after_dump > 0) {
             process(&apply_patch, offset + size, size_after_dump);
         }
