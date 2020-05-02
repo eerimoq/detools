@@ -330,8 +330,8 @@ static void restore(struct detools_apply_patch_t *apply_patch_p,
             clean_and_exit();
         }
 
-        to_offset = detools_apply_patch_get_to_offset(apply_patch_p);
         *patch_offset_p = (int)detools_apply_patch_get_patch_offset(apply_patch_p);
+        to_offset = detools_apply_patch_get_to_offset(apply_patch_p);
         fclose(state_file_p);
     } else {
         printf("No state to restore.\n");
