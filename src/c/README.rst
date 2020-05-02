@@ -34,6 +34,11 @@ Use the build time configuration to customize detools for your
 application needs. See ``DETOOLS_CONFIG_*`` defines in `detools.h`_
 for details.
 
+Examples
+========
+
+There are exampels in the `examples folder`_.
+
 Command line utility
 ====================
 
@@ -57,11 +62,6 @@ Apply an in-place patch.
    $ cp ../../tests/files/foo/old foo.mem
    $ ./detools apply_patch_in_place \
          foo.mem ../../tests/files/foo-in-place-3000-500.patch
-
-Examples
-========
-
-There are exampels in the `examples folder`_.
 
 Code size
 =========
