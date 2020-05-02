@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -26,7 +25,7 @@ static void *mymalloc(size_t size)
     void *buf_p;
 
     buf_p = malloc(size);
-    assert(buf_p != NULL);
+    ASSERT_NE(buf_p, NULL);
 
     return (buf_p);
 }
@@ -261,13 +260,13 @@ static void assert_apply_patch_in_place_resumable(const char *from_p,
                 size = MIN(sizeof(buf), memory_size - offset);
             }
 
-            assert(fwrite(&buf[0], 1, size, fmem_p) == size);
+            ASSERT_EQ(fwrite(&buf[0], 1, size, fmem_p), size);
             offset += size;
         }
 
-        assert(fgetc(ffrom_p) == EOF);
-        assert(fclose(fmem_p) == 0);
-        assert(fclose(ffrom_p) == 0);
+        ASSERT_EQ(fgetc(ffrom_p), EOF);
+        ASSERT_EQ(fclose(fmem_p), 0);
+        ASSERT_EQ(fclose(ffrom_p), 0);
     }
 
     res = detools_apply_patch_in_place_filenames(memory_p,
@@ -298,14 +297,14 @@ static void assert_apply_patch_in_place_resumable(const char *from_p,
         exit(1);
     }
 
-    assert(truncate(memory_p, to_size) == 0);
+    ASSERT_EQ(truncate(memory_p, to_size), 0);
     fmem_p = myfopen(memory_p, "rb");
     fto_p = myfopen(to_p, "rb");
 
     do {
         actual_byte = fgetc(fmem_p);
         expected_byte = fgetc(fto_p);
-        assert(actual_byte == expected_byte);
+        ASSERT_EQ(actual_byte, expected_byte);
     } while (actual_byte != EOF);
 }
 
@@ -480,140 +479,151 @@ TEST(apply_patch_foo_in_place_6000_1000_crle)
 TEST(apply_patch_foo_in_place_resumable_3000_500)
 {
     stored_step = 0;
-    assert_apply_patch_in_place_resumable("../../../tests/files/foo/old",
-                                          "../../../tests/files/foo/in-place-3000-500.patch",
-                                          "../../../tests/files/foo/new",
-                                          false,
-                                          step_set_ok,
-                                          step_get_ok,
-                                          3000,
-                                          0);
-    assert(stored_step == 0);
+    assert_apply_patch_in_place_resumable(
+        "../../../tests/files/foo/old",
+        "../../../tests/files/foo/in-place-3000-500.patch",
+        "../../../tests/files/foo/new",
+        false,
+        step_set_ok,
+        step_get_ok,
+        3000,
+        0);
+    ASSERT_EQ(stored_step, 0);
 }
 
 TEST(apply_patch_foo_in_place_resume_3000_500_fail_set_step_2)
 {
     stored_step = 0;
     fail_set_step = 2;
-    assert_apply_patch_in_place_resumable("../../../tests/files/foo/old",
-                                          "../../../tests/files/foo/in-place-3000-500.patch",
-                                          "../../../tests/files/foo/new",
-                                          false,
-                                          step_set_fail_after,
-                                          step_get_ok,
-                                          3000,
-                                          -DETOOLS_STEP_SET_FAILED);
-    assert(stored_step == 1);
+    assert_apply_patch_in_place_resumable(
+        "../../../tests/files/foo/old",
+        "../../../tests/files/foo/in-place-3000-500.patch",
+        "../../../tests/files/foo/new",
+        false,
+        step_set_fail_after,
+        step_get_ok,
+        3000,
+        -DETOOLS_STEP_SET_FAILED);
+    ASSERT_EQ(stored_step, 1);
 
     /* Resume the aborted update. */
-    assert_apply_patch_in_place_resumable("../../../tests/files/foo/old",
-                                          "../../../tests/files/foo/in-place-3000-500.patch",
-                                          "../../../tests/files/foo/new",
-                                          true,
-                                          step_set_ok,
-                                          step_get_ok,
-                                          3000,
-                                          0);
+    assert_apply_patch_in_place_resumable(
+        "../../../tests/files/foo/old",
+        "../../../tests/files/foo/in-place-3000-500.patch",
+        "../../../tests/files/foo/new",
+        true,
+        step_set_ok,
+        step_get_ok,
+        3000,
+        0);
 }
 
 TEST(apply_patch_foo_in_place_resume_3000_500_fail_set_step_5)
 {
     stored_step = 0;
     fail_set_step = 5;
-    assert_apply_patch_in_place_resumable("../../../tests/files/foo/old",
-                                          "../../../tests/files/foo/in-place-3000-500.patch",
-                                          "../../../tests/files/foo/new",
-                                          false,
-                                          step_set_fail_after,
-                                          step_get_ok,
-                                          3000,
-                                          -DETOOLS_STEP_SET_FAILED);
-    assert(stored_step == 4);
+    assert_apply_patch_in_place_resumable(
+        "../../../tests/files/foo/old",
+        "../../../tests/files/foo/in-place-3000-500.patch",
+        "../../../tests/files/foo/new",
+        false,
+        step_set_fail_after,
+        step_get_ok,
+        3000,
+        -DETOOLS_STEP_SET_FAILED);
+    ASSERT_EQ(stored_step, 4);
 
     /* Resume the aborted update. */
-    assert_apply_patch_in_place_resumable("../../../tests/files/foo/old",
-                                          "../../../tests/files/foo/in-place-3000-500.patch",
-                                          "../../../tests/files/foo/new",
-                                          true,
-                                          step_set_ok,
-                                          step_get_ok,
-                                          3000,
-                                          0);
+    assert_apply_patch_in_place_resumable(
+        "../../../tests/files/foo/old",
+        "../../../tests/files/foo/in-place-3000-500.patch",
+        "../../../tests/files/foo/new",
+        true,
+        step_set_ok,
+        step_get_ok,
+        3000,
+        0);
 }
 
 TEST(apply_patch_foo_in_place_resume_3000_500_fail_set_last_step)
 {
     stored_step = 0;
     fail_set_step = 0;
-    assert_apply_patch_in_place_resumable("../../../tests/files/foo/old",
-                                          "../../../tests/files/foo/in-place-3000-500.patch",
-                                          "../../../tests/files/foo/new",
-                                          false,
-                                          step_set_fail_after,
-                                          step_get_ok,
-                                          3000,
-                                          -DETOOLS_STEP_SET_FAILED);
-    assert(stored_step == 9);
+    assert_apply_patch_in_place_resumable(
+        "../../../tests/files/foo/old",
+        "../../../tests/files/foo/in-place-3000-500.patch",
+        "../../../tests/files/foo/new",
+        false,
+        step_set_fail_after,
+        step_get_ok,
+        3000,
+        -DETOOLS_STEP_SET_FAILED);
+    ASSERT_EQ(stored_step, 9);
 
     /* Resume the aborted update. */
-    assert_apply_patch_in_place_resumable("../../../tests/files/foo/old",
-                                          "../../../tests/files/foo/in-place-3000-500.patch",
-                                          "../../../tests/files/foo/new",
-                                          true,
-                                          step_set_ok,
-                                          step_get_ok,
-                                          3000,
-                                          0);
+    assert_apply_patch_in_place_resumable(
+        "../../../tests/files/foo/old",
+        "../../../tests/files/foo/in-place-3000-500.patch",
+        "../../../tests/files/foo/new",
+        true,
+        step_set_ok,
+        step_get_ok,
+        3000,
+        0);
 }
 
 TEST(apply_patch_foo_in_place_resume_3000_500_fail_get_step_0)
 {
     stored_step = 0;
     fail_get_step = 0;
-    assert_apply_patch_in_place_resumable("../../../tests/files/foo/old",
-                                          "../../../tests/files/foo/in-place-3000-500.patch",
-                                          "../../../tests/files/foo/new",
-                                          false,
-                                          step_set_ok,
-                                          step_get_fail_after,
-                                          3000,
-                                          -DETOOLS_STEP_GET_FAILED);
-    assert(stored_step == 0);
+    assert_apply_patch_in_place_resumable(
+        "../../../tests/files/foo/old",
+        "../../../tests/files/foo/in-place-3000-500.patch",
+        "../../../tests/files/foo/new",
+        false,
+        step_set_ok,
+        step_get_fail_after,
+        3000,
+        -DETOOLS_STEP_GET_FAILED);
+    ASSERT_EQ(stored_step, 0);
 
     /* Resume the aborted update. */
-    assert_apply_patch_in_place_resumable("../../../tests/files/foo/old",
-                                          "../../../tests/files/foo/in-place-3000-500.patch",
-                                          "../../../tests/files/foo/new",
-                                          true,
-                                          step_set_ok,
-                                          step_get_ok,
-                                          3000,
-                                          0);
+    assert_apply_patch_in_place_resumable(
+        "../../../tests/files/foo/old",
+        "../../../tests/files/foo/in-place-3000-500.patch",
+        "../../../tests/files/foo/new",
+        true,
+        step_set_ok,
+        step_get_ok,
+        3000,
+        0);
 }
 
 TEST(apply_patch_foo_in_place_resume_3000_500_fail_get_step_2)
 {
     stored_step = 0;
     fail_get_step = 2;
-    assert_apply_patch_in_place_resumable("../../../tests/files/foo/old",
-                                          "../../../tests/files/foo/in-place-3000-500.patch",
-                                          "../../../tests/files/foo/new",
-                                          false,
-                                          step_set_ok,
-                                          step_get_fail_after,
-                                          3000,
-                                          -DETOOLS_STEP_GET_FAILED);
-    assert(stored_step == 2);
+    assert_apply_patch_in_place_resumable(
+        "../../../tests/files/foo/old",
+        "../../../tests/files/foo/in-place-3000-500.patch",
+        "../../../tests/files/foo/new",
+        false,
+        step_set_ok,
+        step_get_fail_after,
+        3000,
+        -DETOOLS_STEP_GET_FAILED);
+    ASSERT_EQ(stored_step, 2);
 
     /* Resume the aborted update. */
-    assert_apply_patch_in_place_resumable("../../../tests/files/foo/old",
-                                          "../../../tests/files/foo/in-place-3000-500.patch",
-                                          "../../../tests/files/foo/new",
-                                          true,
-                                          step_set_ok,
-                                          step_get_ok,
-                                          3000,
-                                          0);
+    assert_apply_patch_in_place_resumable(
+        "../../../tests/files/foo/old",
+        "../../../tests/files/foo/in-place-3000-500.patch",
+        "../../../tests/files/foo/new",
+        true,
+        step_set_ok,
+        step_get_ok,
+        3000,
+        0);
 }
 
 TEST(create_and_apply_patch_empty_in_place)
@@ -778,9 +788,11 @@ TEST(apply_patch_file_open_error)
                              "../../../tests/files/foo/bad-compression.patch.missing",
                              -DETOOLS_FILE_OPEN_FAILED);
 
-    assert(detools_apply_patch_filenames("../../../tests/files/foo/old",
-                                         "../../../tests/files/foo/bad-compression.patch",
-                                         "") == -DETOOLS_FILE_OPEN_FAILED);
+    ASSERT_EQ(detools_apply_patch_filenames(
+                  "../../../tests/files/foo/old",
+                  "../../../tests/files/foo/bad-compression.patch",
+                  ""),
+              -DETOOLS_FILE_OPEN_FAILED);
 }
 
 TEST(apply_patch_foo_in_place_bad_patch_type)
@@ -841,12 +853,13 @@ TEST(apply_patch_foo_incremental)
     patch_p = patch_init("../../../tests/files/foo/patch", &patch_size);
     expected_patch_size = patch_size;
 
-    assert(detools_apply_patch_init(&apply_patch,
+    ASSERT_EQ(detools_apply_patch_init(&apply_patch,
                                     io_read,
                                     io_seek,
                                     patch_size,
                                     io_write,
-                                    &io) == 0);
+                                    &io),
+              0);
 
     /* Process up to 64 new patch bytes per iteration. */
     patch_offset = 0;
@@ -856,11 +869,11 @@ TEST(apply_patch_foo_incremental)
         res = detools_apply_patch_process(&apply_patch,
                                           &patch_p[patch_offset],
                                           patch_size);
-        assert(res == 0);
+        ASSERT_EQ(res, 0);
         patch_offset += patch_size;
     }
 
-    assert(detools_apply_patch_finalize(&apply_patch) == 2780);
+    ASSERT_EQ(detools_apply_patch_finalize(&apply_patch), 2780);
     io_assert_to_ok(&io);
     free((void *)patch_p);
 }
@@ -872,13 +885,14 @@ TEST(apply_patch_foo_incremental_init_finalize)
 
     io_init(&io, "../../../tests/files/foo/old", "../../../tests/files/foo/new");
 
-    assert(detools_apply_patch_init(&apply_patch,
+    ASSERT_EQ(detools_apply_patch_init(&apply_patch,
                                     io_read,
                                     io_seek,
                                     2780,
                                     io_write,
-                                    &io) == 0);
-    assert(detools_apply_patch_finalize(&apply_patch) == -DETOOLS_SHORT_HEADER);
+                                    &io),
+              0);
+    ASSERT_EQ(detools_apply_patch_finalize(&apply_patch), -DETOOLS_SHORT_HEADER);
     io_destroy(&io);
 }
 
@@ -892,17 +906,19 @@ TEST(apply_patch_foo_incremental_process_once)
     io_init(&io, "../../../tests/files/foo/old", "../../../tests/files/foo/new");
     patch_p = patch_init("../../../tests/files/foo/patch", &patch_size);
 
-    assert(detools_apply_patch_init(&apply_patch,
+    ASSERT_EQ(detools_apply_patch_init(&apply_patch,
                                     io_read,
                                     io_seek,
                                     patch_size,
                                     io_write,
-                                    &io) == 0);
-    assert(detools_apply_patch_process(&apply_patch,
-                                       &patch_p[0],
-                                       64) == 0);
-    assert(detools_apply_patch_finalize(&apply_patch)
-           == -DETOOLS_NOT_ENOUGH_PATCH_DATA);
+                                       &io),
+              0);
+    ASSERT_EQ(detools_apply_patch_process(&apply_patch,
+                                          &patch_p[0],
+                                          64),
+              0);
+    ASSERT_EQ(detools_apply_patch_finalize(&apply_patch),
+              -DETOOLS_NOT_ENOUGH_PATCH_DATA);
     io_destroy(&io);
     free((void *)patch_p);
 }
