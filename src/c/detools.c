@@ -2135,7 +2135,7 @@ struct file_io_t {
     FILE *fto_p;
 };
 
-static int get_file_size(FILE *file_p, size_t *size_p)
+static int file_size(FILE *file_p, size_t *size_p)
 {
     int res;
     long size;
@@ -2200,7 +2200,7 @@ static int file_io_init(struct file_io_t *self_p,
     }
 
     self_p->fpatch_p = file_p;
-    res = get_file_size(self_p->fpatch_p, patch_size_p);
+    res = file_size(self_p->fpatch_p, patch_size_p);
 
     if (res != 0) {
         goto err3;
@@ -2365,7 +2365,7 @@ static int in_place_file_io_init(struct in_place_file_io_t *self_p,
     }
 
     self_p->fpatch_p = file_p;
-    res = get_file_size(self_p->fpatch_p, patch_size_p);
+    res = file_size(self_p->fpatch_p, patch_size_p);
 
     if (res != 0) {
         goto err2;
