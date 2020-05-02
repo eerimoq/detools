@@ -1,12 +1,3 @@
-ifeq ($(origin CC), default)
-CC = gcc
-endif
-
-C_SOURCES := \
-	tests/main.c \
-	src/c/detools.c \
-	src/c/heatshrink/heatshrink_decoder.c
-
 CFLAGS := \
 	-Wall \
 	-Wextra \
@@ -73,8 +64,6 @@ test-c:
 	    -DDETOOLS_CONFIG_COMPRESSION_CRLE=0 \
 	    -DDETOOLS_CONFIG_COMPRESSION_HEATSHRINK=0 \
 	    -Isrc/c/heatshrink -c src/c/detools.c -o detools.no-crle.o
-	$(CC) $(CFLAGS) $(C_SOURCES) -llzma -o main
-	./main
 	$(MAKE) -C src/c library
 	$(MAKE) -C src/c/examples/in-place all
 	$(MAKE) -C src/c/examples/in-place heatshrink

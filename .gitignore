@@ -73,8 +73,6 @@ target/
 *.gcda
 *.gcno
 /main
-/assert-apply-patch.new
-/assert-apply-patch-in-place.mem
 src/c/detools
 src/c/foo.new
 /fuzzer*
@@ -92,3 +90,5 @@ Python-3.8.1.tar
 Python.tar
 /*.patch
 to.tar
+src/c/tst/assert-apply-patch-in-place.mem
+src/c/tst/assert-apply-patch.new

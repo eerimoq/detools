@@ -90,7 +90,7 @@ help:
 
 $(EXE): $(OBJ)
 	echo "LD $@"
-	$(CC) $(CFLAGS) @$(BUILD)/nala_mocks.ldflags $^ -o $@
+	$(CC) $(CFLAGS) @$(BUILD)/nala_mocks.ldflags $^ $(LIBS:%=-l%) -o $@
 
 define COMPILE_template
 $(patsubst %.c,$(BUILD)%.o,$(abspath $1)): $1
