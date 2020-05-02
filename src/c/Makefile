@@ -6,6 +6,7 @@ PREFIX ?= /usr/local
 
 OPT ?= -O2
 CFLAGS := \
+	-g \
 	-Wall \
 	-Wextra \
 	-Wdouble-promotion \

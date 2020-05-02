@@ -53,8 +53,4 @@ void utils_files_assert_and_destroy(void);
 
 void utils_files_reopen_from(void);
 
-void utils_files_save_to_offset(void);
-
-void utils_files_restore_to_offset(void);
-
 #endif

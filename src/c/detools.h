@@ -325,7 +325,8 @@ struct detools_apply_patch_t {
     void *arg_p;
     enum detools_apply_patch_state_t state;
     int compression;
-    size_t to_pos;
+    size_t patch_offset;
+    size_t to_offset;
     size_t to_size;
     int from_offset;
     size_t chunk_size;
@@ -386,11 +387,6 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
  * `detools_apply_patch_restore()` to restore an apply patch object to
  * the dumped state.
  *
- * The user must save the patch and to positions and restore them
- * before processing any data. ToDo: Make them part of the dump
- * created by this function. Requires a new to-write-callback and a
- * new function to get the patch position (or equivalent).
- *
  * @param[in,out] self_p Apply patch object to dump.
  * @param[in] write Write callback.
  *
@@ -400,7 +396,12 @@ int detools_apply_patch_dump(struct detools_apply_patch_t *self_p,
                              detools_state_write_t state_write);
 
 /**
- * Restore given apply patch object to given dumped state.
+ * Restore given apply patch object to given dumped
+ * state.
+ *
+ * `detools_apply_patch_get_to_offset()` and
+ * `detools_apply_patch_get_patch_offset()` are often called after
+ * this function to restore the to and patch streams.
  *
  * @param[in,out] self_p Initialized apply patch object to restore.
  * @param[in] read Callback to read the dumped state.
@@ -409,6 +410,26 @@ int detools_apply_patch_dump(struct detools_apply_patch_t *self_p,
  */
 int detools_apply_patch_restore(struct detools_apply_patch_t *self_p,
                                 detools_state_read_t state_read);
+
+/**
+ * Get the current to stream offset. Often used to restore the to
+ * stream after restore.
+ *
+ * @param[in] self_p Apply patch object.
+ *
+ * @return The current to stream offset.
+ */
+size_t detools_apply_patch_get_to_offset(struct detools_apply_patch_t *self_p);
+
+/**
+ * Get the current patch stream offset. Often used to restore the
+ * patch stream after restore.
+ *
+ * @param[in] self_p Apply patch object.
+ *
+ * @return The current patch stream offset.
+ */
+size_t detools_apply_patch_get_patch_offset(struct detools_apply_patch_t *self_p);
 
 /**
  * Call this function repeatedly until all patch data has been

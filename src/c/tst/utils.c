@@ -128,17 +128,3 @@ void utils_files_reopen_from(void)
 {
     ASSERT_EQ(fseek(utils_files.from.file_p, 0, SEEK_SET), 0);
 }
-
-void utils_files_save_to_offset(void)
-{
-    utils_files.to.saved_offset = utils_files.to.offset;
-}
-
-void utils_files_restore_to_offset(void)
-{
-    ASSERT_GE(utils_files.to.saved_offset, 0);
-    ASSERT_EQ(fseek(utils_files.to.file_p,
-                    utils_files.to.saved_offset,
-                    SEEK_SET), 0);
-    utils_files.to.offset = utils_files.to.saved_offset;
-}

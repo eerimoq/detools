@@ -244,22 +244,6 @@ static void dump(struct detools_apply_patch_t *apply_patch_p,
 
     state_file_p = open_file("state.bin", "wb");
 
-    /* Save patch and to positions. */
-    res = state_write(NULL, &patch_offset, sizeof(patch_offset));
-
-    if (res != 0) {
-        printf("error: Patch offset save failed.\n");
-        clean_and_exit();
-    }
-
-    res = state_write(NULL, &to_offset, sizeof(to_offset));
-
-    if (res != 0) {
-        printf("error: To offset save failed.\n");
-        clean_and_exit();
-    }
-
-    /* Save the apply patch state. */
     res = detools_apply_patch_dump(apply_patch_p, state_write);
 
     if (res != DETOOLS_OK) {
@@ -280,22 +264,6 @@ static void restore(struct detools_apply_patch_t *apply_patch_p,
     if (state_file_p != NULL) {
         printf("Restoring state from 'state.bin'.\n");
 
-        /* Restore patch and to positions. */
-        res = state_read(NULL, patch_offset_p, sizeof(*patch_offset_p));
-
-        if (res != 0) {
-            printf("error: Patch offset restore failed.\n");
-            clean_and_exit();
-        }
-
-        res = state_read(NULL, &to_offset, sizeof(to_offset));
-
-        if (res != 0) {
-            printf("error: To offset restore failed.\n");
-            clean_and_exit();
-        }
-
-        /* Restore the apply patch state. */
         res = detools_apply_patch_restore(apply_patch_p, state_read);
 
         if (res != DETOOLS_OK) {
@@ -303,6 +271,8 @@ static void restore(struct detools_apply_patch_t *apply_patch_p,
             clean_and_exit();
         }
 
+        to_offset = detools_apply_patch_get_to_offset(apply_patch_p);
+        *patch_offset_p = (int)detools_apply_patch_get_patch_offset(apply_patch_p);
         fclose(state_file_p);
     } else {
         printf("No state to restore.\n");
@@ -371,7 +341,8 @@ int main(int argc, const char *argv[])
         }
 
         remove_state();
-        printf("Patch successfully applied.\n");
+        printf("Patch successfully applied. To-file is %d bytes.\n", res);
+        res = 0;
     } else {
         dump(&apply_patch, offset + size);
 

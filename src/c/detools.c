@@ -1046,7 +1046,7 @@ static int process_init(struct detools_apply_patch_t *self_p)
         return (-DETOOLS_CORRUPT_PATCH);
     }
 
-    self_p->to_pos = 0;
+    self_p->to_offset = 0;
     self_p->to_size = (size_t)to_size;
 
     if (to_size > 0) {
@@ -1085,7 +1085,7 @@ static int process_size(struct detools_apply_patch_t *self_p,
     int size;
 
     res = common_process_size(&self_p->patch_reader,
-                              self_p->to_pos,
+                              self_p->to_offset,
                               self_p->to_size,
                               &size);
 
@@ -1138,7 +1138,7 @@ static int process_data(struct detools_apply_patch_t *self_p,
         }
     }
 
-    self_p->to_pos += to_size;
+    self_p->to_offset += to_size;
     self_p->chunk_size -= to_size;
 
     res = self_p->to_write(self_p->arg_p, &to[0], to_size);
@@ -1189,7 +1189,7 @@ static int process_adjustment(struct detools_apply_patch_t *self_p)
 
     self_p->from_offset += offset;
 
-    if (self_p->to_pos == self_p->to_size) {
+    if (self_p->to_offset == self_p->to_size) {
         self_p->state = detools_apply_patch_state_done_t;
     } else {
         self_p->state = detools_apply_patch_state_diff_size_t;
@@ -1290,6 +1290,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
     self_p->from_read = from_read;
     self_p->from_seek = from_seek;
     self_p->patch_size = patch_size;
+    self_p->patch_offset = 0;
     self_p->to_write = to_write;
     self_p->from_offset = 0;
     self_p->arg_p = arg_p;
@@ -1339,7 +1340,8 @@ int detools_apply_patch_restore(struct detools_apply_patch_t *self_p,
     }
 
     self_p->compression = dumped.compression;
-    self_p->to_pos = dumped.to_pos;
+    self_p->patch_offset = dumped.patch_offset;
+    self_p->to_offset = dumped.to_offset;
     self_p->to_size = dumped.to_size;
     self_p->from_offset = dumped.from_offset;
     self_p->chunk_size = dumped.chunk_size;
@@ -1349,12 +1351,22 @@ int detools_apply_patch_restore(struct detools_apply_patch_t *self_p,
     if (res != 0) {
         return (-DETOOLS_IO_FAILED);
     }
-    
+
     return (patch_reader_restore(&self_p->patch_reader,
                                  &dumped.patch_reader,
                                  &self_p->chunk,
                                  self_p->compression,
                                  state_read));
+}
+
+size_t detools_apply_patch_get_patch_offset(struct detools_apply_patch_t *self_p)
+{
+    return (self_p->patch_offset);
+}
+
+size_t detools_apply_patch_get_to_offset(struct detools_apply_patch_t *self_p)
+{
+    return (self_p->to_offset);
 }
 
 int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
@@ -1364,6 +1376,7 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
     int res;
 
     res = 0;
+    self_p->patch_offset += size;
     self_p->chunk.buf_p = patch_p;
     self_p->chunk.size = size;
     self_p->chunk.offset = 0;
