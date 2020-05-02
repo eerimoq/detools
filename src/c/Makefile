@@ -5,24 +5,22 @@ AR = $(CROSS_COMPILE)ar
 PREFIX ?= /usr/local
 
 OPT ?= -O2
-CFLAGS := \
-	-g \
-	-Wall \
-	-Wextra \
-	-Wdouble-promotion \
-	-Wfloat-equal \
-	-Wformat=2 \
-	-Wshadow \
-	-Werror \
-	-std=c99 \
-	$(OPT) \
-	-Iheatshrink
+CFLAGS += -g
+CFLAGS += -Wall
+CFLAGS += -Wextra
+CFLAGS += -Wdouble-promotion
+CFLAGS += -Wfloat-equal
+CFLAGS += -Wformat=2
+CFLAGS += -Wshadow
+CFLAGS += -Werror
+CFLAGS += -std=c99
+CFLAGS += $(OPT)
+CFLAGS += -Iheatshrink
 CFLAGS += $(CFLAGS_EXTRA)
 
-SRC := \
-	heatshrink/heatshrink_decoder.c \
-	detools.c \
-	main.c
+SRC += heatshrink/heatshrink_decoder.c
+SRC += detools.c
+SRC += main.c
 
 all:
 	$(CC) $(CFLAGS) $(SRC) -llzma -o detools

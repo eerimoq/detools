@@ -65,9 +65,9 @@ test-c:
 	    -DDETOOLS_CONFIG_COMPRESSION_HEATSHRINK=0 \
 	    -Isrc/c/heatshrink -c src/c/detools.c -o detools.no-crle.o
 	$(MAKE) -C src/c library
-	$(MAKE) -C src/c/examples/in-place all
-	$(MAKE) -C src/c/examples/in-place heatshrink
-	$(MAKE) -C src/c/examples/in-place crle
+	$(MAKE) -C src/c/examples/in_place all
+	$(MAKE) -C src/c/examples/in_place heatshrink
+	$(MAKE) -C src/c/examples/in_place crle
 	$(MAKE) -C src/c/examples/dump_restore
 
 test-c-fuzzer:

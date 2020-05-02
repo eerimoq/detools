@@ -73,7 +73,7 @@ All functionality enabled.
 
 .. code-block:: text
 
-   $ make -s -C examples/in-place all
+   $ make -s -C examples/in_place all
         text    data     bss     dec     hex filename
         8973     608       8    9589    2575 in-place
 
@@ -81,7 +81,7 @@ Only heatshrink decompression.
 
 .. code-block:: text
 
-   $ make -s -C examples/in-place heatshrink
+   $ make -s -C examples/in_place heatshrink
         text    data     bss     dec     hex filename
         6339     544       8    6891    1aeb in-place-heatshrink
 
@@ -89,7 +89,7 @@ Only CRLE decompression.
 
 .. code-block:: text
 
-   $ make -s -C examples/in-place crle
+   $ make -s -C examples/in_place crle
         text    data     bss     dec     hex filename
         5651     544       8    6203    183b in-place-crle
 
