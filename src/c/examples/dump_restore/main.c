@@ -86,7 +86,7 @@ static int parse_non_negative_integer(const char *value_p)
 
     value = atoi(value_p);
 
-    if (value_p < 0) {
+    if (value < 0) {
         printf("error: Non-negative integer expected.\n");
         clean_and_exit();
     }
@@ -125,6 +125,8 @@ static size_t get_file_size(FILE *file_p)
 
 static int from_read(void *arg_p, uint8_t *buf_p, size_t size)
 {
+    (void)arg_p;
+
     int res;
 
     res = 0;
@@ -147,6 +149,8 @@ static int from_seek(void *arg_p, int offset)
 
 static int to_write(void *arg_p, const uint8_t *buf_p, size_t size)
 {
+    (void)arg_p;
+
     int res;
 
     res = 0;
@@ -235,8 +239,63 @@ static int state_write(void *arg_p, const void *buf_p, size_t size)
     return (0);
 }
 
-static void dump(struct detools_apply_patch_t *apply_patch_p,
-                 int patch_offset)
+static void init(struct detools_apply_patch_t *apply_patch_p,
+                 size_t patch_size)
+{
+    int res;
+
+    res = detools_apply_patch_init(apply_patch_p,
+                                   from_read,
+                                   from_seek,
+                                   patch_size,
+                                   to_write,
+                                   NULL);
+
+    if (res != 0) {
+        printf("error: Init failed.\n");
+        clean_and_exit();
+    }
+}
+
+static void process(struct detools_apply_patch_t *apply_patch_p,
+                    int offset,
+                    int size)
+{
+    int res;
+    void *buf_p;
+
+    printf("Processing %d byte(s) patch data starting at offset %d.\n",
+           size,
+           offset);
+
+    buf_p = read_file(patch_file_p, offset, size);
+
+    res = detools_apply_patch_process(apply_patch_p, buf_p, size);
+
+    if (res < 0) {
+        printf("error: Process failed with '%s'.\n", detools_error_as_string(res));
+        clean_and_exit();
+    }
+
+    free(buf_p);
+}
+
+static int finalize(struct detools_apply_patch_t *apply_patch_p)
+{
+    int res;
+
+    res = detools_apply_patch_finalize(apply_patch_p);
+
+    if (res < 0) {
+        printf("error: Finalize failed with '%s'.\n",
+               detools_error_as_string(res));
+        clean_and_exit();
+    }
+
+    return (res);
+}
+
+static void dump(struct detools_apply_patch_t *apply_patch_p)
 {
     int res;
 
@@ -247,7 +306,7 @@ static void dump(struct detools_apply_patch_t *apply_patch_p,
     res = detools_apply_patch_dump(apply_patch_p, state_write);
 
     if (res != DETOOLS_OK) {
-        printf("error: Dump failed with '%s'.\n", detools_error_as_string(-res));
+        printf("error: Dump failed with '%s'.\n", detools_error_as_string(res));
         clean_and_exit();
     }
 
@@ -291,7 +350,6 @@ int main(int argc, const char *argv[])
     int size;
     int size_after_dump;
     size_t patch_size;
-    void *patch_buf_p;
 
     parse_args(argc,
                argv,
@@ -300,78 +358,29 @@ int main(int argc, const char *argv[])
                &to_file_p,
                &size,
                &size_after_dump);
-
     patch_size = get_file_size(patch_file_p);
 
-    res = detools_apply_patch_init(&apply_patch,
-                                   from_read,
-                                   from_seek,
-                                   patch_size,
-                                   to_write,
-                                   NULL);
-
-    if (res != 0) {
-        printf("error: Init failed.\n");
-        clean_and_exit();
-    }
-
+    init(&apply_patch, patch_size);
     restore(&apply_patch, &offset);
+    process(&apply_patch, offset, size);
 
-    printf("Processing %d byte(s) patch data starting at offset %d.\n",
-           size,
-           offset);
-
-    patch_buf_p = read_file(patch_file_p, offset, size);
-
-    res = detools_apply_patch_process(&apply_patch, patch_buf_p, size);
-
-    if (res < 0) {
-        printf("error: Process failed with '%s'.\n",
-               detools_error_as_string(-res));
-        clean_and_exit();
-    }
-
-    if ((offset + size) == patch_size) {
-        res = detools_apply_patch_finalize(&apply_patch);
-
-        if (res < 0) {
-            printf("error: Finalize failed with '%s'.\n",
-                   detools_error_as_string(-res));
-            clean_and_exit();
-        }
-
+    if ((offset + size) == (int)patch_size) {
+        res = finalize(&apply_patch);
         remove_state();
         printf("Patch successfully applied. To-file is %d bytes.\n", res);
         res = 0;
     } else {
-        dump(&apply_patch, offset + size);
+        dump(&apply_patch);
 
         /* Process any patch data after dump. */
         if (size_after_dump > 0) {
-            printf("Processing %d byte(s) patch data after dump starting at "
-                   "offset %d.\n",
-                   size_after_dump,
-                   offset + size);
-
-            free(patch_buf_p);
-            patch_buf_p = read_file(patch_file_p, offset + size, size_after_dump);
-
-            res = detools_apply_patch_process(&apply_patch,
-                                              patch_buf_p,
-                                              size_after_dump);
-
-            if (res < 0) {
-                printf("error: Process after dump failed with '%s'.\n",
-                       detools_error_as_string(-res));
-                clean_and_exit();
-            }
+            process(&apply_patch, offset + size, size_after_dump);
         }
     }
 
     fclose(from_file_p);
     fclose(patch_file_p);
     fclose(to_file_p);
-    free(patch_buf_p);
 
     return (res);
 }

@@ -2501,6 +2501,10 @@ int detools_apply_patch_in_place_filenames(const char *memory_p,
 
 const char *detools_error_as_string(int error)
 {
+    if (error < 0) {
+        error *= -1;
+    }
+
     switch (error) {
 
     case DETOOLS_NOT_IMPLEMENTED:

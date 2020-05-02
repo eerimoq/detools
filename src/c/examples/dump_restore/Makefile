@@ -1,4 +1,7 @@
 CFLAGS += -std=c99
+CFLAGS += -Wall
+CFLAGS += -Wextra
+CFLAGS += -Werror
 CFLAGS += -I../../heatshrink
 
 SRC += ../../detools.c
