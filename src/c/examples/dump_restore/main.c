@@ -93,7 +93,7 @@ static int parse_non_negative_integer(const char *value_p)
     return (value);
 }
 
-static size_t get_file_size(FILE *file_p)
+static size_t file_size(FILE *file_p)
 {
     int res;
     long size;
@@ -353,7 +353,7 @@ int main(int argc, const char *argv[])
                &to_file_p,
                &size,
                &size_after_dump);
-    patch_size = get_file_size(patch_file_p);
+    patch_size = file_size(patch_file_p);
 
     init(&apply_patch, patch_size);
     restore(&apply_patch, &offset);
