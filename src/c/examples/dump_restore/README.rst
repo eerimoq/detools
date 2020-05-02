@@ -3,6 +3,9 @@ Dump and restore
 
 Command line tool to test the dump and restore feature.
 
+Build and run
+-------------
+
 .. code-block:: text
 
    $ make
