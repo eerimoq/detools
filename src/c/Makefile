@@ -4,6 +4,22 @@ AR = $(CROSS_COMPILE)ar
 # Install prefix.
 PREFIX ?= /usr/local
 
+INC += heatshrink
+INC += ../../3pp/xz/src/liblzma/api
+INC += ../../3pp/xz/src/liblzma/common
+INC += ../../3pp/xz/src/liblzma/lz
+INC += ../../3pp/xz/src/liblzma/rangecoder
+INC += ../../3pp/xz/src/liblzma/lzma
+INC += ../../3pp/xz/src/common
+
+SRC += ../../3pp/xz/src/liblzma/lzma/lzma_decoder.c
+SRC += ../../3pp/xz/src/liblzma/lz/lz_decoder.c
+SRC += ../../3pp/xz/src/liblzma/common/common.c
+SRC += ../../3pp/xz/src/liblzma/common/alone_decoder.c
+SRC += heatshrink/heatshrink_decoder.c
+SRC += detools.c
+SRC += main.c
+
 OPT ?= -O2
 CFLAGS += -g
 CFLAGS += -Wall
@@ -13,17 +29,14 @@ CFLAGS += -Wfloat-equal
 CFLAGS += -Wformat=2
 CFLAGS += -Wshadow
 CFLAGS += -Werror
-CFLAGS += -std=c99
 CFLAGS += $(OPT)
-CFLAGS += -Iheatshrink
+CFLAGS += -DHAVE_STDBOOL_H
+CFLAGS += -DHAVE_STDINT_H
+CFLAGS += $(INC:%=-I%)
 CFLAGS += $(CFLAGS_EXTRA)
 
-SRC += heatshrink/heatshrink_decoder.c
-SRC += detools.c
-SRC += main.c
-
 all:
-	$(CC) $(CFLAGS) $(SRC) -llzma -o detools
+	$(CC) $(CFLAGS) $(SRC) -o detools
 
 library:
 	$(CC) $(CFLAGS) detools.c -c -o detools.o

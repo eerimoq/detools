@@ -278,3 +278,33 @@ TEST(foo_heatshrink_one_byte_at_a_time)
 
     utils_files_assert_and_destroy();
 }
+
+TEST(foo_lzma_at_offset_61_and_90)
+{
+    struct detools_apply_patch_t apply_patch;
+
+    utils_files_init("../../../tests/files/foo/old",
+                     "../../../tests/files/foo/patch",
+                     "../../../tests/files/foo/new");
+
+    /* Init, process 61 bytes and dump. Process another 50 bytes,
+       which will be "lost" when later restoring. */
+    init(&apply_patch, utils_files.patch.size);
+    process(&apply_patch, &utils_files.patch.buf_p[0], 61);
+    dump(&apply_patch);
+    process(&apply_patch, &utils_files.patch.buf_p[61], 50);
+
+    /* Init again, restore, process 29 bytes and dump again. */
+    init(&apply_patch, 0);
+    ASSERT_EQ(restore(&apply_patch), 61);
+    process(&apply_patch, &utils_files.patch.buf_p[61], 29);
+    dump(&apply_patch);
+
+    /* Init once again, restore and apply the rest of the patch. */
+    init(&apply_patch, 0);
+    ASSERT_EQ(restore(&apply_patch), 90);
+    process(&apply_patch, &utils_files.patch.buf_p[90], 37);
+    finalize(&apply_patch, 2780);
+
+    utils_files_assert_and_destroy();
+}

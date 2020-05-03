@@ -30,6 +30,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <dbg.h>
 #include <stdlib.h>
 #include "detools.h"
 
@@ -830,12 +831,15 @@ static int patch_reader_init(struct detools_apply_patch_patch_reader_t *self_p,
 
 static int patch_reader_dump(struct detools_apply_patch_patch_reader_t *self_p,
                              int compression,
-                             detools_state_write_t state_write)
+                             detools_state_write_t state_write,
+                             void *arg_p)
 {
     (void)self_p;
-    (void)state_write;
 
     int res;
+    void *buf_p;
+    size_t size;
+    lzma_ret ret;
 
     res = 0;
 
@@ -856,6 +860,28 @@ static int patch_reader_dump(struct detools_apply_patch_patch_reader_t *self_p,
         break;
 #endif
 
+#if DETOOLS_CONFIG_COMPRESSION_LZMA == 1
+    case COMPRESSION_LZMA:
+        ret = lzma_alone_decoder_dump(&self_p->compression.lzma.stream,
+                                      &buf_p,
+                                      &size);
+
+        if (ret != LZMA_OK) {
+            res = -1;
+            break;
+        }
+
+        res = state_write(arg_p, &size, sizeof(size));
+
+        if (res != 0) {
+            break;
+        }
+
+        res = state_write(arg_p, buf_p, size);
+
+        break;
+#endif
+
     default:
         res = -DETOOLS_NOT_IMPLEMENTED;
         break;
@@ -868,11 +894,13 @@ static int patch_reader_restore(struct detools_apply_patch_patch_reader_t *self_
                                 struct detools_apply_patch_patch_reader_t *dumped_p,
                                 struct detools_apply_patch_chunk_t *patch_chunk_p,
                                 int compression,
-                                detools_state_read_t state_read)
+                                detools_state_read_t state_read,
+                                void *arg_p)
 {
-    (void)state_read;
-
     int res;
+    lzma_ret ret;
+    void *buf_p;
+    size_t size;
 
     res = 0;
     *self_p = *dumped_p;
@@ -898,6 +926,40 @@ static int patch_reader_restore(struct detools_apply_patch_patch_reader_t *self_
     case COMPRESSION_HEATSHRINK:
         self_p->destroy = patch_reader_heatshrink_destroy;
         self_p->decompress = patch_reader_heatshrink_decompress;
+        break;
+#endif
+
+#if DETOOLS_CONFIG_COMPRESSION_LZMA == 1
+    case COMPRESSION_LZMA:
+        self_p->destroy = patch_reader_lzma_destroy;
+        self_p->decompress = patch_reader_lzma_decompress;
+
+        res = state_read(arg_p, &size, sizeof(size));
+
+        if (res != 0) {
+            break;
+        }
+
+        buf_p = malloc(size);
+
+        if (buf_p == NULL) {
+            res = -1;
+            break;
+        }
+
+        res = state_read(arg_p, buf_p, size);
+
+        if (res == 0) {
+            ret = lzma_alone_decoder_restore(&self_p->compression.lzma.stream,
+                                             buf_p,
+                                             size);
+
+            if (ret != LZMA_OK) {
+                res = -1;
+            }
+        }
+
+        free(buf_p);
         break;
 #endif
 
@@ -1317,7 +1379,8 @@ int detools_apply_patch_dump(struct detools_apply_patch_t *self_p,
 
     return (patch_reader_dump(&self_p->patch_reader,
                               self_p->compression,
-                              state_write));
+                              state_write,
+                              self_p->arg_p));
 }
 
 int detools_apply_patch_restore(struct detools_apply_patch_t *self_p,
@@ -1356,7 +1419,8 @@ int detools_apply_patch_restore(struct detools_apply_patch_t *self_p,
                                  &dumped.patch_reader,
                                  &self_p->chunk,
                                  self_p->compression,
-                                 state_read));
+                                 state_read,
+                                 self_p->arg_p));
 }
 
 size_t detools_apply_patch_get_patch_offset(struct detools_apply_patch_t *self_p)
