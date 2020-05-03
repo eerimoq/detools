@@ -17,9 +17,13 @@ Features:
 
 Goals:
 
+- Easy to use.
+
 - Low RAM usage.
 
 - Small code size.
+
+- Portable.
 
 ToDo:
 
