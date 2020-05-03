@@ -41,7 +41,7 @@ for details.
 Examples
 ========
 
-There are exampels in the `examples folder`_.
+There are examples in the `examples folder`_.
 
 Command line utility
 ====================
