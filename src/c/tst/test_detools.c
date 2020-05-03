@@ -20,16 +20,6 @@ struct io_t {
     } to;
 };
 
-static void *mymalloc(size_t size)
-{
-    void *buf_p;
-
-    buf_p = malloc(size);
-    ASSERT_NE(buf_p, NULL);
-
-    return (buf_p);
-}
-
 static FILE *myfopen(const char *name_p, const char *flags_p)
 {
     FILE *file_p;
@@ -57,8 +47,8 @@ static void io_init(struct io_t *self_p,
     self_p->to.size = (size_t)size;
     ASSERT_EQ(fseek(file_p, 0, SEEK_SET), 0);
 
-    self_p->to.actual_p = mymalloc(self_p->to.size);
-    self_p->to.expected_p = mymalloc(self_p->to.size);
+    self_p->to.actual_p = nala_alloc(self_p->to.size);
+    self_p->to.expected_p = nala_alloc(self_p->to.size);
     ASSERT_EQ(fread(self_p->to.expected_p, self_p->to.size, 1, file_p), 1);
 
     fclose(file_p);
@@ -66,17 +56,10 @@ static void io_init(struct io_t *self_p,
     self_p->to.written = 0;
 }
 
-static void io_destroy(struct io_t *self_p)
-{
-    free(self_p->to.actual_p);
-    free(self_p->to.expected_p);
-}
-
 static void io_assert_to_ok(struct io_t *self_p)
 {
     ASSERT_EQ(self_p->to.written, self_p->to.size);
     ASSERT_MEMORY_EQ(self_p->to.actual_p, self_p->to.expected_p, self_p->to.size);
-    io_destroy(self_p);
 }
 
 static int io_read(void *arg_p, uint8_t *buf_p, size_t size)
@@ -129,7 +112,7 @@ static uint8_t *read_init(const char *name_p, size_t *size_p)
     *size_p = (size_t)size;
     ASSERT_EQ(fseek(file_p, 0, SEEK_SET), 0);
 
-    buf_p = mymalloc(*size_p);
+    buf_p = nala_alloc(*size_p);
     ASSERT_EQ(fread(buf_p, *size_p, 1, file_p), 1);
 
     fclose(file_p);
@@ -875,7 +858,6 @@ TEST(apply_patch_foo_incremental)
 
     ASSERT_EQ(detools_apply_patch_finalize(&apply_patch), 2780);
     io_assert_to_ok(&io);
-    free((void *)patch_p);
 }
 
 TEST(apply_patch_foo_incremental_init_finalize)
@@ -893,7 +875,6 @@ TEST(apply_patch_foo_incremental_init_finalize)
                                     &io),
               0);
     ASSERT_EQ(detools_apply_patch_finalize(&apply_patch), -DETOOLS_SHORT_HEADER);
-    io_destroy(&io);
 }
 
 TEST(apply_patch_foo_incremental_process_once)
@@ -919,8 +900,6 @@ TEST(apply_patch_foo_incremental_process_once)
               0);
     ASSERT_EQ(detools_apply_patch_finalize(&apply_patch),
               -DETOOLS_NOT_ENOUGH_PATCH_DATA);
-    io_destroy(&io);
-    free((void *)patch_p);
 }
 
 TEST(error_as_string)
