@@ -369,7 +369,9 @@ struct detools_apply_patch_in_place_t {
  * @param[out] self_p Apply patch object to initialize.
  * @param[in] from_read Callback to read from-data.
  * @param[in] from_seek Callback to seek from current position in from-data.
- * @param[in] patch_size Patch size in bytes.
+ * @param[in] patch_size Patch size in bytes. Not used if
+ *                       `detools_apply_patch_restore()` is called
+ *                       immediately after this function.
  * @param[in] to_write Destination callback.
  * @param[in] arg_p Argument passed to the callbacks.
  *
@@ -387,7 +389,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
  * `detools_apply_patch_restore()` to restore an apply patch object to
  * the dumped state.
  *
- * @param[in,out] self_p Apply patch object to dump.
+ * @param[in] self_p Apply patch object to dump.
  * @param[in] write Write callback.
  *
  * @return zero(0) or negative error code.
