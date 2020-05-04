@@ -310,8 +310,8 @@ static void dump(struct detools_apply_patch_t *apply_patch_p)
     fclose(state_file_p);
 }
 
-static void restore(struct detools_apply_patch_t *apply_patch_p,
-                    int *patch_offset_p)
+static void try_restore(struct detools_apply_patch_t *apply_patch_p,
+                        int *patch_offset_p)
 {
     int res;
 
@@ -356,7 +356,7 @@ int main(int argc, const char *argv[])
     patch_size = file_size(patch_file_p);
 
     init(&apply_patch, patch_size);
-    restore(&apply_patch, &offset);
+    try_restore(&apply_patch, &offset);
     process(&apply_patch, offset, size);
 
     if ((offset + size) == (int)patch_size) {
