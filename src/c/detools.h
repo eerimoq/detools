@@ -592,7 +592,7 @@ int detools_apply_patch_in_place_filenames(const char *memory_p,
  *
  * @param[in] Error code.
  *
- * @return Error string, or NULL.
+ * @return Error string.
  */
 const char *detools_error_as_string(int error);
 
