@@ -92,3 +92,9 @@ Python.tar
 to.tar
 src/c/tst/assert-apply-patch-in-place.mem
 src/c/tst/assert-apply-patch.new
+src/c/tst/corpus
+src/c/tst/fuzzer-corrupt-patch*
+src/c/tst/slow-unit-*
+src/c/tst/from
+src/c/tst/patch
+src/c/tst/to

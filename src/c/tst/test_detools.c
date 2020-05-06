@@ -955,3 +955,184 @@ TEST(error_as_string)
     ASSERT_EQ(detools_error_as_string(123456),
               "Unknown error.");
 }
+
+static const uint8_t from_buf[256] = { 0, };
+static int from_offset = 0;
+
+static int from_read(void *arg_p, uint8_t *buf_p, size_t size)
+{
+    (void)arg_p;
+
+    if (((size_t)from_offset + size) > 256) {
+        return (-1);
+    }
+
+    memcpy(buf_p, &from_buf[from_offset], size);
+    from_offset += size;
+
+    return (0);
+}
+
+static int from_seek(void *arg_p, int offset)
+{
+    (void)arg_p;
+
+    if ((from_offset + offset) < 0) {
+        return (-1);
+    }
+
+    from_offset += offset;
+
+    return (0);
+}
+
+static int to_write(void *arg_p, const uint8_t *buf_p, size_t size)
+{
+    (void)arg_p;
+    (void)buf_p;
+    (void)size;
+
+    return (0);
+}
+
+TEST(fuzzer_size_overflow)
+{
+    struct detools_apply_patch_t apply_patch;
+    const uint8_t patch[] = {
+        0x04, 0x0c, 0xfd, 0xff, 0x00, 0x00, 0x00, 0x5d, 0x00, 0x2b,
+        0x06, 0x66
+    };
+    int res;
+
+    res = detools_apply_patch_init(&apply_patch,
+                                   from_read,
+                                   from_seek,
+                                   sizeof(patch),
+                                   to_write,
+                                   NULL);
+    ASSERT_EQ(res, 0);
+
+    res = detools_apply_patch_process(&apply_patch, &patch[0], sizeof(patch));
+    ASSERT_EQ(res, -DETOOLS_CORRUPT_PATCH_OVERFLOW);
+
+    res = detools_apply_patch_finalize(&apply_patch);
+    ASSERT_EQ(res, -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(fuzzer_infinite_loop)
+{
+    struct detools_apply_patch_t apply_patch;
+    const uint8_t patch[] = {
+        0x02, 0x3a, 0x01, 0xce, 0xce, 0xce, 0xfe, 0xff, 0x00, 0x00,
+        0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+    int res;
+
+    res = detools_apply_patch_init(&apply_patch,
+                                   from_read,
+                                   from_seek,
+                                   sizeof(patch),
+                                   to_write,
+                                   NULL);
+    ASSERT_EQ(res, 0);
+
+    res = detools_apply_patch_process(&apply_patch, &patch[0], sizeof(patch));
+    ASSERT_EQ(res, -DETOOLS_CORRUPT_PATCH_OVERFLOW);
+
+    res = detools_apply_patch_finalize(&apply_patch);
+    ASSERT_EQ(res, -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(fuzzer_lzma_decode_failure)
+{
+    struct detools_apply_patch_t apply_patch;
+    const uint8_t patch[] = {
+        0x01, 0x5b, 0x00, 0x00, 0x00, 0x00, 0xe2, 0xff, 0x8c, 0x8c,
+        0x8c, 0x00, 0x00, 0x00, 0x0f, 0x02
+    };
+    int res;
+
+    res = detools_apply_patch_init(&apply_patch,
+                                   from_read,
+                                   from_seek,
+                                   sizeof(patch),
+                                   to_write,
+                                   NULL);
+    ASSERT_EQ(res, 0);
+
+    res = detools_apply_patch_process(&apply_patch, &patch[0], sizeof(patch));
+    ASSERT_EQ(res, -DETOOLS_LZMA_DECODE);
+
+    res = detools_apply_patch_finalize(&apply_patch);
+    ASSERT_EQ(res, -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(fuzzer_corrupt_crle_kind)
+{
+    struct detools_apply_patch_t apply_patch;
+    const uint8_t patch[] = {
+        0x02, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x04,
+        0x90
+    };
+    int res;
+
+    res = detools_apply_patch_init(&apply_patch,
+                                   from_read,
+                                   from_seek,
+                                   sizeof(patch),
+                                   to_write,
+                                   NULL);
+    ASSERT_EQ(res, 0);
+
+    res = detools_apply_patch_process(&apply_patch, &patch[0], sizeof(patch));
+    ASSERT_EQ(res, -DETOOLS_CORRUPT_PATCH_CRLE_SCATTERED_SIZE);
+
+    res = detools_apply_patch_finalize(&apply_patch);
+    ASSERT_EQ(res, -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(fuzzer_corrupt_crle_idle_out_of_data)
+{
+    struct detools_apply_patch_t apply_patch;
+    const uint8_t patch[] = {
+        0x02, 0x7a
+    };
+    int res;
+
+    res = detools_apply_patch_init(&apply_patch,
+                                   from_read,
+                                   from_seek,
+                                   sizeof(patch),
+                                   to_write,
+                                   NULL);
+    ASSERT_EQ(res, 0);
+
+    res = detools_apply_patch_process(&apply_patch, &patch[0], sizeof(patch));
+    ASSERT_EQ(res, 0);
+
+    res = detools_apply_patch_finalize(&apply_patch);
+    ASSERT_EQ(res, -DETOOLS_NOT_ENOUGH_PATCH_DATA);
+}
+
+TEST(fuzzer_dfpatch_not_implemented)
+{
+    struct detools_apply_patch_t apply_patch;
+    const uint8_t patch[] = {
+        0x02, 0x08, 0x00, 0x40, 0x05, 0xfe
+    };
+    int res;
+
+    res = detools_apply_patch_init(&apply_patch,
+                                   from_read,
+                                   from_seek,
+                                   sizeof(patch),
+                                   to_write,
+                                   NULL);
+    ASSERT_EQ(res, 0);
+
+    res = detools_apply_patch_process(&apply_patch, &patch[0], sizeof(patch));
+    ASSERT_EQ(res, -DETOOLS_NOT_IMPLEMENTED);
+
+    res = detools_apply_patch_finalize(&apply_patch);
+    ASSERT_EQ(res, -DETOOLS_ALREADY_FAILED);
+}

@@ -27,6 +27,7 @@ test:
 	$(MAKE) test-c
 	find . -name "*.gcno" -exec gcov {} +
 	$(MAKE) test-c-fuzzer FUZZER_EXECUTION_TIME=1
+	$(MAKE) -C src/c/tst fuzz-corpus-patch FUZZER_EXECUTION_TIME=1
 
 test-sdist:
 	rm -rf dist

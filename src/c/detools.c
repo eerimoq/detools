@@ -540,6 +540,10 @@ static int unpack_usize(struct detools_unpack_usize_t *self_p,
                 return (res);
             }
 
+            if (self_p->offset >= (int)(8 * sizeof(self_p->value) - 7)) {
+                return (-DETOOLS_CORRUPT_PATCH_OVERFLOW);
+            }
+
             self_p->value |= ((byte & 0x7f) << self_p->offset);
             self_p->offset += 7;
             break;
@@ -582,7 +586,7 @@ static int patch_reader_crle_decompress_idle(
         break;
 
     default:
-        res = -DETOOLS_CORRUPT_PATCH;
+        res = -DETOOLS_CORRUPT_PATCH_CRLE_KIND;
         break;
     }
 
@@ -604,6 +608,10 @@ static int patch_reader_crle_decompress_scattered_size(
         return (res);
     }
 
+    if (size <= 0) {
+        return (-DETOOLS_CORRUPT_PATCH_CRLE_SCATTERED_SIZE);
+    }
+
     crle_p->state = detools_crle_state_scattered_data_t;
     crle_p->kind.scattered.number_of_bytes_left = (size_t)size;
 
@@ -619,7 +627,6 @@ static int patch_reader_crle_decompress_scattered_data(
     int res;
 
     *size_p = MIN(*size_p, crle_p->kind.scattered.number_of_bytes_left);
-
     res = chunk_read(self_p->patch_chunk_p, buf_p, size_p);
 
     if (res != 0) {
@@ -648,6 +655,10 @@ static int patch_reader_crle_decompress_repeated_repetitions(
 
     if (res != 0) {
         return (res);
+    }
+
+    if (repetitions <= 0) {
+        return (-DETOOLS_CORRUPT_PATCH_CRLE_REPEATED_REPETITIONS);
     }
 
     crle_p->state = detools_crle_state_repeated_data_t;
@@ -961,9 +972,12 @@ static int patch_reader_unpack_size(
                 return (res);
             }
 
+            if (self_p->size.offset >= (int)(8 * sizeof(self_p->size.value) - 7)) {
+                return (-DETOOLS_CORRUPT_PATCH_OVERFLOW);
+            }
+
             self_p->size.value |= ((byte & 0x7f) << self_p->size.offset);
             self_p->size.offset += 7;
-
             break;
 
         default:
