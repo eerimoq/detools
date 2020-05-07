@@ -952,6 +952,12 @@ TEST(error_as_string)
               "Step set failed.");
     ASSERT_EQ(detools_error_as_string(DETOOLS_STEP_GET_FAILED),
               "Step get failed.");
+    ASSERT_EQ(detools_error_as_string(DETOOLS_ALREADY_FAILED),
+              "Already failed.");
+    ASSERT_EQ(detools_error_as_string(DETOOLS_CORRUPT_PATCH_OVERFLOW),
+              "Corrupt patch, overflow.");
+    ASSERT_EQ(detools_error_as_string(DETOOLS_CORRUPT_PATCH_CRLE_KIND),
+              "Corrupt patch, CRLE kind.");
     ASSERT_EQ(detools_error_as_string(123456),
               "Unknown error.");
 }
@@ -1060,19 +1066,6 @@ TEST(fuzzer_lzma_decode_failure)
     test_fuzzer(&patch[0],
                 sizeof(patch),
                 -DETOOLS_LZMA_DECODE,
-                -DETOOLS_ALREADY_FAILED);
-}
-
-TEST(fuzzer_corrupt_crle_scattered_size)
-{
-    const uint8_t patch[] = {
-        0x02, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x04,
-        0x90
-    };
-
-    test_fuzzer(&patch[0],
-                sizeof(patch),
-                -DETOOLS_CORRUPT_PATCH_CRLE_SCATTERED_SIZE,
                 -DETOOLS_ALREADY_FAILED);
 }
 

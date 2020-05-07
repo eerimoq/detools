@@ -90,7 +90,6 @@
 #define DETOOLS_ALREADY_FAILED                           24
 #define DETOOLS_CORRUPT_PATCH_OVERFLOW                   25
 #define DETOOLS_CORRUPT_PATCH_CRLE_KIND                  26
-#define DETOOLS_CORRUPT_PATCH_CRLE_SCATTERED_SIZE        27
 
 /**
  * Read callback.

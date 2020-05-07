@@ -608,10 +608,6 @@ static int patch_reader_crle_decompress_scattered_size(
         return (res);
     }
 
-    if (size <= 0) {
-        return (-DETOOLS_CORRUPT_PATCH_CRLE_SCATTERED_SIZE);
-    }
-
     crle_p->state = detools_crle_state_scattered_data_t;
     crle_p->kind.scattered.number_of_bytes_left = (size_t)size;
 
@@ -2585,6 +2581,15 @@ const char *detools_error_as_string(int error)
 
     case DETOOLS_STEP_GET_FAILED:
         return "Step get failed.";
+
+    case DETOOLS_ALREADY_FAILED:
+        return "Already failed.";
+
+    case DETOOLS_CORRUPT_PATCH_OVERFLOW:
+        return "Corrupt patch, overflow.";
+
+    case DETOOLS_CORRUPT_PATCH_CRLE_KIND:
+        return "Corrupt patch, CRLE kind.";
 
     default:
         return "Unknown error.";
