@@ -657,10 +657,6 @@ static int patch_reader_crle_decompress_repeated_repetitions(
         return (res);
     }
 
-    if (repetitions <= 0) {
-        return (-DETOOLS_CORRUPT_PATCH_CRLE_REPEATED_REPETITIONS);
-    }
-
     crle_p->state = detools_crle_state_repeated_data_t;
     crle_p->kind.repeated.number_of_bytes_left = (size_t)repetitions;
 
