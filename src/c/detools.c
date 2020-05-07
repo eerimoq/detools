@@ -527,39 +527,34 @@ static int unpack_usize(struct detools_unpack_usize_t *self_p,
     int res;
     uint8_t byte;
 
+    switch (self_p->state) {
+
+    case detools_unpack_usize_state_first_t:
+        self_p->value = 0;
+        self_p->offset = 0;
+        self_p->state = detools_unpack_usize_state_consecutive_t;
+        break;
+
+    case detools_unpack_usize_state_consecutive_t:
+        break;
+
+    default:
+        return (-DETOOLS_INTERNAL_ERROR);
+    }
+
     do {
-        switch (self_p->state) {
+        res = chunk_get(patch_chunk_p, &byte);
 
-        case detools_unpack_usize_state_first_t:
-            res = chunk_get(patch_chunk_p, &byte);
-
-            if (res != 0) {
-                return (res);
-            }
-
-            self_p->value = (byte & 0x7f);
-            self_p->offset = 7;
-            self_p->state = detools_unpack_usize_state_consecutive_t;
-            break;
-
-        case detools_unpack_usize_state_consecutive_t:
-            res = chunk_get(patch_chunk_p, &byte);
-
-            if (res != 0) {
-                return (res);
-            }
-
-            if (is_overflow(self_p->offset)) {
-                return (-DETOOLS_CORRUPT_PATCH_OVERFLOW);
-            }
-
-            self_p->value |= ((byte & 0x7f) << self_p->offset);
-            self_p->offset += 7;
-            break;
-
-        default:
-            return (-DETOOLS_INTERNAL_ERROR);
+        if (res != 0) {
+            return (res);
         }
+
+        if (is_overflow(self_p->offset)) {
+            return (-DETOOLS_CORRUPT_PATCH_OVERFLOW);
+        }
+
+        self_p->value |= ((byte & 0x7f) << self_p->offset);
+        self_p->offset += 7;
     } while ((byte & 0x80) != 0);
 
     *size_p = self_p->value;
@@ -963,7 +958,6 @@ static int patch_reader_unpack_size(
             self_p->size.value = (byte & 0x3f);
             self_p->size.offset = 6;
             self_p->size.state = detools_unpack_usize_state_consecutive_t;
-
             break;
 
         case detools_unpack_usize_state_consecutive_t:
@@ -984,17 +978,16 @@ static int patch_reader_unpack_size(
         default:
             return (-DETOOLS_INTERNAL_ERROR);
         }
-
-        if ((byte & 0x80) == 0) {
-            self_p->size.state = detools_unpack_usize_state_first_t;
-
-            if (self_p->size.is_signed) {
-                self_p->size.value *= -1;
-            }
-
-            *size_p = self_p->size.value;
-        }
     } while ((byte & 0x80) != 0);
+
+    /* Done, fix sign. */
+    self_p->size.state = detools_unpack_usize_state_first_t;
+
+    if (self_p->size.is_signed) {
+        self_p->size.value *= -1;
+    }
+
+    *size_p = self_p->size.value;
 
     return (res);
 }
