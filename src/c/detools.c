@@ -1,7 +1,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2019, Erik Moqvist
+ * Copyright (c) 2019-2020, Erik Moqvist
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2019, Erik Moqvist
+ * Copyright (c) 2019-2020, Erik Moqvist
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,7 +91,6 @@
 #define DETOOLS_CORRUPT_PATCH_OVERFLOW                   25
 #define DETOOLS_CORRUPT_PATCH_CRLE_KIND                  26
 #define DETOOLS_CORRUPT_PATCH_CRLE_SCATTERED_SIZE        27
-#define DETOOLS_CORRUPT_PATCH_CRLE_REPEATED_REPETITIONS  28
 
 /**
  * Read callback.
