@@ -79,7 +79,7 @@ All functionality enabled.
 
    $ make -s -C examples/in_place all
         text    data     bss     dec     hex filename
-        8973     608       8    9589    2575 in-place
+        9048     664       8    9720    25f8 in-place
 
 Only heatshrink decompression.
 
@@ -87,7 +87,7 @@ Only heatshrink decompression.
 
    $ make -s -C examples/in_place heatshrink
         text    data     bss     dec     hex filename
-        6339     544       8    6891    1aeb in-place-heatshrink
+        6582     600       8    7190    1c16 in-place-heatshrink
 
 Only CRLE decompression.
 
@@ -95,7 +95,7 @@ Only CRLE decompression.
 
    $ make -s -C examples/in_place crle
         text    data     bss     dec     hex filename
-        5651     544       8    6203    183b in-place-crle
+        5954     600       8    6562    19a2 in-place-crle
 
 .. _heatshrink: https://github.com/atomicobject/heatshrink
 
