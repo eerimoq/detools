@@ -116,6 +116,11 @@ static int chunk_read(struct detools_apply_patch_chunk_t *self_p,
 
 #endif
 
+static bool is_overflow(int value)
+{
+    return ((value + 7) > (int)(8 * sizeof(int)));
+}
+
 static int chunk_unpack_header_size(struct detools_apply_patch_chunk_t *self_p,
                                     int *size_p)
 {
@@ -137,6 +142,10 @@ static int chunk_unpack_header_size(struct detools_apply_patch_chunk_t *self_p,
 
         if (res != 0) {
             return (-DETOOLS_SHORT_HEADER);
+        }
+
+        if (is_overflow(offset)) {
+            return (-DETOOLS_CORRUPT_PATCH_OVERFLOW);
         }
 
         *size_p |= ((byte & 0x7f) << offset);
@@ -540,7 +549,7 @@ static int unpack_usize(struct detools_unpack_usize_t *self_p,
                 return (res);
             }
 
-            if (self_p->offset >= (int)(8 * sizeof(self_p->value) - 7)) {
+            if (is_overflow(self_p->offset)) {
                 return (-DETOOLS_CORRUPT_PATCH_OVERFLOW);
             }
 
@@ -964,7 +973,7 @@ static int patch_reader_unpack_size(
                 return (res);
             }
 
-            if (self_p->size.offset >= (int)(8 * sizeof(self_p->size.value) - 7)) {
+            if (is_overflow(self_p->size.offset)) {
                 return (-DETOOLS_CORRUPT_PATCH_OVERFLOW);
             }
 

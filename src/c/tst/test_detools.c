@@ -1115,3 +1115,15 @@ TEST(fuzzer_bad_from_read_error)
                 -DETOOLS_IO_FAILED,
                 -DETOOLS_ALREADY_FAILED);
 }
+
+TEST(fuzzer_size_overflow_header)
+{
+    const uint8_t patch[] = {
+        0x04, 0xfc, 0xf7, 0xfe, 0xfb, 0x04
+    };
+
+    test_fuzzer(&patch[0],
+                sizeof(patch),
+                -DETOOLS_CORRUPT_PATCH_OVERFLOW,
+                -DETOOLS_ALREADY_FAILED);
+}
