@@ -1,7 +1,7 @@
 TESTS += test_detools.c
 TESTS += test_dump_restore.c
 TESTS += test_command_line.c
-TESTS += test_fuzzer_corpus.c
+TESTS += test_fuzzer.c
 INC += ../heatshrink
 SRC += ../detools.c
 SRC += ../heatshrink/heatshrink_decoder.c
