@@ -2,21 +2,43 @@
 
 """
 
+import bitstruct
+
 from heatshrink2.core import Writer
 from heatshrink2.core import Reader
 from heatshrink2.core import Encoder
 
 
+def pack_header(window_sz2, lookahead_sz2):
+    return bitstruct.pack('u4u4', window_sz2 - 4, lookahead_sz2 - 3)
+
+
+def unpack_header(data):
+    window_sz2, lookahead_sz2 = bitstruct.unpack('u4u4', data)
+
+    return window_sz2 + 4, lookahead_sz2 + 3
+
+
 class HeatshrinkCompressor(object):
 
     def __init__(self):
-        self._encoder = Encoder(Writer(window_sz2=8, lookahead_sz2=7))
+        window_sz2 = 8
+        lookahead_sz2 = 7
+        self._data = pack_header(window_sz2, lookahead_sz2)
+        self._encoder = Encoder(Writer(window_sz2=window_sz2,
+                                       lookahead_sz2=lookahead_sz2))
 
     def compress(self, data):
-        return self._encoder.fill(data)
+        compressed = self._encoder.fill(data)
+
+        if self._data:
+            compressed = self._data + compressed
+            self._data = b''
+
+        return compressed
 
     def flush(self):
-        return self._encoder.finish()
+        return self._data + self._encoder.finish()
 
 
 class HeatshrinkDecompressor(object):
@@ -24,9 +46,19 @@ class HeatshrinkDecompressor(object):
     def __init__(self, number_of_bytes):
         self._number_of_bytes_left = number_of_bytes
         self._data = b''
-        self._encoder = Encoder(Reader(window_sz2=8, lookahead_sz2=7))
+        self._encoder = None
 
     def decompress(self, data, size):
+        if self._encoder is None:
+            if not data:
+                return b''
+
+            window_sz2, lookahead_sz2 = unpack_header(data[:1])
+            self._encoder = Encoder(Reader(window_sz2=window_sz2,
+                                           lookahead_sz2=lookahead_sz2))
+            data = data[1:]
+            self._number_of_bytes_left -= 1
+
         if self._number_of_bytes_left > 0:
             self._data += self._encoder.fill(data)
             self._number_of_bytes_left -= len(data)

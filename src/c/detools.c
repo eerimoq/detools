@@ -224,6 +224,14 @@ static int patch_reader_none_init(struct detools_apply_patch_patch_reader_t *sel
 
 #if DETOOLS_CONFIG_COMPRESSION_HEATSHRINK == 1
 
+static void unpack_heatshrink_header(uint8_t byte,
+                                     int8_t *window_sz2_p,
+                                     int8_t *lookahead_sz2_p)
+{
+    *window_sz2_p = (((byte >> 4) & 0xf) + 4);
+    *lookahead_sz2_p = ((byte & 0xf) + 3);
+}
+
 static int patch_reader_heatshrink_decompress(
     struct detools_apply_patch_patch_reader_t *self_p,
     uint8_t *buf_p,
@@ -239,6 +247,23 @@ static int patch_reader_heatshrink_decompress(
 
     heatshrink_p = &self_p->compression.heatshrink;
     left = *size_p;
+
+    if (heatshrink_p->window_sz2 == -1) {
+        res = chunk_get(self_p->patch_chunk_p, &byte);
+
+        if (res != 0) {
+            return (1);
+        }
+
+        unpack_heatshrink_header(byte,
+                                 &heatshrink_p->window_sz2,
+                                 &heatshrink_p->lookahead_sz2);
+
+        if ((heatshrink_p->window_sz2 != HEATSHRINK_STATIC_WINDOW_BITS)
+            || (heatshrink_p->lookahead_sz2 != HEATSHRINK_STATIC_LOOKAHEAD_BITS)) {
+            return (-DETOOLS_HEATSHRINK_HEADER);
+        }
+    }
 
     while (1) {
         /* Get available data. */
@@ -304,7 +329,12 @@ static int patch_reader_heatshrink_destroy(
 static int patch_reader_heatshrink_init(
     struct detools_apply_patch_patch_reader_t *self_p)
 {
-    heatshrink_decoder_reset(&self_p->compression.heatshrink.decoder);
+    struct detools_apply_patch_patch_reader_heatshrink_t *heatshrink_p;
+
+    heatshrink_p = &self_p->compression.heatshrink;
+    heatshrink_p->window_sz2 = -1;
+    heatshrink_p->lookahead_sz2 = -1;
+    heatshrink_decoder_reset(&heatshrink_p->decoder);
     self_p->destroy = patch_reader_heatshrink_destroy;
     self_p->decompress = patch_reader_heatshrink_decompress;
 
@@ -2592,6 +2622,9 @@ const char *detools_error_as_string(int error)
 
     case DETOOLS_CORRUPT_PATCH_CRLE_KIND:
         return "Corrupt patch, CRLE kind.";
+
+    case DETOOLS_HEATSHRINK_HEADER:
+        return "Heatshrink header.";
 
     default:
         return "Unknown error.";

@@ -248,7 +248,7 @@ TEST(foo_heatshrink_at_offset_10_and_100)
     /* Init once again, restore and process remaining 25 bytes. */
     init(&apply_patch, 0);
     ASSERT_EQ(restore(&apply_patch), 100);
-    process(&apply_patch, &utils_files.patch.buf_p[100], 25);
+    process(&apply_patch, &utils_files.patch.buf_p[100], 26);
     finalize(&apply_patch, 2780);
 
     utils_files_assert_and_destroy();

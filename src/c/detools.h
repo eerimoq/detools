@@ -90,6 +90,7 @@
 #define DETOOLS_ALREADY_FAILED                           24
 #define DETOOLS_CORRUPT_PATCH_OVERFLOW                   25
 #define DETOOLS_CORRUPT_PATCH_CRLE_KIND                  26
+#define DETOOLS_HEATSHRINK_HEADER                        27
 
 /**
  * Read callback.
@@ -230,6 +231,8 @@ struct detools_apply_patch_patch_reader_lzma_t {
 #include "heatshrink_decoder.h"
 
 struct detools_apply_patch_patch_reader_heatshrink_t {
+    int8_t window_sz2;
+    int8_t lookahead_sz2;
     heatshrink_decoder decoder;
 };
 

@@ -958,6 +958,8 @@ TEST(error_as_string)
               "Corrupt patch, overflow.");
     ASSERT_EQ(detools_error_as_string(DETOOLS_CORRUPT_PATCH_CRLE_KIND),
               "Corrupt patch, CRLE kind.");
+    ASSERT_EQ(detools_error_as_string(DETOOLS_HEATSHRINK_HEADER),
+              "Heatshrink header.");
     ASSERT_EQ(detools_error_as_string(123456),
               "Unknown error.");
 }
