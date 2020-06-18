@@ -7,7 +7,7 @@
 About
 =====
 
-Binary `delta encoding`_ in Python 3 and C.
+Binary `delta encoding`_ in Python 3.6+ and C.
 
 Based on http://www.daemonology.net/bsdiff/ and `HDiffPatch`_, with
 the following features:
