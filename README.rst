@@ -1,7 +1,3 @@
-|buildstatus|_
-|appveyor|_
-|coverage|_
-|codecov|_
 |nala|_
 
 About
@@ -286,18 +282,6 @@ Contributing
       make test
 
 #. Create a pull request.
-
-.. |buildstatus| image:: https://travis-ci.org/eerimoq/detools.svg?branch=master
-.. _buildstatus: https://travis-ci.org/eerimoq/detools
-
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/github/eerimoq/detools?svg=true
-.. _appveyor: https://ci.appveyor.com/project/eerimoq/detools/branch/master
-
-.. |coverage| image:: https://coveralls.io/repos/github/eerimoq/detools/badge.svg?branch=master
-.. _coverage: https://coveralls.io/github/eerimoq/detools
-
-.. |codecov| image:: https://codecov.io/gh/eerimoq/detools/branch/master/graph/badge.svg
-.. _codecov: https://codecov.io/gh/eerimoq/detools
 
 .. |nala| image:: https://img.shields.io/badge/nala-test-blue.svg
 .. _nala: https://github.com/eerimoq/nala
