@@ -22,7 +22,7 @@ jobs:
         pip install -r requirements.txt
     - name: Test
       run: |
-        python setup.py build
+        python setup.py build_ext -b .
         python -m unittest
 
   test-c:
