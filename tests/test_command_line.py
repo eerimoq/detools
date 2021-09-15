@@ -34,6 +34,34 @@ class DetoolsCommandLineTest(unittest.TestCase):
 
         self.execute_and_assert(argv, foo_patch, 'tests/files/foo/patch')
 
+    def test_create_patch_foo_heatshrink(self):
+        foo_patch = 'foo.patch'
+        argv = [
+            'detools',
+            'create_patch',
+            '-c', 'heatshrink',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            foo_patch
+        ]
+
+        self.execute_and_assert(argv, foo_patch, 'tests/files/foo/heatshrink.patch')
+
+    def test_create_patch_foo_heatshrink_custom(self):
+        foo_patch = 'foo.patch'
+        argv = [
+            'detools',
+            'create_patch',
+            '-c', 'heatshrink',
+            '--heatshrink-window-sz2', '10',
+            '--heatshrink-lookahead-sz2', '5',
+            'tests/files/foo/old',
+            'tests/files/foo/new',
+            foo_patch
+        ]
+
+        self.execute_and_assert(argv, foo_patch, 'tests/files/foo/heatshrink-10-5.patch')
+
     def test_create_patch_foo_hdiffpatch_no_mmap(self):
         foo_patch = 'foo.patch'
         argv = [

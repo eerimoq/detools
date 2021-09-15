@@ -21,9 +21,7 @@ def unpack_header(data):
 
 class HeatshrinkCompressor(object):
 
-    def __init__(self):
-        window_sz2 = 8
-        lookahead_sz2 = 7
+    def __init__(self, window_sz2, lookahead_sz2):
         self._data = pack_header(window_sz2, lookahead_sz2)
         self._encoder = Encoder(Writer(window_sz2=window_sz2,
                                        lookahead_sz2=lookahead_sz2))

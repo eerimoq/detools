@@ -266,6 +266,14 @@ class DetoolsTest(unittest.TestCase):
                                            'tests/files/foo/heatshrink.patch',
                                            compression='heatshrink')
 
+    def test_create_and_apply_patch_foo_heatshrink_compression_custom(self):
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/heatshrink-10-5.patch',
+                                           compression='heatshrink',
+                                           heatshrink_window_sz2=10,
+                                           heatshrink_lookahead_sz2=5)
+
     def test_create_and_apply_patch_foo_zstd_compression(self):
         self.assert_create_and_apply_patch('tests/files/foo/old',
                                            'tests/files/foo/new',

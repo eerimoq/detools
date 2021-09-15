@@ -215,6 +215,13 @@ def data_format_args(args):
     }
 
 
+def heatshrink_args(args):
+    return {
+        'heatshrink_window_sz2': args.heatshrink_window_sz2,
+        'heatshrink_lookahead_sz2': args.heatshrink_lookahead_sz2
+    }
+
+
 def print_successful(filename, start_time):
     print("Successfully created '{}' in {}!".format(
         filename,
@@ -233,6 +240,7 @@ def _do_create_patch(args):
                            match_score=args.match_score,
                            match_block_size=args.match_block_size,
                            use_mmap=not args.no_mmap,
+                           **heatshrink_args(args),
                            **data_format_args(args))
     print_successful(args.patchfile, start_time)
 
@@ -250,6 +258,7 @@ def _do_create_patch_in_place(args):
                            args.segment_size,
                            args.minimum_shift_size,
                            use_mmap=not args.no_mmap,
+                           **heatshrink_args(args),
                            **data_format_args(args))
     print_successful(args.patchfile, start_time)
 
@@ -521,6 +530,19 @@ def add_data_format_args(subparser):
         help='To file data address ranges.')
 
 
+def add_heatshrink_args(subparser):
+    subparser.add_argument(
+        '--heatshrink-window-sz2',
+        default=8,
+        type=int,
+        help='Heatshrink window sz2 setting (default: %(default)s).')
+    subparser.add_argument(
+        '--heatshrink-lookahead-sz2',
+        default=7,
+        type=int,
+        help='Heatshrink lookahead sz2 setting (default: %(default)s).')
+
+
 def _main():
     parser = argparse.ArgumentParser(description='Binary delta encoding utility.')
 
@@ -580,6 +602,7 @@ def _main():
     subparser.add_argument('--no-mmap',
                            action='store_true',
                            help='Do not use mmap.')
+    add_heatshrink_args(subparser)
     add_data_format_args(subparser)
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
@@ -613,6 +636,7 @@ def _main():
     subparser.add_argument('--no-mmap',
                            action='store_true',
                            help='Do not use mmap.')
+    add_heatshrink_args(subparser)
     add_data_format_args(subparser)
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('tofile', help='To file.')
