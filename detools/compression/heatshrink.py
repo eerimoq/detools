@@ -45,15 +45,17 @@ class HeatshrinkDecompressor(object):
         self._number_of_bytes_left = number_of_bytes
         self._data = b''
         self._encoder = None
+        self.window_sz2 = None
+        self.lookahead_sz2 = None
 
     def decompress(self, data, size):
         if self._encoder is None:
             if not data:
                 return b''
 
-            window_sz2, lookahead_sz2 = unpack_header(data[:1])
-            self._encoder = Encoder(Reader(window_sz2=window_sz2,
-                                           lookahead_sz2=lookahead_sz2))
+            self.window_sz2, self.lookahead_sz2 = unpack_header(data[:1])
+            self._encoder = Encoder(Reader(window_sz2=self.window_sz2,
+                                           lookahead_sz2=self.lookahead_sz2))
             data = data[1:]
             self._number_of_bytes_left -= 1
 

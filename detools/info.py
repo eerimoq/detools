@@ -12,7 +12,23 @@ from .common import unpack_size
 from .common import unpack_size_with_length
 from .common import data_format_number_to_string
 from .common import peek_header_type
+from .compression.heatshrink import HeatshrinkDecompressor
 from .data_format import info as data_format_info
+
+
+def _compression_info(patch_reader):
+    info = None
+
+    if patch_reader:
+        decompressor = patch_reader.decompressor
+
+        if isinstance(decompressor, HeatshrinkDecompressor):
+            info = {
+                'window-sz2': decompressor.window_sz2,
+                'lookahead-sz2': decompressor.lookahead_sz2
+            }
+
+    return info
 
 
 def patch_info_sequential_inner(patch_reader, to_size):
@@ -63,6 +79,7 @@ def patch_info_sequential(fpatch, fsize):
     dfpatch_size = 0
     data_format = None
     dfpatch_info = None
+    patch_reader = None
 
     if to_size == 0:
         info = (0, [], [], [], 0)
@@ -83,6 +100,7 @@ def patch_info_sequential(fpatch, fsize):
 
     return (patch_size,
             compression,
+            _compression_info(patch_reader),
             dfpatch_size,
             data_format,
             dfpatch_info,
@@ -98,6 +116,7 @@ def patch_info_in_place(fpatch):
      from_size,
      to_size) = read_header_in_place(fpatch)
     segments = []
+    patch_reader = None
 
     if to_size > 0:
         patch_reader = PatchReader(fpatch, compression)
@@ -118,6 +137,7 @@ def patch_info_in_place(fpatch):
 
     return (patch_size,
             compression,
+            _compression_info(patch_reader),
             memory_size,
             segment_size,
             shift_size,
@@ -129,8 +149,15 @@ def patch_info_in_place(fpatch):
 def patch_info_hdiffpatch(fpatch):
     patch_size = file_size(fpatch)
     compression, to_size, _ = read_header_hdiffpatch(fpatch)
+    patch_reader = None
 
-    return (patch_size, compression, to_size)
+    if to_size > 0:
+        patch_reader = PatchReader(fpatch, compression)
+
+    return (patch_size,
+            compression,
+            _compression_info(patch_reader),
+            to_size)
 
 
 def patch_info(fpatch, fsize=None):

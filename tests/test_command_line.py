@@ -162,6 +162,39 @@ class DetoolsCommandLineTest(unittest.TestCase):
                          'Average extra size: 14 bytes\n'
                          'Median extra size:  14 bytes\n')
 
+    def test_patch_info_foo_heatshrink_empty(self):
+        argv = [
+            'detools',
+            'patch_info',
+            'tests/files/empty/heatshrink.patch'
+        ]
+        stdout = StringIO()
+
+        with patch('sys.argv', argv):
+            with patch('sys.stdout', stdout):
+                detools._main()
+
+        self.assertEqual(
+            stdout.getvalue(),
+            'Type:               sequential\n'
+            'Patch size:         2 bytes\n'
+            'To size:            0 bytes\n'
+            'Patch/to ratio:     inf % (lower is better)\n'
+            'Diff/extra ratio:   inf % (higher is better)\n'
+            'Size/data ratio:    inf % (lower is better)\n'
+            'Compression:        heatshrink\n'
+            'Data format size:   0 bytes\n'
+            '\n'
+            'Number of diffs:    0\n'
+            'Total diff size:    0 bytes\n'
+            'Average diff size:  -\n'
+            'Median diff size:   -\n'
+            '\n'
+            'Number of extras:   0\n'
+            'Total extra size:   0 bytes\n'
+            'Average extra size: -\n'
+            'Median extra size:  -\n')
+
     def test_patch_info_foo_no_delta(self):
         argv = [
             'detools',

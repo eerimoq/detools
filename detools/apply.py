@@ -34,19 +34,19 @@ class PatchReader(object):
 
     def __init__(self, fpatch, compression):
         if compression == 'lzma':
-            self._decompressor = LZMADecompressor()
+            self.decompressor = LZMADecompressor()
         elif compression == 'bz2':
-            self._decompressor = BZ2Decompressor()
+            self.decompressor = BZ2Decompressor()
         elif compression == 'crle':
-            self._decompressor = CrleDecompressor(patch_data_length(fpatch))
+            self.decompressor = CrleDecompressor(patch_data_length(fpatch))
         elif compression == 'none':
-            self._decompressor = NoneDecompressor(patch_data_length(fpatch))
+            self.decompressor = NoneDecompressor(patch_data_length(fpatch))
         elif compression == 'heatshrink':
-            self._decompressor = HeatshrinkDecompressor(patch_data_length(fpatch))
+            self.decompressor = HeatshrinkDecompressor(patch_data_length(fpatch))
         elif compression == 'zstd':
-            self._decompressor = ZstdDecompressor(patch_data_length(fpatch))
+            self.decompressor = ZstdDecompressor(patch_data_length(fpatch))
         elif compression == 'lz4':
-            self._decompressor = Lz4Decompressor()
+            self.decompressor = Lz4Decompressor()
         else:
             raise Error(format_bad_compression_string(compression))
 
@@ -63,10 +63,10 @@ class PatchReader(object):
         buf = b''
 
         while len(buf) < size:
-            if self._decompressor.eof:
+            if self.decompressor.eof:
                 raise Error('Early end of patch data.')
 
-            if self._decompressor.needs_input:
+            if self.decompressor.needs_input:
                 data = self._fpatch.read(4096)
 
                 if not data:
@@ -75,7 +75,7 @@ class PatchReader(object):
                 data = b''
 
             try:
-                buf += self._decompressor.decompress(data, size - len(buf))
+                buf += self.decompressor.decompress(data, size - len(buf))
             except Exception:
                 raise Error('Patch decompression failed.')
 
@@ -83,7 +83,7 @@ class PatchReader(object):
 
     @property
     def eof(self):
-        return self._decompressor.eof
+        return self.decompressor.eof
 
 
 def iter_chunks(patch_reader, to_pos, to_size, message):

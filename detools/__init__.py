@@ -28,6 +28,21 @@ from .common import COMPRESSIONS as _COMPRESSIONS
 from .data_format.elf import from_file as _data_format_elf_from_file
 
 
+def _format_compression(compression, compression_info):
+    info = None
+
+    if compression == 'heatshrink':
+        if compression_info:
+            window_sz2 = compression_info['window-sz2']
+            lookahead_sz2 = compression_info['lookahead-sz2']
+            info = f'window-sz2: {window_sz2}, lookahead-sz2: {lookahead_sz2}'
+
+    if info:
+        compression += f' ({info})'
+
+    return compression
+
+
 def parse_integer(option, value):
     try:
         return int(value, 0)
@@ -358,6 +373,7 @@ def _patch_info_sequential(detailed,
                            fsize,
                            patch_size,
                            compression,
+                           compression_info,
                            dfpatch_size,
                            data_format,
                            dfpatch_info,
@@ -374,6 +390,7 @@ def _patch_info_sequential(detailed,
     size_data_ratio = _format_ratio(number_of_size_bytes, number_of_data_bytes)
     patch_to_ratio = _format_ratio(patch_size, to_size)
     diff_extra_ratio = _format_ratio(number_of_diff_bytes, number_of_extra_bytes)
+    compression = _format_compression(compression, compression_info)
 
     if diff_sizes:
         mean_diff_size = fsize(int(mean(diff_sizes)))
@@ -422,6 +439,7 @@ def _patch_info_sequential(detailed,
 def _patch_info_in_place(fsize,
                          patch_size,
                          compression,
+                         compression_info,
                          memory_size,
                          segment_size,
                          from_shift_size,
@@ -429,6 +447,7 @@ def _patch_info_in_place(fsize,
                          to_size,
                          segments):
     patch_to_ratio = _format_ratio(patch_size, to_size)
+    compression = _format_compression(compression, compression_info)
 
     print('Type:               in-place')
     print('Patch size:         {}'.format(fsize(patch_size)))
@@ -461,8 +480,10 @@ def _patch_info_in_place(fsize,
 def _patch_info_hdiffpatch(fsize,
                            patch_size,
                            compression,
+                           compression_info,
                            to_size):
     patch_to_ratio = _format_ratio(patch_size, to_size)
+    compression = _format_compression(compression, compression_info)
 
     print('Type:               hdiffpatch')
     print('Patch size:         {}'.format(fsize(patch_size)))
