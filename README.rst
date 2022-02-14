@@ -106,7 +106,7 @@ to 615k).
 Example usage
 =============
 
-Examples in C are found in `src/c`_.
+Examples in C are found in `c`_.
 
 Command line tool
 -----------------
@@ -290,7 +290,7 @@ Contributing
 
 .. _HDiffPatch: https://github.com/sisong/HDiffPatch
 
-.. _Incremental apply patch: https://github.com/eerimoq/detools/tree/master/src/c
+.. _Incremental apply patch: https://github.com/eerimoq/detools/tree/master/c
 
 .. _delta encoding: https://en.wikipedia.org/wiki/Delta_encoding
 
@@ -302,6 +302,6 @@ Contributing
 
 .. _in-place: https://detools.readthedocs.io/en/latest/#id3
 
-.. _src/c: https://github.com/eerimoq/detools/tree/master/src/c
+.. _c: https://github.com/eerimoq/detools/tree/master/c
 
 .. _tests/benchmark.sh: https://github.com/eerimoq/detools/tree/master/tests/benchmark.sh

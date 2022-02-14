@@ -103,6 +103,6 @@ Only CRLE decompression.
 
 .. _in-place: https://detools.readthedocs.io/en/latest/#id3
 
-.. _detools.h: https://github.com/eerimoq/detools/blob/master/src/c/detools.h
+.. _detools.h: https://github.com/eerimoq/detools/blob/master/c/detools.h
 
-.. _examples folder: https://github.com/eerimoq/detools/tree/master/src/c/examples
+.. _examples folder: https://github.com/eerimoq/detools/tree/master/c/examples

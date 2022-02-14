@@ -67,9 +67,9 @@ TEST(foo_none_at_offset_0)
 {
     struct detools_apply_patch_t apply_patch;
 
-    utils_files_init("../../../tests/files/foo/old",
-                     "../../../tests/files/foo/none.patch",
-                     "../../../tests/files/foo/new");
+    utils_files_init("../../tests/files/foo/old",
+                     "../../tests/files/foo/none.patch",
+                     "../../tests/files/foo/new");
 
     /* Init and dump. */
     init(&apply_patch, utils_files.patch.size);
@@ -88,9 +88,9 @@ TEST(foo_none_at_offset_100_and_2791)
 {
     struct detools_apply_patch_t apply_patch;
 
-    utils_files_init("../../../tests/files/foo/old",
-                     "../../../tests/files/foo/none.patch",
-                     "../../../tests/files/foo/new");
+    utils_files_init("../../tests/files/foo/old",
+                     "../../tests/files/foo/none.patch",
+                     "../../tests/files/foo/new");
 
     /* Init, process 100 bytes and dump. Process another 50 bytes,
        which will be "lost" when later restoring. */
@@ -119,9 +119,9 @@ TEST(foo_none_one_byte_at_a_time)
     struct detools_apply_patch_t apply_patch;
     int i;
 
-    utils_files_init("../../../tests/files/foo/old",
-                     "../../../tests/files/foo/none.patch",
-                     "../../../tests/files/foo/new");
+    utils_files_init("../../tests/files/foo/old",
+                     "../../tests/files/foo/none.patch",
+                     "../../tests/files/foo/new");
 
     /* Init, process 10 bytes and dump. */
     init(&apply_patch, utils_files.patch.size);
@@ -144,9 +144,9 @@ TEST(foo_none_dump_state_write_error)
     struct detools_apply_patch_t apply_patch;
     int res;
 
-    utils_files_init("../../../tests/files/foo/old",
-                     "../../../tests/files/foo/none.patch",
-                     "../../../tests/files/foo/new");
+    utils_files_init("../../tests/files/foo/old",
+                     "../../tests/files/foo/none.patch",
+                     "../../tests/files/foo/new");
 
     init(&apply_patch, utils_files.patch.size);
 
@@ -161,9 +161,9 @@ TEST(foo_crle_at_offset_100_101_164_and_189)
 {
     struct detools_apply_patch_t apply_patch;
 
-    utils_files_init("../../../tests/files/foo/old",
-                     "../../../tests/files/foo/crle.patch",
-                     "../../../tests/files/foo/new");
+    utils_files_init("../../tests/files/foo/old",
+                     "../../tests/files/foo/crle.patch",
+                     "../../tests/files/foo/new");
 
     /* Init, process 100 bytes and dump. Process another 50 bytes,
        which will be "lost" when later restoring. */
@@ -204,9 +204,9 @@ TEST(foo_crle_one_byte_at_a_time)
     struct detools_apply_patch_t apply_patch;
     int i;
 
-    utils_files_init("../../../tests/files/foo/old",
-                     "../../../tests/files/foo/crle.patch",
-                     "../../../tests/files/foo/new");
+    utils_files_init("../../tests/files/foo/old",
+                     "../../tests/files/foo/crle.patch",
+                     "../../tests/files/foo/new");
 
     /* Init, process 10 bytes and dump. */
     init(&apply_patch, utils_files.patch.size);
@@ -228,9 +228,9 @@ TEST(foo_heatshrink_at_offset_10_and_100)
 {
     struct detools_apply_patch_t apply_patch;
 
-    utils_files_init("../../../tests/files/foo/old",
-                     "../../../tests/files/foo/heatshrink.patch",
-                     "../../../tests/files/foo/new");
+    utils_files_init("../../tests/files/foo/old",
+                     "../../tests/files/foo/heatshrink.patch",
+                     "../../tests/files/foo/new");
 
     /* Init, process 10 bytes and dump. Process another 50 bytes,
        which will be "lost" when later restoring. */
@@ -259,9 +259,9 @@ TEST(foo_heatshrink_one_byte_at_a_time)
     struct detools_apply_patch_t apply_patch;
     int i;
 
-    utils_files_init("../../../tests/files/foo/old",
-                     "../../../tests/files/foo/heatshrink.patch",
-                     "../../../tests/files/foo/new");
+    utils_files_init("../../tests/files/foo/old",
+                     "../../tests/files/foo/heatshrink.patch",
+                     "../../tests/files/foo/new");
 
     /* Init, process 10 bytes and dump. */
     init(&apply_patch, utils_files.patch.size);

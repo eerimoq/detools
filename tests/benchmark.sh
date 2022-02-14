@@ -22,7 +22,7 @@ function apply_patch() {
           > /dev/null
     cmp Python.tar $to_file
     \time -f "RSS=%M elapsed=%E" \
-          src/c/detools apply_patch $from_file $1 Python.tar
+          c/detools apply_patch $from_file $1 Python.tar
     cmp Python.tar $to_file
 }
 

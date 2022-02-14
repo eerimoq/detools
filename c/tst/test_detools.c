@@ -334,128 +334,128 @@ static void assert_apply_patch_error(const char *from_p,
 
 TEST(apply_patch_foo)
 {
-    assert_apply_patch("../../../tests/files/foo/old",
-                       "../../../tests/files/foo/patch",
-                       "../../../tests/files/foo/new");
+    assert_apply_patch("../../tests/files/foo/old",
+                       "../../tests/files/foo/patch",
+                       "../../tests/files/foo/new");
 }
 
 TEST(apply_patch_foo_backwards)
 {
-    assert_apply_patch("../../../tests/files/foo/new",
-                       "../../../tests/files/foo/backwards.patch",
-                       "../../../tests/files/foo/old");
+    assert_apply_patch("../../tests/files/foo/new",
+                       "../../tests/files/foo/backwards.patch",
+                       "../../tests/files/foo/old");
 }
 
 TEST(apply_patch_micropython)
 {
     assert_apply_patch(
-        "../../../tests/files/micropython/esp8266-20180511-v1.9.4.bin",
-        "../../../tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10.patch",
-        "../../../tests/files/micropython/esp8266-20190125-v1.10.bin");
+        "../../tests/files/micropython/esp8266-20180511-v1.9.4.bin",
+        "../../tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10.patch",
+        "../../tests/files/micropython/esp8266-20190125-v1.10.bin");
 }
 
 TEST(apply_patch_foo_none_compression)
 {
-    assert_apply_patch("../../../tests/files/foo/old",
-                       "../../../tests/files/foo/none.patch",
-                       "../../../tests/files/foo/new");
+    assert_apply_patch("../../tests/files/foo/old",
+                       "../../tests/files/foo/none.patch",
+                       "../../tests/files/foo/new");
 }
 
 TEST(apply_patch_foo_heatshrink_compression)
 {
-    assert_apply_patch("../../../tests/files/foo/old",
-                       "../../../tests/files/foo/heatshrink.patch",
-                       "../../../tests/files/foo/new");
+    assert_apply_patch("../../tests/files/foo/old",
+                       "../../tests/files/foo/heatshrink.patch",
+                       "../../tests/files/foo/new");
 }
 
 TEST(apply_patch_micropython_none_compression)
 {
     assert_apply_patch(
-        "../../../tests/files/micropython/esp8266-20180511-v1.9.4.bin",
-        "../../../tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-"
+        "../../tests/files/micropython/esp8266-20180511-v1.9.4.bin",
+        "../../tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-"
         "none.patch",
-        "../../../tests/files/micropython/esp8266-20190125-v1.10.bin");
+        "../../tests/files/micropython/esp8266-20190125-v1.10.bin");
 }
 
 TEST(apply_patch_micropython_heatshrink_compression)
 {
     assert_apply_patch(
-        "../../../tests/files/micropython/esp8266-20180511-v1.9.4.bin",
-        "../../../tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-"
+        "../../tests/files/micropython/esp8266-20180511-v1.9.4.bin",
+        "../../tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-"
         "heatshrink.patch",
-        "../../../tests/files/micropython/esp8266-20190125-v1.10.bin");
+        "../../tests/files/micropython/esp8266-20190125-v1.10.bin");
 }
 
 TEST(apply_patch_foo_crle_compression)
 {
-    assert_apply_patch("../../../tests/files/foo/old",
-                       "../../../tests/files/foo/crle.patch",
-                       "../../../tests/files/foo/new");
+    assert_apply_patch("../../tests/files/foo/old",
+                       "../../tests/files/foo/crle.patch",
+                       "../../tests/files/foo/new");
 }
 
 TEST(apply_patch_micropython_crle_compression)
 {
     assert_apply_patch(
-        "../../../tests/files/micropython/esp8266-20180511-v1.9.4.bin",
-        "../../../tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-crle.patch",
-        "../../../tests/files/micropython/esp8266-20190125-v1.10.bin");
+        "../../tests/files/micropython/esp8266-20180511-v1.9.4.bin",
+        "../../tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-crle.patch",
+        "../../tests/files/micropython/esp8266-20190125-v1.10.bin");
 }
 
 TEST(apply_patch_micropython_in_place)
 {
     assert_apply_patch_in_place(
-        "../../../tests/files/micropython/esp8266-20180511-v1.9.4.bin",
-        "../../../tests/files/micropython/esp8266-20180511-v1.9.4--"
+        "../../tests/files/micropython/esp8266-20180511-v1.9.4.bin",
+        "../../tests/files/micropython/esp8266-20180511-v1.9.4--"
         "20190125-v1.10-in-place.patch",
-        "../../../tests/files/micropython/esp8266-20190125-v1.10.bin",
+        "../../tests/files/micropython/esp8266-20190125-v1.10.bin",
         2097152);
 }
 
 TEST(apply_patch_foo_in_place_3000_1500)
 {
-    assert_apply_patch_in_place("../../../tests/files/foo/old",
-                                "../../../tests/files/foo/in-place-3000-1500.patch",
-                                "../../../tests/files/foo/new",
+    assert_apply_patch_in_place("../../tests/files/foo/old",
+                                "../../tests/files/foo/in-place-3000-1500.patch",
+                                "../../tests/files/foo/new",
                                 3000);
 }
 
 TEST(apply_patch_foo_in_place_3k_1_5k)
 {
-    assert_apply_patch_in_place("../../../tests/files/foo/old",
-                                "../../../tests/files/foo/in-place-3k-1.5k.patch",
-                                "../../../tests/files/foo/new",
+    assert_apply_patch_in_place("../../tests/files/foo/old",
+                                "../../tests/files/foo/in-place-3k-1.5k.patch",
+                                "../../tests/files/foo/new",
                                 3072);
 }
 
 TEST(apply_patch_foo_in_place_3000_1500_1500)
 {
-    assert_apply_patch_in_place("../../../tests/files/foo/old",
-                                "../../../tests/files/foo/in-place-3000-1500-1500.patch",
-                                "../../../tests/files/foo/new",
+    assert_apply_patch_in_place("../../tests/files/foo/old",
+                                "../../tests/files/foo/in-place-3000-1500-1500.patch",
+                                "../../tests/files/foo/new",
                                 3000);
 }
 
 TEST(apply_patch_foo_in_place_3000_500)
 {
-    assert_apply_patch_in_place("../../../tests/files/foo/old",
-                                "../../../tests/files/foo/in-place-3000-500.patch",
-                                "../../../tests/files/foo/new",
+    assert_apply_patch_in_place("../../tests/files/foo/old",
+                                "../../tests/files/foo/in-place-3000-500.patch",
+                                "../../tests/files/foo/new",
                                 3000);
 }
 
 TEST(apply_patch_foo_in_place_3000_500_crle)
 {
-    assert_apply_patch_in_place("../../../tests/files/foo/old",
-                                "../../../tests/files/foo/in-place-3000-500-crle.patch",
-                                "../../../tests/files/foo/new",
+    assert_apply_patch_in_place("../../tests/files/foo/old",
+                                "../../tests/files/foo/in-place-3000-500-crle.patch",
+                                "../../tests/files/foo/new",
                                 3000);
 }
 
 TEST(apply_patch_foo_in_place_6000_1000_crle)
 {
-    assert_apply_patch_in_place("../../../tests/files/foo/old",
-                                "../../../tests/files/foo/in-place-6000-1000-crle.patch",
-                                "../../../tests/files/foo/new",
+    assert_apply_patch_in_place("../../tests/files/foo/old",
+                                "../../tests/files/foo/in-place-6000-1000-crle.patch",
+                                "../../tests/files/foo/new",
                                 6000);
 }
 
@@ -463,9 +463,9 @@ TEST(apply_patch_foo_in_place_resumable_3000_500)
 {
     stored_step = 0;
     assert_apply_patch_in_place_resumable(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/in-place-3000-500.patch",
-        "../../../tests/files/foo/new",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/in-place-3000-500.patch",
+        "../../tests/files/foo/new",
         false,
         step_set_ok,
         step_get_ok,
@@ -479,9 +479,9 @@ TEST(apply_patch_foo_in_place_resume_3000_500_fail_set_step_2)
     stored_step = 0;
     fail_set_step = 2;
     assert_apply_patch_in_place_resumable(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/in-place-3000-500.patch",
-        "../../../tests/files/foo/new",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/in-place-3000-500.patch",
+        "../../tests/files/foo/new",
         false,
         step_set_fail_after,
         step_get_ok,
@@ -491,9 +491,9 @@ TEST(apply_patch_foo_in_place_resume_3000_500_fail_set_step_2)
 
     /* Resume the aborted update. */
     assert_apply_patch_in_place_resumable(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/in-place-3000-500.patch",
-        "../../../tests/files/foo/new",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/in-place-3000-500.patch",
+        "../../tests/files/foo/new",
         true,
         step_set_ok,
         step_get_ok,
@@ -506,9 +506,9 @@ TEST(apply_patch_foo_in_place_resume_3000_500_fail_set_step_5)
     stored_step = 0;
     fail_set_step = 5;
     assert_apply_patch_in_place_resumable(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/in-place-3000-500.patch",
-        "../../../tests/files/foo/new",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/in-place-3000-500.patch",
+        "../../tests/files/foo/new",
         false,
         step_set_fail_after,
         step_get_ok,
@@ -518,9 +518,9 @@ TEST(apply_patch_foo_in_place_resume_3000_500_fail_set_step_5)
 
     /* Resume the aborted update. */
     assert_apply_patch_in_place_resumable(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/in-place-3000-500.patch",
-        "../../../tests/files/foo/new",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/in-place-3000-500.patch",
+        "../../tests/files/foo/new",
         true,
         step_set_ok,
         step_get_ok,
@@ -533,9 +533,9 @@ TEST(apply_patch_foo_in_place_resume_3000_500_fail_set_last_step)
     stored_step = 0;
     fail_set_step = 0;
     assert_apply_patch_in_place_resumable(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/in-place-3000-500.patch",
-        "../../../tests/files/foo/new",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/in-place-3000-500.patch",
+        "../../tests/files/foo/new",
         false,
         step_set_fail_after,
         step_get_ok,
@@ -545,9 +545,9 @@ TEST(apply_patch_foo_in_place_resume_3000_500_fail_set_last_step)
 
     /* Resume the aborted update. */
     assert_apply_patch_in_place_resumable(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/in-place-3000-500.patch",
-        "../../../tests/files/foo/new",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/in-place-3000-500.patch",
+        "../../tests/files/foo/new",
         true,
         step_set_ok,
         step_get_ok,
@@ -560,9 +560,9 @@ TEST(apply_patch_foo_in_place_resume_3000_500_fail_get_step_0)
     stored_step = 0;
     fail_get_step = 0;
     assert_apply_patch_in_place_resumable(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/in-place-3000-500.patch",
-        "../../../tests/files/foo/new",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/in-place-3000-500.patch",
+        "../../tests/files/foo/new",
         false,
         step_set_ok,
         step_get_fail_after,
@@ -572,9 +572,9 @@ TEST(apply_patch_foo_in_place_resume_3000_500_fail_get_step_0)
 
     /* Resume the aborted update. */
     assert_apply_patch_in_place_resumable(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/in-place-3000-500.patch",
-        "../../../tests/files/foo/new",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/in-place-3000-500.patch",
+        "../../tests/files/foo/new",
         true,
         step_set_ok,
         step_get_ok,
@@ -587,9 +587,9 @@ TEST(apply_patch_foo_in_place_resume_3000_500_fail_get_step_2)
     stored_step = 0;
     fail_get_step = 2;
     assert_apply_patch_in_place_resumable(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/in-place-3000-500.patch",
-        "../../../tests/files/foo/new",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/in-place-3000-500.patch",
+        "../../tests/files/foo/new",
         false,
         step_set_ok,
         step_get_fail_after,
@@ -599,9 +599,9 @@ TEST(apply_patch_foo_in_place_resume_3000_500_fail_get_step_2)
 
     /* Resume the aborted update. */
     assert_apply_patch_in_place_resumable(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/in-place-3000-500.patch",
-        "../../../tests/files/foo/new",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/in-place-3000-500.patch",
+        "../../tests/files/foo/new",
         true,
         step_set_ok,
         step_get_ok,
@@ -611,177 +611,177 @@ TEST(apply_patch_foo_in_place_resume_3000_500_fail_get_step_2)
 
 TEST(create_and_apply_patch_empty_in_place)
 {
-    assert_apply_patch_in_place("../../../tests/files/empty/old",
-                                "../../../tests/files/empty/in-place.patch",
-                                "../../../tests/files/empty/new",
+    assert_apply_patch_in_place("../../tests/files/empty/old",
+                                "../../tests/files/empty/in-place.patch",
+                                "../../tests/files/empty/new",
                                 6000);
 }
 
 TEST(apply_patch_bsdiff)
 {
-    assert_apply_patch("../../../tests/files/bsdiff.py",
-                       "../../../tests/files/bsdiff-READ-ME.patch",
-                       "../../../tests/files/READ-ME.rst");
+    assert_apply_patch("../../tests/files/bsdiff.py",
+                       "../../tests/files/bsdiff-READ-ME.patch",
+                       "../../tests/files/READ-ME.rst");
 }
 
 TEST(apply_patch_sais)
 {
-    assert_apply_patch("../../../tests/files/sais.c",
-                       "../../../tests/files/sais-READ-ME.patch",
-                       "../../../tests/files/READ-ME.rst");
+    assert_apply_patch("../../tests/files/sais.c",
+                       "../../tests/files/sais-READ-ME.patch",
+                       "../../tests/files/READ-ME.rst");
 }
 
 TEST(apply_patch_3f5531ba56182a807a5c358f04678b3b026d3a)
 {
     assert_apply_patch(
-        "../../../tests/files/3f5531ba56182a807a5c358f04678b3b026d3a.bin",
-        "../../../tests/files/3f5531ba56182a807a5c358f04678b3b026d3a-READ-ME.patch",
-        "../../../tests/files/READ-ME.rst");
+        "../../tests/files/3f5531ba56182a807a5c358f04678b3b026d3a.bin",
+        "../../tests/files/3f5531ba56182a807a5c358f04678b3b026d3a-READ-ME.patch",
+        "../../tests/files/READ-ME.rst");
 }
 
 TEST(apply_patch_b2db59ab76ca36f67e61f720857021df8a660b)
 {
     assert_apply_patch(
-        "../../../tests/files/b2db59ab76ca36f67e61f720857021df8a660b.bin",
-        "../../../tests/files/b2db59ab76ca36f67e61f720857021df8a660b-READ-ME.patch",
-        "../../../tests/files/READ-ME.rst");
+        "../../tests/files/b2db59ab76ca36f67e61f720857021df8a660b.bin",
+        "../../tests/files/b2db59ab76ca36f67e61f720857021df8a660b-READ-ME.patch",
+        "../../tests/files/READ-ME.rst");
 }
 
 TEST(apply_patch_d027a1e1f752f15b6a13d9f9d775f3914c83f7)
 {
     assert_apply_patch(
-        "../../../tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7.bin",
-        "../../../tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7-READ-ME.patch",
-        "../../../tests/files/READ-ME.rst");
+        "../../tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7.bin",
+        "../../tests/files/d027a1e1f752f15b6a13d9f9d775f3914c83f7-READ-ME.patch",
+        "../../tests/files/READ-ME.rst");
 }
 
 TEST(apply_patch_eb9ed88e9975028c4694e070cfaece2498e92d)
 {
     assert_apply_patch(
-        "../../../tests/files/eb9ed88e9975028c4694e070cfaece2498e92d.bin",
-        "../../../tests/files/eb9ed88e9975028c4694e070cfaece2498e92d-READ-ME.patch",
-        "../../../tests/files/READ-ME.rst");
+        "../../tests/files/eb9ed88e9975028c4694e070cfaece2498e92d.bin",
+        "../../tests/files/eb9ed88e9975028c4694e070cfaece2498e92d-READ-ME.patch",
+        "../../tests/files/READ-ME.rst");
 }
 
 TEST(apply_patch_no_delta)
 {
-    assert_apply_patch("../../../tests/files/foo/new",
-                       "../../../tests/files/foo/no-delta.patch",
-                       "../../../tests/files/foo/new");
+    assert_apply_patch("../../tests/files/foo/new",
+                       "../../tests/files/foo/no-delta.patch",
+                       "../../tests/files/foo/new");
 }
 
 TEST(apply_patch_empty)
 {
-    assert_apply_patch("../../../tests/files/empty/old",
-                       "../../../tests/files/empty/patch",
-                       "../../../tests/files/empty/new");
+    assert_apply_patch("../../tests/files/empty/old",
+                       "../../tests/files/empty/patch",
+                       "../../tests/files/empty/new");
 }
 
 TEST(apply_patch_empty_none_compression)
 {
-    assert_apply_patch("../../../tests/files/empty/old",
-                       "../../../tests/files/empty/none.patch",
-                       "../../../tests/files/empty/new");
+    assert_apply_patch("../../tests/files/empty/old",
+                       "../../tests/files/empty/none.patch",
+                       "../../tests/files/empty/new");
 }
 
 TEST(apply_patch_empty_crle_compression)
 {
-    assert_apply_patch("../../../tests/files/empty/old",
-                       "../../../tests/files/empty/patch",
-                       "../../../tests/files/empty/new");
+    assert_apply_patch("../../tests/files/empty/old",
+                       "../../tests/files/empty/patch",
+                       "../../tests/files/empty/new");
 }
 
 TEST(apply_patch_empty_heatshrink_compression)
 {
-    assert_apply_patch("../../../tests/files/empty/old",
-                       "../../../tests/files/empty/heatshrink.patch",
-                       "../../../tests/files/empty/new");
+    assert_apply_patch("../../tests/files/empty/old",
+                       "../../tests/files/empty/heatshrink.patch",
+                       "../../tests/files/empty/new");
 }
 
 TEST(apply_patch_foo_short)
 {
-    assert_apply_patch_error("../../../tests/files/foo/old",
-                             "../../../tests/files/foo/short.patch",
+    assert_apply_patch_error("../../tests/files/foo/old",
+                             "../../tests/files/foo/short.patch",
                              -DETOOLS_CORRUPT_PATCH);
 }
 
 TEST(apply_patch_foo_short_none_compression)
 {
-    assert_apply_patch_error("../../../tests/files/foo/old",
-                             "../../../tests/files/foo/short-none.patch",
+    assert_apply_patch_error("../../tests/files/foo/old",
+                             "../../tests/files/foo/short-none.patch",
                              -DETOOLS_CORRUPT_PATCH);
 }
 
 TEST(apply_patch_foo_long)
 {
-    assert_apply_patch_error("../../../tests/files/foo/old",
-                             "../../../tests/files/foo/bad-lzma-end.patch",
+    assert_apply_patch_error("../../tests/files/foo/old",
+                             "../../tests/files/foo/bad-lzma-end.patch",
                              -DETOOLS_LZMA_DECODE);
 }
 
 TEST(apply_patch_foo_diff_data_too_long)
 {
-    assert_apply_patch_error("../../../tests/files/foo/old",
-                             "../../../tests/files/foo/diff-data-too-long.patch",
+    assert_apply_patch_error("../../tests/files/foo/old",
+                             "../../tests/files/foo/diff-data-too-long.patch",
                              -DETOOLS_CORRUPT_PATCH);
 }
 
 TEST(apply_patch_foo_extra_data_too_long)
 {
-    assert_apply_patch_error("../../../tests/files/foo/old",
-                             "../../../tests/files/foo/extra-data-too-long.patch",
+    assert_apply_patch_error("../../tests/files/foo/old",
+                             "../../tests/files/foo/extra-data-too-long.patch",
                              -DETOOLS_CORRUPT_PATCH);
 }
 
 TEST(apply_patch_foo_bad_patch_type)
 {
-    assert_apply_patch_error("../../../tests/files/foo/old",
-                             "../../../tests/files/foo/bad-patch-type.patch",
+    assert_apply_patch_error("../../tests/files/foo/old",
+                             "../../tests/files/foo/bad-patch-type.patch",
                              -DETOOLS_BAD_PATCH_TYPE);
 }
 
 TEST(apply_patch_foo_bad_compression)
 {
-    assert_apply_patch_error("../../../tests/files/foo/old",
-                             "../../../tests/files/foo/bad-compression.patch",
+    assert_apply_patch_error("../../tests/files/foo/old",
+                             "../../tests/files/foo/bad-compression.patch",
                              -DETOOLS_BAD_COMPRESSION);
 }
 
 TEST(apply_patch_one_byte)
 {
-    assert_apply_patch_error("../../../tests/files/foo/old",
-                             "../../../tests/files/foo/one-byte.patch",
+    assert_apply_patch_error("../../tests/files/foo/old",
+                             "../../tests/files/foo/one-byte.patch",
                              -DETOOLS_SHORT_HEADER);
 }
 
 TEST(apply_patch_short_to_size)
 {
-    assert_apply_patch_error("../../../tests/files/foo/old",
-                             "../../../tests/files/foo/short-to-size.patch",
+    assert_apply_patch_error("../../tests/files/foo/old",
+                             "../../tests/files/foo/short-to-size.patch",
                              -DETOOLS_SHORT_HEADER);
 }
 
 TEST(apply_patch_file_open_error)
 {
-    assert_apply_patch_error("../../../tests/files/foo/old.missing",
-                             "../../../tests/files/foo/bad-compression.patch",
+    assert_apply_patch_error("../../tests/files/foo/old.missing",
+                             "../../tests/files/foo/bad-compression.patch",
                              -DETOOLS_FILE_OPEN_FAILED);
 
-    assert_apply_patch_error("../../../tests/files/foo/old",
-                             "../../../tests/files/foo/bad-compression.patch.missing",
+    assert_apply_patch_error("../../tests/files/foo/old",
+                             "../../tests/files/foo/bad-compression.patch.missing",
                              -DETOOLS_FILE_OPEN_FAILED);
 
     ASSERT_EQ(detools_apply_patch_filenames(
-                  "../../../tests/files/foo/old",
-                  "../../../tests/files/foo/bad-compression.patch",
+                  "../../tests/files/foo/old",
+                  "../../tests/files/foo/bad-compression.patch",
                   ""),
               -DETOOLS_FILE_OPEN_FAILED);
 }
 
 TEST(apply_patch_foo_in_place_bad_patch_type)
 {
-    assert_apply_patch_in_place_error("../../../tests/files/foo/old",
-                                      "../../../tests/files/foo/patch",
+    assert_apply_patch_in_place_error("../../tests/files/foo/old",
+                                      "../../tests/files/foo/patch",
                                       3000,
                                       -DETOOLS_BAD_PATCH_TYPE);
 }
@@ -789,8 +789,8 @@ TEST(apply_patch_foo_in_place_bad_patch_type)
 TEST(apply_patch_foo_in_place_memory_size_missing)
 {
     assert_apply_patch_in_place_error(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/missing-in-place-memory-size.patch",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/missing-in-place-memory-size.patch",
         3000,
         -DETOOLS_SHORT_HEADER);
 }
@@ -798,8 +798,8 @@ TEST(apply_patch_foo_in_place_memory_size_missing)
 TEST(apply_patch_foo_in_place_segment_size_missing)
 {
     assert_apply_patch_in_place_error(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/missing-in-place-segment-size.patch",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/missing-in-place-segment-size.patch",
         3000,
         -DETOOLS_SHORT_HEADER);
 }
@@ -807,8 +807,8 @@ TEST(apply_patch_foo_in_place_segment_size_missing)
 TEST(apply_patch_foo_in_place_shift_size_missing)
 {
     assert_apply_patch_in_place_error(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/missing-in-place-shift-size.patch",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/missing-in-place-shift-size.patch",
         3000,
         -DETOOLS_SHORT_HEADER);
 }
@@ -816,8 +816,8 @@ TEST(apply_patch_foo_in_place_shift_size_missing)
 TEST(apply_patch_foo_in_place_from_size_missing)
 {
     assert_apply_patch_in_place_error(
-        "../../../tests/files/foo/old",
-        "../../../tests/files/foo/missing-in-place-from-size.patch",
+        "../../tests/files/foo/old",
+        "../../tests/files/foo/missing-in-place-from-size.patch",
         3000,
         -DETOOLS_SHORT_HEADER);
 }
@@ -832,8 +832,8 @@ TEST(apply_patch_foo_incremental)
     size_t patch_offset;
     int res;
 
-    io_init(&io, "../../../tests/files/foo/old", "../../../tests/files/foo/new");
-    patch_p = patch_init("../../../tests/files/foo/patch", &patch_size);
+    io_init(&io, "../../tests/files/foo/old", "../../tests/files/foo/new");
+    patch_p = patch_init("../../tests/files/foo/patch", &patch_size);
     expected_patch_size = patch_size;
 
     ASSERT_EQ(detools_apply_patch_init(&apply_patch,
@@ -865,7 +865,7 @@ TEST(apply_patch_foo_incremental_init_finalize)
     struct detools_apply_patch_t apply_patch;
     struct io_t io;
 
-    io_init(&io, "../../../tests/files/foo/old", "../../../tests/files/foo/new");
+    io_init(&io, "../../tests/files/foo/old", "../../tests/files/foo/new");
 
     ASSERT_EQ(detools_apply_patch_init(&apply_patch,
                                     io_read,
@@ -884,8 +884,8 @@ TEST(apply_patch_foo_incremental_process_once)
     const uint8_t *patch_p;
     size_t patch_size;
 
-    io_init(&io, "../../../tests/files/foo/old", "../../../tests/files/foo/new");
-    patch_p = patch_init("../../../tests/files/foo/patch", &patch_size);
+    io_init(&io, "../../tests/files/foo/old", "../../tests/files/foo/new");
+    patch_p = patch_init("../../tests/files/foo/patch", &patch_size);
 
     ASSERT_EQ(detools_apply_patch_init(&apply_patch,
                                     io_read,
