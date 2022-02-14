@@ -57,6 +57,8 @@ int main(int argc, const char *argv[])
 {
     int res;
 
+    res = 0;
+    
     if (argc < 2) {
         print_usage_and_exit(argv[0]);
     }
