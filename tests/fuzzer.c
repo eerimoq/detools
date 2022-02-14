@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
-#include "../src/c/detools.h"
+#include "../c/detools.h"
 
 #define membersof(v) (sizeof(v) / sizeof((v)[0]))
 

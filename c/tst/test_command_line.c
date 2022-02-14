@@ -4,31 +4,31 @@
 TEST(apply_patch_foo)
 {
     ASSERT_EQ(system("../detools apply_patch "
-                     "../../../tests/files/foo/old "
-                     "../../../tests/files/foo/patch "
+                     "../../tests/files/foo/old "
+                     "../../tests/files/foo/patch "
                      "build/foo.new"),
               0);
-    ASSERT_FILE_EQ("build/foo.new", "../../../tests/files/foo/new");
+    ASSERT_FILE_EQ("build/foo.new", "../../tests/files/foo/new");
 }
 
 TEST(apply_patch_foo_heatshrink)
 {
     ASSERT_EQ(system("../detools apply_patch "
-                     "../../../tests/files/foo/old "
-                     "../../../tests/files/foo/heatshrink.patch "
+                     "../../tests/files/foo/old "
+                     "../../tests/files/foo/heatshrink.patch "
                      "build/heatshrink.foo.new"),
               0);
-    ASSERT_FILE_EQ("build/heatshrink.foo.new", "../../../tests/files/foo/new");
+    ASSERT_FILE_EQ("build/heatshrink.foo.new", "../../tests/files/foo/new");
 }
 
 TEST(apply_patch_in_place_foo)
 {
-    ASSERT_EQ(system("cp ../../../tests/files/foo/old build/foo.mem"), 0);
+    ASSERT_EQ(system("cp ../../tests/files/foo/old build/foo.mem"), 0);
     ASSERT_EQ(system("../detools apply_patch_in_place "
                      "build/foo.mem "
-                     "../../../tests/files/foo/in-place-3000-500.patch"), 0);
+                     "../../tests/files/foo/in-place-3000-500.patch"), 0);
     ASSERT_FILE_EQ("build/foo.mem",
-                   "../../../tests/files/foo/in-place-3000-500.mem");
+                   "../../tests/files/foo/in-place-3000-500.mem");
 }
 
 TEST(usage)
@@ -56,8 +56,8 @@ TEST(usage_apply_patch_missing_to_file)
 {
     CAPTURE_OUTPUT(output, errput) {
         ASSERT_EQ(system("../detools apply_patch "
-                         "../../../tests/files/foo/old "
-                         "../../../tests/files/foo/patch"),
+                         "../../tests/files/foo/old "
+                         "../../tests/files/foo/patch"),
                   256);
     }
 
