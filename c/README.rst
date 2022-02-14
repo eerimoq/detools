@@ -57,15 +57,15 @@ Apply a sequential patch.
 .. code-block:: text
 
    $ ./detools apply_patch \
-         ../../tests/files/foo/old ../../tests/files/foo/patch foo.new
+         ../tests/files/foo/old ../tests/files/foo/patch foo.new
 
 Apply an in-place patch.
 
 .. code-block:: text
 
-   $ cp ../../tests/files/foo/old foo.mem
+   $ cp ../tests/files/foo/old foo.mem
    $ ./detools apply_patch_in_place \
-         foo.mem ../../tests/files/foo-in-place-3000-500.patch
+         foo.mem ../tests/files/foo/in-place-3000-500.patch
 
 Code size
 =========
