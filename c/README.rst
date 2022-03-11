@@ -31,6 +31,50 @@ ToDo:
   algorithms. Requires implementing dump and restore functions in
   these libraries, which may not be trivial.
 
+API Overview
+============
+
+See `detools.h`_ for details.
+
+Using files
+-----------
+
+.. code-block:: c
+
+   int detools_apply_patch_filenames(const char *from_p,
+                                     const char *patch_p,
+                                     const char *to_p);
+
+Using callbacks
+---------------
+
+.. code-block:: c
+
+   int detools_apply_patch_callbacks(detools_read_t from_read,
+                                     detools_seek_t from_seek,
+                                     detools_read_t patch_read,
+                                     size_t patch_size,
+                                     detools_write_t to_write,
+                                     void *arg_p);
+
+Low level
+---------
+
+.. code-block:: c
+
+   int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
+                                detools_read_t from_read,
+                                detools_seek_t from_seek,
+                                size_t patch_size,
+                                detools_write_t to_write,
+                                void *arg_p);
+
+   int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
+                                   const uint8_t *patch_p,
+                                   size_t size);
+
+   int detools_apply_patch_finalize(struct detools_apply_patch_t *self_p);
+
 Configuration
 =============
 
