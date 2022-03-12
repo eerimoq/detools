@@ -259,15 +259,30 @@ static int patch_reader_heatshrink_decompress(
                                  &heatshrink_p->window_sz2,
                                  &heatshrink_p->lookahead_sz2);
 
+#if HEATSHRINK_DYNAMIC_ALLOC == 1
+        heatshrink_p->decoder_p = heatshrink_decoder_alloc(
+            512,
+            heatshrink_p->window_sz2,
+            heatshrink_p->lookahead_sz2);
+
+        if (heatshrink_p->decoder_p == NULL) {
+            return (-DETOOLS_HEATSHRINK_HEADER);
+        }
+#else
         if ((heatshrink_p->window_sz2 != HEATSHRINK_STATIC_WINDOW_BITS)
             || (heatshrink_p->lookahead_sz2 != HEATSHRINK_STATIC_LOOKAHEAD_BITS)) {
             return (-DETOOLS_HEATSHRINK_HEADER);
         }
+
+        heatshrink_p->decoder_p = &heatshrink_p->decoder;
+        heatshrink_decoder_reset(heatshrink_p->decoder_p);
+#endif
+
     }
 
     while (1) {
         /* Get available data. */
-        pres = heatshrink_decoder_poll(&heatshrink_p->decoder,
+        pres = heatshrink_decoder_poll(heatshrink_p->decoder_p,
                                        buf_p,
                                        left,
                                        &size);
@@ -287,7 +302,7 @@ static int patch_reader_heatshrink_decompress(
         res = chunk_get(self_p->patch_chunk_p, &byte);
 
         if (res == 0) {
-            sres = heatshrink_decoder_sink(&heatshrink_p->decoder,
+            sres = heatshrink_decoder_sink(heatshrink_p->decoder_p,
                                            &byte,
                                            sizeof(byte),
                                            &size);
@@ -317,7 +332,15 @@ static int patch_reader_heatshrink_destroy(
 
     heatshrink_p = &self_p->compression.heatshrink;
 
-    fres = heatshrink_decoder_finish(&heatshrink_p->decoder);
+    if (heatshrink_p->decoder_p == NULL) {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+
+    fres = heatshrink_decoder_finish(heatshrink_p->decoder_p);
+
+#if HEATSHRINK_DYNAMIC_ALLOC == 1
+    heatshrink_decoder_free(heatshrink_p->decoder_p);
+#endif
 
     if (fres == HSDR_FINISH_DONE) {
         return (0);
@@ -334,7 +357,7 @@ static int patch_reader_heatshrink_init(
     heatshrink_p = &self_p->compression.heatshrink;
     heatshrink_p->window_sz2 = -1;
     heatshrink_p->lookahead_sz2 = -1;
-    heatshrink_decoder_reset(&heatshrink_p->decoder);
+    heatshrink_p->decoder_p = NULL;
     self_p->destroy = patch_reader_heatshrink_destroy;
     self_p->decompress = patch_reader_heatshrink_decompress;
 
