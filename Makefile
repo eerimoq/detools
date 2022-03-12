@@ -72,6 +72,10 @@ test-c:
 	$(MAKE) -C c/examples/in_place heatshrink
 	$(MAKE) -C c/examples/in_place crle
 	$(MAKE) -C c/examples/dump_restore
+	$(MAKE) -C c clean
+	$(MAKE) -C c test
+	$(MAKE) -C c clean
+	$(MAKE) -C c CFLAGS_EXTRA="-DHEATSHRINK_DYNAMIC_ALLOC=1" test
 
 test-c-fuzzer:
 	clang $(FUZZER_CFLAGS) \

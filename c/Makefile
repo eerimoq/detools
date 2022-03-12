@@ -25,6 +25,18 @@ SRC += main.c
 all:
 	$(CC) $(CFLAGS) $(SRC) -llzma -o detools
 
+clean:
+	rm -f detools detools.o libdetools.a esp8266-20190125-v1.10.bin
+
+test: all
+	./detools apply_patch \
+	    ../tests/files/micropython/esp8266-20180511-v1.9.4.bin \
+	    ../tests/files/micropython/esp8266-20180511-v1.9.4--20190125-v1.10-heatshrink.patch \
+	    esp8266-20190125-v1.10.bin
+	cmp \
+	    esp8266-20190125-v1.10.bin \
+	    ../tests/files/micropython/esp8266-20190125-v1.10.bin
+
 library:
 	$(CC) $(CFLAGS) detools.c -c -o detools.o
 	$(AR) cr libdetools.a detools.o

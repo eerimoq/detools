@@ -261,7 +261,7 @@ static int patch_reader_heatshrink_decompress(
 
 #if HEATSHRINK_DYNAMIC_ALLOC == 1
         heatshrink_p->decoder_p = heatshrink_decoder_alloc(
-            512,
+            256,
             heatshrink_p->window_sz2,
             heatshrink_p->lookahead_sz2);
 
@@ -333,7 +333,7 @@ static int patch_reader_heatshrink_destroy(
     heatshrink_p = &self_p->compression.heatshrink;
 
     if (heatshrink_p->decoder_p == NULL) {
-        return (-DETOOLS_CORRUPT_PATCH);
+        return (0);
     }
 
     fres = heatshrink_decoder_finish(heatshrink_p->decoder_p);
@@ -912,8 +912,10 @@ static int patch_reader_dump(struct detools_apply_patch_patch_reader_t *self_p,
 #endif
 
 #if DETOOLS_CONFIG_COMPRESSION_HEATSHRINK == 1
+#    if HEATSHRINK_DYNAMIC_ALLOC == 0
     case COMPRESSION_HEATSHRINK:
         break;
+#    endif
 #endif
 
     default:
@@ -955,10 +957,14 @@ static int patch_reader_restore(struct detools_apply_patch_patch_reader_t *self_
 #endif
 
 #if DETOOLS_CONFIG_COMPRESSION_HEATSHRINK == 1
+#    if HEATSHRINK_DYNAMIC_ALLOC == 0
     case COMPRESSION_HEATSHRINK:
+        self_p->compression.heatshrink.decoder_p =
+            &self_p->compression.heatshrink.decoder;
         self_p->destroy = patch_reader_heatshrink_destroy;
         self_p->decompress = patch_reader_heatshrink_decompress;
         break;
+#    endif
 #endif
 
     default:
