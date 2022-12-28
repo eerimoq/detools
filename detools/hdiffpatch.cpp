@@ -364,6 +364,8 @@ static PyObject *m_apply_patch(PyObject *self_p, PyObject* args_p)
         exit(1);
     }
 
+    free(temp_cache_p );
+
     return (byte_array_p);
 }
 
