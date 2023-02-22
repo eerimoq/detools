@@ -211,7 +211,7 @@ currently active patch has been successfully applied.
       +-------+-------+-------+-------+-------+-------+
       |ABCDEFGHIJKLMNOPQRSTUVWXYZstuvw|ghijklmnopqr|  | Step: 8
       +-------+-------+-------+-------+-------+-------+
-      |ABCDEFGHIJKLMNOPQRSTUVWXYZstuvwxyz|    |opqr|  | Step: 0
+      |ABCDEFGHIJKLMNOPQRSTUVWXYZstuvwxyz|    |opqr|  | Step: 9
       +-------+-------+-------+-------+-------+-------+
 
 Functions and classes
