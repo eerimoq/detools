@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define DETOOLS_VERSION                  "0.51.0"
+#define DETOOLS_VERSION                  "0.52.0"
 
 /* Error codes. */
 #define DETOOLS_OK                                        0
