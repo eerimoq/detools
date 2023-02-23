@@ -13,12 +13,18 @@ class DetoolsTest(unittest.TestCase):
                             from_filename,
                             to_filename,
                             patch_filename,
+                            user_filename,
                             **kwargs):
         fpatch = BytesIO()
 
+        if user_filename is not None:
+            fuser = open(user_filename, 'rb')
+        else:
+            fuser = None
+
         with open(from_filename, 'rb') as ffrom:
             with open(to_filename, 'rb') as fto:
-                detools.create_patch(ffrom, fto, fpatch, **kwargs)
+                detools.create_patch(ffrom, fto, fpatch, fuser=fuser, **kwargs)
 
         actual = fpatch.getvalue()
         # open(patch_filename, 'wb').write(actual)
@@ -32,15 +38,21 @@ class DetoolsTest(unittest.TestCase):
                            from_filename,
                            to_filename,
                            patch_filename,
+                           user_filename,
                            **kwargs):
         patch_type = kwargs.get('patch_type', 'sequential')
+
+        if user_filename is not None:
+            fuser = BytesIO()
+        else:
+            fuser = None
 
         if patch_type in ['sequential', 'hdiffpatch']:
             fto = BytesIO()
 
             with open(from_filename, 'rb') as ffrom:
                 with open(patch_filename, 'rb') as fpatch:
-                    to_size = detools.apply_patch(ffrom, fpatch, fto)
+                    to_size = detools.apply_patch(ffrom, fpatch, fto, fuser)
 
             actual = fto.getvalue()
         elif patch_type == 'in-place':
@@ -53,10 +65,13 @@ class DetoolsTest(unittest.TestCase):
             fmem = BytesIO(data)
 
             with open(patch_filename, 'rb') as fpatch:
-                to_size = detools.apply_patch_in_place(fmem, fpatch)
+                to_size = detools.apply_patch_in_place(fmem, fpatch, fuser)
 
             actual = fmem.getvalue()[:to_size]
         elif patch_type == 'bsdiff':
+            if fuser is not None:
+                raise Exception('bsdiff cannot have user data')
+
             fto = BytesIO()
 
             with open(from_filename, 'rb') as ffrom:
@@ -76,24 +91,37 @@ class DetoolsTest(unittest.TestCase):
         self.assertEqual(len(actual), len(expected))
         self.assertEqual(actual, expected)
 
+        if user_filename is not None:
+            with open(user_filename, 'rb') as fin:
+                self.assertEqual(fuser.getvalue(), fin.read())
+
     def assert_create_and_apply_patch(self,
                                       from_filename,
                                       to_filename,
                                       patch_filename,
+                                      user_filename=None,
                                       **kwargs):
         self.assert_create_patch(from_filename,
                                  to_filename,
                                  patch_filename,
+                                 user_filename,
                                  **kwargs)
         self.assert_apply_patch(from_filename,
                                 to_filename,
                                 patch_filename,
+                                user_filename,
                                 **kwargs)
 
     def test_create_and_apply_patch_foo(self):
         self.assert_create_and_apply_patch('tests/files/foo/old',
                                            'tests/files/foo/new',
                                            'tests/files/foo/patch')
+
+    def test_create_and_apply_patch_foo_with_user(self):
+        self.assert_create_and_apply_patch('tests/files/foo/old',
+                                           'tests/files/foo/new',
+                                           'tests/files/foo/user.patch',
+                                           'tests/files/foo/user')
 
     def test_create_and_apply_patch_foo_backwards(self):
         self.assert_create_and_apply_patch('tests/files/foo/new',

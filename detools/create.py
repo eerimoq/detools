@@ -27,6 +27,7 @@ from .common import div_ceil
 from .common import file_size
 from .common import file_read
 from .common import pack_size
+from .common import pack_header
 from .common import DataSegment
 from .common import unpack_size_bytes
 from .data_format import encode as data_format_encode
@@ -37,10 +38,6 @@ from . import hdiffpatch
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-def pack_header(patch_type, compression):
-    return bitstruct.pack('p1u3u4', patch_type, compression)
 
 
 def create_compressor(compression,
@@ -215,9 +212,11 @@ def create_patch_sequential(ffrom,
                             data_segment,
                             use_mmap,
                             heatshrink_window_sz2,
-                            heatshrink_lookahead_sz2):
+                            heatshrink_lookahead_sz2,
+                            fuser):
     fpatch.write(pack_header(PATCH_TYPE_SEQUENTIAL,
-                             compression_string_to_number(compression)))
+                             compression_string_to_number(compression),
+                             fuser))
     fpatch.write(pack_size(file_size(fto)))
     create_patch_sequential_data(ffrom,
                                  fto,
@@ -260,7 +259,8 @@ def create_patch_in_place(ffrom,
                           data_segment,
                           use_mmap,
                           heatshrink_window_sz2,
-                          heatshrink_lookahead_sz2):
+                          heatshrink_lookahead_sz2,
+                          fuser=None):
     if (memory_size % segment_size) != 0:
         raise Error(
             'Memory size {} is not a multiple of segment size {}.'.format(
@@ -310,7 +310,8 @@ def create_patch_in_place(ffrom,
 
     # Create the patch.
     fpatch.write(pack_header(PATCH_TYPE_IN_PLACE,
-                             compression_string_to_number(compression)))
+                             compression_string_to_number(compression),
+                             fuser))
     fpatch.write(pack_size(memory_size))
     fpatch.write(pack_size(segment_size))
     fpatch.write(pack_size(shift_size))
@@ -415,7 +416,8 @@ def create_patch_hdiffpatch(ffrom,
                             match_score,
                             use_mmap,
                             heatshrink_window_sz2,
-                            heatshrink_lookahead_sz2):
+                            heatshrink_lookahead_sz2,
+                            fuser):
     start_time = time.time()
     patch = create_patch_hdiffpatch_generic(ffrom,
                                             fto,
@@ -433,7 +435,8 @@ def create_patch_hdiffpatch(ffrom,
                                    heatshrink_lookahead_sz2)
 
     fpatch.write(pack_header(PATCH_TYPE_HDIFFPATCH,
-                             compression_string_to_number(compression)))
+                             compression_string_to_number(compression),
+                             fuser))
     fpatch.write(pack_size(file_size(fto)))
     fpatch.write(pack_size(len(patch)))
     fpatch.write(compressor.compress(patch))
@@ -451,7 +454,8 @@ def create_patch_match_blocks(ffrom,
                               match_block_size,
                               use_mmap,
                               heatshrink_window_sz2,
-                              heatshrink_lookahead_sz2):
+                              heatshrink_lookahead_sz2,
+                              fuser):
     start_time = time.time()
     patch = create_patch_hdiffpatch_generic(ffrom,
                                             fto,
@@ -470,12 +474,14 @@ def create_patch_match_blocks(ffrom,
 
     if patch_type == 'hdiffpatch':
         fpatch.write(pack_header(PATCH_TYPE_HDIFFPATCH,
-                                 compression_string_to_number(compression)))
+                                 compression_string_to_number(compression),
+                                 fuser))
         fpatch.write(pack_size(file_size(fto)))
         fpatch.write(pack_size(len(patch)))
     elif patch_type == 'sequential':
         fpatch.write(pack_header(PATCH_TYPE_SEQUENTIAL,
-                                 compression_string_to_number(compression)))
+                                 compression_string_to_number(compression),
+                                 fuser))
         fpatch.write(pack_size(file_size(fto)))
         fpatch.write(compressor.compress(pack_size(0)))
     else:
@@ -515,7 +521,8 @@ def create_patch(ffrom,
                  match_block_size=64,
                  use_mmap=True,
                  heatshrink_window_sz2=8,
-                 heatshrink_lookahead_sz2=7):
+                 heatshrink_lookahead_sz2=7,
+                 fuser=None):
     """Create a patch from `ffrom` to `fto` and write it to `fpatch`. All
     three arguments are file-like objects.
 
@@ -569,7 +576,8 @@ def create_patch(ffrom,
                                 data_segment,
                                 use_mmap,
                                 heatshrink_window_sz2,
-                                heatshrink_lookahead_sz2)
+                                heatshrink_lookahead_sz2,
+                                fuser)
     elif algorithm == 'bsdiff' and patch_type == 'in-place':
         create_patch_in_place(ffrom,
                               fto,
@@ -583,7 +591,8 @@ def create_patch(ffrom,
                               data_segment,
                               use_mmap,
                               heatshrink_window_sz2,
-                              heatshrink_lookahead_sz2)
+                              heatshrink_lookahead_sz2,
+                              fuser)
     elif algorithm == 'bsdiff' and patch_type == 'bsdiff':
         create_patch_bsdiff(ffrom, fto, fpatch)
     elif algorithm == 'hdiffpatch' and patch_type == 'hdiffpatch':
@@ -594,7 +603,8 @@ def create_patch(ffrom,
                                 match_score,
                                 use_mmap,
                                 heatshrink_window_sz2,
-                                heatshrink_lookahead_sz2)
+                                heatshrink_lookahead_sz2,
+                                fuser)
     elif algorithm == 'match-blocks':
         create_patch_match_blocks(ffrom,
                                   fto,
@@ -604,7 +614,8 @@ def create_patch(ffrom,
                                   match_block_size,
                                   use_mmap,
                                   heatshrink_window_sz2,
-                                  heatshrink_lookahead_sz2)
+                                  heatshrink_lookahead_sz2,
+                                  fuser)
     else:
         raise Error(
             "Bad algorithm ({}) and patch type ({}) combination.".format(
@@ -639,7 +650,8 @@ def create_patch_filenames(fromfile,
                            match_block_size=64,
                            use_mmap=True,
                            heatshrink_window_sz2=8,
-                           heatshrink_lookahead_sz2=7):
+                           heatshrink_lookahead_sz2=7,
+                           user_data_file=None):
     """Same as :func:`~detools.create_patch()`, but with filenames instead
     of file-like objects.
 
@@ -650,6 +662,11 @@ def create_patch_filenames(fromfile,
     with open(fromfile, 'rb') as ffrom:
         with open(tofile, 'rb') as fto:
             with open(patchfile, 'wb') as fpatch:
+                if user_data_file is None:
+                    fuser = None
+                else:
+                    fuser = open(user_data_file, 'rb')
+
                 create_patch(ffrom,
                              fto,
                              fpatch,
@@ -677,4 +694,5 @@ def create_patch_filenames(fromfile,
                              match_block_size,
                              use_mmap,
                              heatshrink_window_sz2,
-                             heatshrink_lookahead_sz2)
+                             heatshrink_lookahead_sz2,
+                             fuser)

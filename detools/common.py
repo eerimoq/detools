@@ -34,6 +34,8 @@ COMPRESSIONS = {
     'lz4': COMPRESSION_LZ4
 }
 
+HEADER_TYPE_USER = 1
+
 DATA_FORMAT_ARM_CORTEX_M4 = 0
 DATA_FORMAT_AARCH64       = 1
 DATA_FORMAT_XTENSA_LX106  = 2
@@ -187,8 +189,41 @@ class DataSegment(object):
         self.to_code_end = to_code_end
 
 
-def unpack_header(data):
-    return bitstruct.unpack('p1u3u4', data)
+def pack_header(patch_type, compression, fuser):
+    if fuser is None:
+        header = bitstruct.pack('p1u3u4', patch_type, compression)
+    else:
+        header = bitstruct.pack('b1u3u4', True, patch_type, compression)
+        user = bitstruct.pack('u8', HEADER_TYPE_USER)
+        user += pack_size(file_size(fuser))
+        user += fuser.read()
+        header += pack_size(len(user))
+        header += user
+
+    return header
+
+
+def unpack_header(fpatch, fuser):
+    header = fpatch.read(1)
+    is_extended, patch_type, compression = bitstruct.unpack('b1u3u4', header)
+    has_user = False
+
+    if is_extended:
+        extended_end = unpack_size(fpatch)
+        extended_end += fpatch.tell()
+
+        while fpatch.tell() < extended_end:
+            header_type = fpatch.read(1)[0]
+            size = unpack_size(fpatch)
+            data = fpatch.read(size)
+
+            if header_type == HEADER_TYPE_USER:
+                has_user = True
+
+                if fuser is not None:
+                    fuser.write(data)
+
+    return patch_type, compression, has_user
 
 
 def peek_header_type(fpatch):
@@ -199,4 +234,4 @@ def peek_header_type(fpatch):
     if len(header) != 1:
         raise Error('Failed to read the patch header.')
 
-    return unpack_header(header)[0]
+    return bitstruct.unpack('p1u3p4', header)[0]
