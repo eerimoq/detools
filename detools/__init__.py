@@ -298,10 +298,7 @@ def _do_create_patch_bsdiff(args):
 
 def _do_apply_patch(args):
     start_time = time.time()
-    apply_patch_filenames(args.fromfile,
-                          args.patchfile,
-                          args.tofile,
-                          args.user_header_data)
+    apply_patch_filenames(args.fromfile, args.patchfile, args.tofile)
     print_successful(args.tofile, start_time)
 
 
@@ -717,8 +714,6 @@ def _main():
     subparser = subparsers.add_parser(
         'apply_patch',
         description='Apply given sequential or hdiffpatch patch.')
-    subparser.add_argument('--user-header-data',
-                           help='Path to a file where to write user header data.')
     subparser.add_argument('fromfile', help='From file.')
     subparser.add_argument('patchfile', help='Patch file.')
     subparser.add_argument('tofile', help='Created to file.')

@@ -517,7 +517,7 @@ def apply_patch_hdiffpatch(ffrom, fpatch, fto, fuser=None):
     return fto.write(to_data)
 
 
-def apply_patch_filenames(fromfile, patchfile, tofile, user_data_file=None):
+def apply_patch_filenames(fromfile, patchfile, tofile):
     """Same as :func:`~detools.apply_patch()`, but with filenames instead
     of file-like objects.
 
@@ -529,12 +529,7 @@ def apply_patch_filenames(fromfile, patchfile, tofile, user_data_file=None):
     with open(fromfile, 'rb') as ffrom:
         with open(patchfile, 'rb') as fpatch:
             with open(tofile, 'wb') as fto:
-                if user_data_file is None:
-                    fuser = None
-                else:
-                    fuser = open(user_data_file, 'wb')
-
-                return apply_patch(ffrom, fpatch, fto, fuser)
+                return apply_patch(ffrom, fpatch, fto)
 
 
 def apply_patch_in_place_filenames(memfile, patchfile):
