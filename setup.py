@@ -46,7 +46,6 @@ setup(name='detools',
       packages=find_packages(exclude=['tests']),
       install_requires=[
           'humanfriendly',
-          'bincopy',
           'bitstruct',
           'pyelftools',
           'zstandard',

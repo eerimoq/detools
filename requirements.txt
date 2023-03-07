@@ -1,5 +1,4 @@
 humanfriendly
-bincopy
 bitstruct
 pyelftools
 zstandard

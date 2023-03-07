@@ -1,4 +1,3 @@
-from io import BytesIO
 import os
 from .errors import Error
 from .apply import read_header_sequential
@@ -76,8 +75,7 @@ def patch_info_sequential_inner(patch_reader, to_size):
 
 def patch_info_sequential(fpatch, fsize):
     patch_size = file_size(fpatch)
-    fuser = BytesIO()
-    compression, to_size, has_user = read_header_sequential(fpatch, fuser)
+    compression, to_size = read_header_sequential(fpatch)
     dfpatch_size = 0
     data_format = None
     dfpatch_info = None
@@ -103,7 +101,6 @@ def patch_info_sequential(fpatch, fsize):
     return (patch_size,
             compression,
             _compression_info(patch_reader),
-            fuser.getvalue() if has_user else None,
             dfpatch_size,
             data_format,
             dfpatch_info,
@@ -112,14 +109,12 @@ def patch_info_sequential(fpatch, fsize):
 
 def patch_info_in_place(fpatch):
     patch_size = file_size(fpatch)
-    fuser = BytesIO()
     (compression,
      memory_size,
      segment_size,
      shift_size,
      from_size,
-     to_size,
-     has_user) = read_header_in_place(fpatch, fuser)
+     to_size) = read_header_in_place(fpatch)
     segments = []
     patch_reader = None
 
@@ -143,7 +138,6 @@ def patch_info_in_place(fpatch):
     return (patch_size,
             compression,
             _compression_info(patch_reader),
-            fuser.getvalue() if has_user else None,
             memory_size,
             segment_size,
             shift_size,
@@ -154,8 +148,7 @@ def patch_info_in_place(fpatch):
 
 def patch_info_hdiffpatch(fpatch):
     patch_size = file_size(fpatch)
-    fuser = BytesIO()
-    compression, to_size, _, has_user = read_header_hdiffpatch(fpatch, fuser)
+    compression, to_size, _ = read_header_hdiffpatch(fpatch)
     patch_reader = None
 
     if to_size > 0:
@@ -164,7 +157,6 @@ def patch_info_hdiffpatch(fpatch):
     return (patch_size,
             compression,
             _compression_info(patch_reader),
-            fuser.getvalue() if has_user else None,
             to_size)
 
 

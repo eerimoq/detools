@@ -141,12 +141,17 @@ def convert_compression(compression):
     return compression
 
 
-def read_header_sequential(fpatch, fuser):
+def read_header_sequential(fpatch):
     """Read a sequential header.
 
     """
 
-    patch_type, compression, has_user = unpack_header(fpatch, fuser)
+    header = fpatch.read(1)
+
+    if len(header) != 1:
+        raise Error('Failed to read the patch header.')
+
+    patch_type, compression  = unpack_header(header)
 
     if patch_type != PATCH_TYPE_SEQUENTIAL:
         raise Error(
@@ -156,15 +161,20 @@ def read_header_sequential(fpatch, fuser):
     compression = convert_compression(compression)
     to_size = unpack_size(fpatch)
 
-    return compression, to_size, has_user
+    return compression, to_size
 
 
-def read_header_hdiffpatch(fpatch, fuser):
+def read_header_hdiffpatch(fpatch):
     """Read a hdiffpatch header.
 
     """
 
-    patch_type, compression, has_user = unpack_header(fpatch, fuser)
+    header = fpatch.read(1)
+
+    if len(header) != 1:
+        raise Error('Failed to read the patch header.')
+
+    patch_type, compression  = unpack_header(header)
 
     if patch_type != PATCH_TYPE_HDIFFPATCH:
         raise Error(
@@ -175,15 +185,20 @@ def read_header_hdiffpatch(fpatch, fuser):
     to_size = unpack_size(fpatch)
     patch_size = unpack_size(fpatch)
 
-    return compression, to_size, patch_size, has_user
+    return compression, to_size, patch_size
 
 
-def read_header_in_place(fpatch, fuser):
+def read_header_in_place(fpatch):
     """Read an in-place header.
 
     """
 
-    patch_type, compression, has_user = unpack_header(fpatch, fuser)
+    header = fpatch.read(1)
+
+    if len(header) != 1:
+        raise Error('Failed to read the patch header.')
+
+    patch_type, compression = unpack_header(header)
 
     if patch_type != PATCH_TYPE_IN_PLACE:
         raise Error(
@@ -197,13 +212,7 @@ def read_header_in_place(fpatch, fuser):
     from_size = unpack_size(fpatch)
     to_size = unpack_size(fpatch)
 
-    return (compression,
-            memory_size,
-            segment_size,
-            shift_size,
-            from_size,
-            to_size,
-            has_user)
+    return compression, memory_size, segment_size, shift_size, from_size, to_size
 
 
 def offtin(data):
@@ -313,7 +322,7 @@ def create_data_format_readers(patch_reader, ffrom, to_size):
     return dfdiff, ffrom
 
 
-def apply_patch(ffrom, fpatch, fto, fuser=None):
+def apply_patch(ffrom, fpatch, fto):
     """Apply given sequential or hdiffpatch patch `fpatch` to `ffrom` to
     create `fto`. Returns the size of the created to-data.
 
@@ -330,15 +339,15 @@ def apply_patch(ffrom, fpatch, fto, fuser=None):
     patch_type = peek_header_type(fpatch)
 
     if patch_type == PATCH_TYPE_SEQUENTIAL:
-        return apply_patch_sequential(ffrom, fpatch, fto, fuser)
+        return apply_patch_sequential(ffrom, fpatch, fto)
     elif patch_type == PATCH_TYPE_HDIFFPATCH:
-        return apply_patch_hdiffpatch(ffrom, fpatch, fto, fuser)
+        return apply_patch_hdiffpatch(ffrom, fpatch, fto)
     else:
         raise Error('Bad patch type {}.'.format(patch_type))
 
 
-def apply_patch_sequential(ffrom, fpatch, fto, fuser=None):
-    compression, to_size, _ = read_header_sequential(fpatch, fuser)
+def apply_patch_sequential(ffrom, fpatch, fto):
+    compression, to_size = read_header_sequential(fpatch)
 
     if to_size == 0:
         return to_size
@@ -385,7 +394,7 @@ def apply_patch_sequential(ffrom, fpatch, fto, fuser=None):
     return to_size
 
 
-def apply_patch_in_place(fmem, fpatch, fuser=None):
+def apply_patch_in_place(fmem, fpatch):
     """Apply given in-place patch `fpatch` to `fmem`. Returns the size of
     the created to-data.
 
@@ -403,8 +412,7 @@ def apply_patch_in_place(fmem, fpatch, fuser=None):
      segment_size,
      shift_size,
      from_size,
-     to_size,
-     _) = read_header_in_place(fpatch, fuser)
+     to_size) = read_header_in_place(fpatch)
 
     if to_size > 0:
         patch_reader = PatchReader(fpatch, compression)
@@ -491,7 +499,7 @@ def apply_patch_bsdiff(ffrom, fpatch, fto):
     return to_size
 
 
-def apply_patch_hdiffpatch(ffrom, fpatch, fto, fuser=None):
+def apply_patch_hdiffpatch(ffrom, fpatch, fto):
     """Apply given hdiffpatch patch `fpatch` to `ffrom` to create
     `fto`. Returns the size of the created to-data.
 
@@ -505,7 +513,7 @@ def apply_patch_hdiffpatch(ffrom, fpatch, fto, fuser=None):
 
     """
 
-    compression, to_size, patch_size, _ = read_header_hdiffpatch(fpatch, fuser)
+    compression, to_size, patch_size = read_header_hdiffpatch(fpatch)
 
     if to_size == 0:
         return to_size

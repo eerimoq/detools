@@ -6,7 +6,6 @@ from statistics import mean
 from statistics import median
 import binascii
 
-import bincopy
 from humanfriendly import format_size
 from humanfriendly import parse_size
 from humanfriendly import format_timespan
@@ -42,13 +41,6 @@ def _format_compression(compression, compression_info):
         compression += f' ({info})'
 
     return compression
-
-
-def _format_user(user):
-    bf = bincopy.BinFile()
-    bf.add_binary(user)
-
-    return '  ' + bf.as_hexdump().replace('\n', '\n' + 2 * ' ').strip()
 
 
 def parse_integer(option, value):
@@ -263,7 +255,6 @@ def _do_create_patch(args):
                            match_score=args.match_score,
                            match_block_size=args.match_block_size,
                            use_mmap=not args.no_mmap,
-                           user_data_file=args.user_header_data,
                            **heatshrink_args(args),
                            **data_format_args(args))
     print_successful(args.patchfile, start_time)
@@ -383,7 +374,6 @@ def _patch_info_sequential(detailed,
                            patch_size,
                            compression,
                            compression_info,
-                           user,
                            dfpatch_size,
                            data_format,
                            dfpatch_info,
@@ -401,9 +391,6 @@ def _patch_info_sequential(detailed,
     patch_to_ratio = _format_ratio(patch_size, to_size)
     diff_extra_ratio = _format_ratio(number_of_diff_bytes, number_of_extra_bytes)
     compression = _format_compression(compression, compression_info)
-
-    if user is not None:
-        user = _format_user(user)
 
     if diff_sizes:
         mean_diff_size = fsize(int(mean(diff_sizes)))
@@ -426,11 +413,6 @@ def _patch_info_sequential(detailed,
     print('Diff/extra ratio:   {} % (higher is better)'.format(diff_extra_ratio))
     print('Size/data ratio:    {} % (lower is better)'.format(size_data_ratio))
     print('Compression:        {}'.format(compression))
-
-    if user is not None:
-        print('User header data:')
-        print(user)
-
     print('Data format size:   {}'.format(fsize(dfpatch_size)))
 
     if dfpatch_size > 0:
@@ -458,7 +440,6 @@ def _patch_info_in_place(fsize,
                          patch_size,
                          compression,
                          compression_info,
-                         user,
                          memory_size,
                          segment_size,
                          from_shift_size,
@@ -467,9 +448,6 @@ def _patch_info_in_place(fsize,
                          segments):
     patch_to_ratio = _format_ratio(patch_size, to_size)
     compression = _format_compression(compression, compression_info)
-
-    if user is not None:
-        user = _format_user(user)
 
     print('Type:               in-place')
     print('Patch size:         {}'.format(fsize(patch_size)))
@@ -481,11 +459,6 @@ def _patch_info_in_place(fsize,
     print('Patch/to ratio:     {} % (lower is better)'.format(patch_to_ratio))
     print('Number of segments: {}'.format(len(segments)))
     print('Compression:        {}'.format(compression))
-
-    if user is not None:
-        print('User header data:')
-        print(user)
-
     print()
 
     for i, (dfpatch_size, data_format, sequential_info) in enumerate(segments):
@@ -508,23 +481,15 @@ def _patch_info_hdiffpatch(fsize,
                            patch_size,
                            compression,
                            compression_info,
-                           user,
                            to_size):
     patch_to_ratio = _format_ratio(patch_size, to_size)
     compression = _format_compression(compression, compression_info)
-
-    if user is not None:
-        user = _format_user(user)
 
     print('Type:               hdiffpatch')
     print('Patch size:         {}'.format(fsize(patch_size)))
     print('To size:            {}'.format(fsize(to_size)))
     print('Patch/to ratio:     {} % (lower is better)'.format(patch_to_ratio))
     print('Compression:        {}'.format(compression))
-
-    if user is not None:
-        print('User header data:')
-        print(user)
 
 
 def _do_patch_info(args):
@@ -633,9 +598,6 @@ def _main():
         default='sequential',
         help=('Patch type. Sequential is sequential, hdiffpatch smaller '
               '(default: %(default)s).'))
-    subparser.add_argument(
-        '--user-header-data',
-        help='Path to a file with user header data.')
     subparser.add_argument(
         '-a', '--algorithm',
         choices=('bsdiff', 'hdiffpatch', 'match-blocks'),
