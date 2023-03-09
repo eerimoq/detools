@@ -122,37 +122,53 @@ static bool is_overflow(int value)
 }
 
 static int chunk_unpack_header_size(struct detools_apply_patch_chunk_t *self_p,
+                                    struct detools_apply_patch_size_t *size_state_p,
                                     int *size_p)
 {
-    uint8_t byte;
-    int offset;
     int res;
+    uint8_t byte;
 
-    res = chunk_get(self_p, &byte);
+    do {
+        switch (size_state_p->state) {
 
-    if (res != 0) {
-        return (-DETOOLS_SHORT_HEADER);
-    }
+        case detools_unpack_usize_state_first_t:
+            res = chunk_get(self_p, &byte);
 
-    *size_p = (byte & 0x3f);
-    offset = 6;
+            if (res != 0) {
+                return (res);
+            }
 
-    while ((byte & 0x80) != 0) {
-        res = chunk_get(self_p, &byte);
+            size_state_p->value = (byte & 0x3f);
+            size_state_p->offset = 6;
+            size_state_p->state = detools_unpack_usize_state_consecutive_t;
+            break;
 
-        if (res != 0) {
-            return (-DETOOLS_SHORT_HEADER);
+        case detools_unpack_usize_state_consecutive_t:
+            res = chunk_get(self_p, &byte);
+
+            if (res != 0) {
+                return (res);
+            }
+
+            if (is_overflow(size_state_p->offset)) {
+                return (-DETOOLS_CORRUPT_PATCH_OVERFLOW);
+            }
+
+            size_state_p->value |= ((byte & 0x7f) << size_state_p->offset);
+            size_state_p->offset += 7;
+            break;
+
+        default:
+            return (-DETOOLS_INTERNAL_ERROR);
         }
+    } while ((byte & 0x80) != 0);
 
-        if (is_overflow(offset)) {
-            return (-DETOOLS_CORRUPT_PATCH_OVERFLOW);
-        }
+    /* Done, fix sign. */
+    size_state_p->state = detools_unpack_usize_state_first_t;
 
-        *size_p |= ((byte & 0x7f) << offset);
-        offset += 7;
-    }
+    *size_p = size_state_p->value;
 
-    return (0);
+    return (res);
 }
 
 /*
@@ -1076,12 +1092,10 @@ static int common_process_size(
  * Low level sequential patch type functionality.
  */
 
-static int process_init(struct detools_apply_patch_t *self_p)
+static int process_init_fixed_header(struct detools_apply_patch_t *self_p)
 {
     int patch_type;
     uint8_t byte;
-    int res;
-    int to_size;
 
     if (chunk_get(&self_p->chunk, &byte) != 0) {
         return (-DETOOLS_SHORT_HEADER);
@@ -1094,7 +1108,18 @@ static int process_init(struct detools_apply_patch_t *self_p)
         return (-DETOOLS_BAD_PATCH_TYPE);
     }
 
-    res = chunk_unpack_header_size(&self_p->chunk, &to_size);
+    self_p->init_state = detools_apply_patch_init_state_to_size_t;
+    self_p->size.state = detools_unpack_usize_state_first_t;
+
+    return (0);
+}
+
+static int process_init_to_size(struct detools_apply_patch_t *self_p)
+{
+    int res;
+    int to_size;
+
+    res = chunk_unpack_header_size(&self_p->chunk, &self_p->size, &to_size);
 
     if (res != 0) {
         return (res);
@@ -1120,6 +1145,28 @@ static int process_init(struct detools_apply_patch_t *self_p)
         self_p->state = detools_apply_patch_state_dfpatch_size_t;
     } else {
         self_p->state = detools_apply_patch_state_done_t;
+    }
+
+    return (res);
+}
+
+static int process_init(struct detools_apply_patch_t *self_p)
+{
+    int res;
+
+    switch (self_p->init_state) {
+
+    case detools_apply_patch_init_state_fixed_header_t:
+        res = process_init_fixed_header(self_p);
+        break;
+
+    case detools_apply_patch_init_state_to_size_t:
+        res = process_init_to_size(self_p);
+        break;
+
+    default:
+        res = -DETOOLS_INTERNAL_ERROR;
+        break;
     }
 
     return (res);
@@ -1300,8 +1347,7 @@ static int apply_patch_process_once(struct detools_apply_patch_t *self_p)
         break;
 
     case detools_apply_patch_state_done_t:
-        res = -DETOOLS_ALREADY_DONE;
-        break;
+        return (-DETOOLS_ALREADY_DONE);
 
     case detools_apply_patch_state_failed_t:
         res = -DETOOLS_ALREADY_FAILED;
@@ -1362,6 +1408,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
     self_p->from_offset = 0;
     self_p->arg_p = arg_p;
     self_p->state = detools_apply_patch_state_init_t;
+    self_p->init_state = detools_apply_patch_init_state_fixed_header_t;
     self_p->patch_reader.destroy = NULL;
 
     return (0);
@@ -1452,7 +1499,7 @@ int detools_apply_patch_process(struct detools_apply_patch_t *self_p,
         res = apply_patch_process_once(self_p);
     }
 
-    if (res == 1) {
+    if ((res == 1) || (res == -DETOOLS_ALREADY_DONE)) {
         res = 0;
     }
 
@@ -1676,6 +1723,7 @@ static int in_place_shift_memory(struct detools_apply_patch_in_place_t *self_p,
     return (0);
 }
 
+/* ToDo: Split into multiple states, like non-in_place patch. */
 static int in_place_read_header(struct detools_apply_patch_in_place_t *self_p,
                                 int *compression_p,
                                 int *memory_size_p,
@@ -1699,31 +1747,43 @@ static int in_place_read_header(struct detools_apply_patch_in_place_t *self_p,
         return (-DETOOLS_BAD_PATCH_TYPE);
     }
 
-    res = chunk_unpack_header_size(&self_p->chunk, memory_size_p);
+    self_p->size.state = detools_unpack_usize_state_first_t;
+    res = chunk_unpack_header_size(&self_p->chunk, &self_p->size, memory_size_p);
 
     if (res != 0) {
-        return (res);
+        return (-DETOOLS_SHORT_HEADER);
     }
 
-    res = chunk_unpack_header_size(&self_p->chunk, segment_size_p);
+    self_p->size.state = detools_unpack_usize_state_first_t;
+    res = chunk_unpack_header_size(&self_p->chunk, &self_p->size, segment_size_p);
 
     if (res != 0) {
-        return (res);
+        return (-DETOOLS_SHORT_HEADER);
     }
 
-    res = chunk_unpack_header_size(&self_p->chunk, shift_size_p);
+    self_p->size.state = detools_unpack_usize_state_first_t;
+    res = chunk_unpack_header_size(&self_p->chunk, &self_p->size, shift_size_p);
 
     if (res != 0) {
-        return (res);
+        return (-DETOOLS_SHORT_HEADER);
     }
 
-    res = chunk_unpack_header_size(&self_p->chunk, from_size_p);
+    self_p->size.state = detools_unpack_usize_state_first_t;
+    res = chunk_unpack_header_size(&self_p->chunk, &self_p->size, from_size_p);
 
     if (res != 0) {
-        return (res);
+        return (-DETOOLS_SHORT_HEADER);
     }
 
-    return (chunk_unpack_header_size(&self_p->chunk, to_size_p));
+    self_p->size.state = detools_unpack_usize_state_first_t;
+
+    res = chunk_unpack_header_size(&self_p->chunk, &self_p->size, to_size_p);
+
+    if (res != 0) {
+        return (-DETOOLS_SHORT_HEADER);
+    }
+
+    return (res);
 }
 
 static int in_place_process_init(struct detools_apply_patch_in_place_t *self_p)
@@ -1975,8 +2035,7 @@ static int apply_patch_in_place_process_once(
         break;
 
     case detools_apply_patch_state_done_t:
-        res = -DETOOLS_ALREADY_DONE;
-        break;
+        return (-DETOOLS_ALREADY_DONE);
 
     case detools_apply_patch_state_failed_t:
         res = -DETOOLS_ALREADY_FAILED;
@@ -2034,7 +2093,7 @@ int detools_apply_patch_in_place_process(
         res = apply_patch_in_place_process_once(self_p);
     }
 
-    if (res == 1) {
+    if ((res == 1) || (res == -DETOOLS_ALREADY_DONE)) {
         res = 0;
     }
 

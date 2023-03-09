@@ -751,14 +751,14 @@ TEST(apply_patch_one_byte)
 {
     assert_apply_patch_error("../../tests/files/foo/old",
                              "../../tests/files/foo/one-byte.patch",
-                             -DETOOLS_SHORT_HEADER);
+                             -DETOOLS_NOT_ENOUGH_PATCH_DATA);
 }
 
 TEST(apply_patch_short_to_size)
 {
     assert_apply_patch_error("../../tests/files/foo/old",
                              "../../tests/files/foo/short-to-size.patch",
-                             -DETOOLS_SHORT_HEADER);
+                             -DETOOLS_NOT_ENOUGH_PATCH_DATA);
 }
 
 TEST(apply_patch_file_open_error)
@@ -837,11 +837,11 @@ TEST(apply_patch_foo_incremental)
     expected_patch_size = patch_size;
 
     ASSERT_EQ(detools_apply_patch_init(&apply_patch,
-                                    io_read,
-                                    io_seek,
-                                    patch_size,
-                                    io_write,
-                                    &io),
+                                       io_read,
+                                       io_seek,
+                                       patch_size,
+                                       io_write,
+                                       &io),
               0);
 
     /* Process up to 64 new patch bytes per iteration. */
@@ -868,11 +868,11 @@ TEST(apply_patch_foo_incremental_init_finalize)
     io_init(&io, "../../tests/files/foo/old", "../../tests/files/foo/new");
 
     ASSERT_EQ(detools_apply_patch_init(&apply_patch,
-                                    io_read,
-                                    io_seek,
-                                    2780,
-                                    io_write,
-                                    &io),
+                                       io_read,
+                                       io_seek,
+                                       2780,
+                                       io_write,
+                                       &io),
               0);
     ASSERT_EQ(detools_apply_patch_finalize(&apply_patch), -DETOOLS_SHORT_HEADER);
 }
@@ -888,10 +888,10 @@ TEST(apply_patch_foo_incremental_process_once)
     patch_p = patch_init("../../tests/files/foo/patch", &patch_size);
 
     ASSERT_EQ(detools_apply_patch_init(&apply_patch,
-                                    io_read,
-                                    io_seek,
-                                    patch_size,
-                                    io_write,
+                                       io_read,
+                                       io_seek,
+                                       patch_size,
+                                       io_write,
                                        &io),
               0);
     ASSERT_EQ(detools_apply_patch_process(&apply_patch,
@@ -900,6 +900,64 @@ TEST(apply_patch_foo_incremental_process_once)
               0);
     ASSERT_EQ(detools_apply_patch_finalize(&apply_patch),
               -DETOOLS_NOT_ENOUGH_PATCH_DATA);
+}
+
+TEST(apply_patch_foo_process_one_byte_at_a_time)
+{
+    struct detools_apply_patch_t apply_patch;
+    struct io_t io;
+    const uint8_t *patch_p;
+    size_t patch_size;
+    size_t offset;
+
+    io_init(&io, "../../tests/files/foo/old", "../../tests/files/foo/new");
+    patch_p = patch_init("../../tests/files/foo/patch", &patch_size);
+
+    ASSERT_EQ(detools_apply_patch_init(&apply_patch,
+                                       io_read,
+                                       io_seek,
+                                       patch_size,
+                                       io_write,
+                                       &io),
+              0);
+
+    for (offset = 0; offset < patch_size; offset++) {
+        ASSERT_EQ(detools_apply_patch_process(&apply_patch,
+                                              &patch_p[offset],
+                                              1),
+                  0);
+    }
+
+    ASSERT_EQ(detools_apply_patch_finalize(&apply_patch), 2780);
+}
+
+TEST(apply_patch_foo_heatshrink_process_one_byte_at_a_time)
+{
+    struct detools_apply_patch_t apply_patch;
+    struct io_t io;
+    const uint8_t *patch_p;
+    size_t patch_size;
+    size_t offset;
+
+    io_init(&io, "../../tests/files/foo/old", "../../tests/files/foo/new");
+    patch_p = patch_init("../../tests/files/foo/heatshrink.patch", &patch_size);
+
+    ASSERT_EQ(detools_apply_patch_init(&apply_patch,
+                                       io_read,
+                                       io_seek,
+                                       patch_size,
+                                       io_write,
+                                       &io),
+              0);
+
+    for (offset = 0; offset < patch_size; offset++) {
+        ASSERT_EQ(detools_apply_patch_process(&apply_patch,
+                                              &patch_p[offset],
+                                              1),
+                  0);
+    }
+
+    ASSERT_EQ(detools_apply_patch_finalize(&apply_patch), 2780);
 }
 
 TEST(error_as_string)

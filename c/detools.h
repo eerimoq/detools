@@ -208,6 +208,13 @@ typedef int (*detools_step_set_t)(void *arg_p, int step);
  */
 typedef int (*detools_step_get_t)(void *arg_p, int *step_p);
 
+struct detools_apply_patch_size_t {
+    int state;
+    int value;
+    int offset;
+    bool is_signed;
+};
+
 struct detools_apply_patch_patch_reader_none_t {
     size_t patch_size;
     size_t patch_offset;
@@ -278,12 +285,7 @@ struct detools_apply_patch_patch_reader_crle_t {
 
 struct detools_apply_patch_patch_reader_t {
     struct detools_apply_patch_chunk_t *patch_chunk_p;
-    struct {
-        int state;
-        int value;
-        int offset;
-        bool is_signed;
-    } size;
+    struct detools_apply_patch_size_t size;
     union {
 #if DETOOLS_CONFIG_COMPRESSION_NONE == 1
         struct detools_apply_patch_patch_reader_none_t none;
@@ -322,6 +324,11 @@ enum detools_apply_patch_state_t {
     detools_apply_patch_state_failed_t
 };
 
+enum detools_apply_patch_init_state_t {
+    detools_apply_patch_init_state_fixed_header_t = 0,
+    detools_apply_patch_init_state_to_size_t
+};
+
 /**
  * The apply patch data structure.
  */
@@ -332,6 +339,7 @@ struct detools_apply_patch_t {
     detools_write_t to_write;
     void *arg_p;
     enum detools_apply_patch_state_t state;
+    enum detools_apply_patch_init_state_t init_state;
     int compression;
     size_t patch_offset;
     size_t to_offset;
@@ -340,6 +348,7 @@ struct detools_apply_patch_t {
     size_t chunk_size;
     struct detools_apply_patch_patch_reader_t patch_reader;
     struct detools_apply_patch_chunk_t chunk;
+    struct detools_apply_patch_size_t size;
 };
 
 /**
@@ -369,6 +378,7 @@ struct detools_apply_patch_in_place_t {
     } segment;
     struct detools_apply_patch_patch_reader_t patch_reader;
     struct detools_apply_patch_chunk_t chunk;
+    struct detools_apply_patch_size_t size;
 };
 
 /**
