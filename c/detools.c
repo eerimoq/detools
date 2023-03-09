@@ -1747,35 +1747,29 @@ static int in_place_read_header(struct detools_apply_patch_in_place_t *self_p,
         return (-DETOOLS_BAD_PATCH_TYPE);
     }
 
-    self_p->size.state = detools_unpack_usize_state_first_t;
     res = chunk_unpack_header_size(&self_p->chunk, &self_p->size, memory_size_p);
 
     if (res != 0) {
         return (-DETOOLS_SHORT_HEADER);
     }
 
-    self_p->size.state = detools_unpack_usize_state_first_t;
     res = chunk_unpack_header_size(&self_p->chunk, &self_p->size, segment_size_p);
 
     if (res != 0) {
         return (-DETOOLS_SHORT_HEADER);
     }
 
-    self_p->size.state = detools_unpack_usize_state_first_t;
     res = chunk_unpack_header_size(&self_p->chunk, &self_p->size, shift_size_p);
 
     if (res != 0) {
         return (-DETOOLS_SHORT_HEADER);
     }
 
-    self_p->size.state = detools_unpack_usize_state_first_t;
     res = chunk_unpack_header_size(&self_p->chunk, &self_p->size, from_size_p);
 
     if (res != 0) {
         return (-DETOOLS_SHORT_HEADER);
     }
-
-    self_p->size.state = detools_unpack_usize_state_first_t;
 
     res = chunk_unpack_header_size(&self_p->chunk, &self_p->size, to_size_p);
 
@@ -1796,6 +1790,7 @@ static int in_place_process_init(struct detools_apply_patch_in_place_t *self_p)
     int from_size;
     int to_size;
 
+    self_p->size.state = detools_unpack_usize_state_first_t;
     res = in_place_read_header(self_p,
                                &compression,
                                &memory_size,
