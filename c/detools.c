@@ -1138,7 +1138,6 @@ static int process_init_to_size(struct detools_apply_patch_t *self_p)
         return (-DETOOLS_CORRUPT_PATCH);
     }
 
-    self_p->to_offset = 0;
     self_p->to_size = (size_t)to_size;
 
     if (to_size > 0) {
@@ -1404,6 +1403,7 @@ int detools_apply_patch_init(struct detools_apply_patch_t *self_p,
     self_p->from_seek = from_seek;
     self_p->patch_size = patch_size;
     self_p->patch_offset = 0;
+    self_p->to_offset = 0;
     self_p->to_write = to_write;
     self_p->from_offset = 0;
     self_p->arg_p = arg_p;
