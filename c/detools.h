@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define DETOOLS_VERSION                  "0.52.0"
+#define DETOOLS_VERSION                  "0.53.0"
 
 /* Error codes. */
 #define DETOOLS_OK                                        0
@@ -351,6 +351,15 @@ struct detools_apply_patch_t {
     struct detools_apply_patch_size_t size;
 };
 
+enum detools_apply_patch_in_place_init_state_t {
+    detools_apply_patch_in_place_init_state_fixed_header_t = 0,
+    detools_apply_patch_in_place_init_state_memory_size_t,
+    detools_apply_patch_in_place_init_state_segment_size_t,
+    detools_apply_patch_in_place_init_state_shift_size_t,
+    detools_apply_patch_in_place_init_state_from_size_t,
+    detools_apply_patch_in_place_init_state_to_size_t
+};
+
 /**
  * The in-place apply patch data structure.
  */
@@ -363,9 +372,13 @@ struct detools_apply_patch_in_place_t {
     size_t patch_size;
     void *arg_p;
     enum detools_apply_patch_state_t state;
+    enum detools_apply_patch_in_place_init_state_t init_state;
+    int compression;
     int ongoing_step;
     size_t to_pos;
     size_t to_size;
+    size_t from_size;
+    size_t memory_size;
     size_t segment_size;
     size_t shift_size;
     size_t chunk_size;

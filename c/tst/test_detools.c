@@ -792,7 +792,7 @@ TEST(apply_patch_foo_in_place_memory_size_missing)
         "../../tests/files/foo/old",
         "../../tests/files/foo/missing-in-place-memory-size.patch",
         3000,
-        -DETOOLS_SHORT_HEADER);
+        -DETOOLS_NOT_ENOUGH_PATCH_DATA);
 }
 
 TEST(apply_patch_foo_in_place_segment_size_missing)
@@ -801,7 +801,7 @@ TEST(apply_patch_foo_in_place_segment_size_missing)
         "../../tests/files/foo/old",
         "../../tests/files/foo/missing-in-place-segment-size.patch",
         3000,
-        -DETOOLS_SHORT_HEADER);
+        -DETOOLS_NOT_ENOUGH_PATCH_DATA);
 }
 
 TEST(apply_patch_foo_in_place_shift_size_missing)
@@ -810,7 +810,7 @@ TEST(apply_patch_foo_in_place_shift_size_missing)
         "../../tests/files/foo/old",
         "../../tests/files/foo/missing-in-place-shift-size.patch",
         3000,
-        -DETOOLS_SHORT_HEADER);
+        -DETOOLS_NOT_ENOUGH_PATCH_DATA);
 }
 
 TEST(apply_patch_foo_in_place_from_size_missing)
@@ -819,7 +819,7 @@ TEST(apply_patch_foo_in_place_from_size_missing)
         "../../tests/files/foo/old",
         "../../tests/files/foo/missing-in-place-from-size.patch",
         3000,
-        -DETOOLS_SHORT_HEADER);
+        -DETOOLS_NOT_ENOUGH_PATCH_DATA);
 }
 
 TEST(apply_patch_foo_incremental)
