@@ -30,9 +30,39 @@ static FILE *myfopen(const char *name_p, const char *flags_p)
     return (file_p);
 }
 
-static void io_init(struct io_t *self_p,
-                    const char *from_p,
-                    const char *to_p)
+static void create_in_place_memory_file(size_t memory_size,
+                                        const char *memory_p,
+                                        const char *from_p)
+{
+    FILE *fmem_p;
+    FILE *ffrom_p;
+    size_t offset;
+    size_t size;
+    uint8_t buf[512];
+
+    fmem_p = myfopen(memory_p, "wb");
+    ffrom_p = myfopen(from_p, "rb");
+
+    offset = 0;
+
+    while (offset < memory_size) {
+        size = fread(&buf[0], 1, sizeof(buf), ffrom_p);
+
+        if (size == 0) {
+            memset(&buf[0], -1, sizeof(buf));
+            size = MIN(sizeof(buf), memory_size - offset);
+        }
+
+        ASSERT_EQ(fwrite(&buf[0], 1, size, fmem_p), size);
+        offset += size;
+    }
+
+    ASSERT_EQ(fgetc(ffrom_p), EOF);
+    ASSERT_EQ(fclose(fmem_p), 0);
+    ASSERT_EQ(fclose(ffrom_p), 0);
+}
+
+static void io_init(struct io_t *self_p, const char *from_p, const char *to_p)
 {
     FILE *file_p;
     long size;
@@ -94,6 +124,104 @@ static int io_write(void *arg_p, const uint8_t *buf_p, size_t size)
 
     memcpy(&self_p->to.actual_p[self_p->to.written], buf_p, size);
     self_p->to.written += size;
+
+    return (0);
+}
+
+struct io_mem_t {
+    FILE *fmem_p;
+    size_t memory_size;
+    struct {
+        uint8_t *expected_p;
+        size_t size;
+    } to;
+};
+
+static void io_mem_init(struct io_mem_t *self_p,
+                        size_t memory_size,
+                        const char *from_p,
+                        const char *to_p)
+{
+    const char *memory_p = "assert-apply-patch-in-place.mem";
+    FILE *file_p;
+    long size;
+
+    create_in_place_memory_file(memory_size, memory_p, from_p);
+
+    self_p->fmem_p = myfopen(memory_p, "r+b");
+    self_p->memory_size = memory_size;
+
+    file_p = myfopen(to_p, "rb");
+
+    ASSERT_EQ(fseek(file_p, 0, SEEK_END), 0);
+    size = ftell(file_p);
+    ASSERT_GT(size, 0);
+    self_p->to.size = (size_t)size;
+    ASSERT_EQ(fseek(file_p, 0, SEEK_SET), 0);
+
+    self_p->to.expected_p = nala_alloc(self_p->to.size);
+    ASSERT_EQ(fread(self_p->to.expected_p, self_p->to.size, 1, file_p), 1);
+
+    fclose(file_p);
+}
+
+static void io_mem_assert_ok(struct io_mem_t *self_p)
+{
+    uint8_t *actual_p;
+
+    actual_p = nala_alloc(self_p->memory_size);
+    ASSERT_EQ(fseek(self_p->fmem_p, 0, SEEK_SET), 0);
+    ASSERT_EQ(fread(actual_p, self_p->memory_size, 1, self_p->fmem_p), 1);
+    ASSERT_MEMORY_EQ(actual_p, self_p->to.expected_p, self_p->to.size);
+}
+
+static int io_mem_read(void *arg_p, void *dst_p, uintptr_t src, size_t size)
+{
+    struct io_mem_t *self_p;
+
+    self_p = (struct io_mem_t *)arg_p;
+
+    if (fseek(self_p->fmem_p, src, SEEK_SET) == 0) {
+        if (fread(dst_p, 1, size, self_p->fmem_p) == size) {
+            return (0);
+        } else {
+            return (-1);
+        }
+    } else {
+        return (-1);
+    }
+}
+
+static int io_mem_write(void *arg_p, uintptr_t dst, void *src_p, size_t size)
+{
+    struct io_mem_t *self_p;
+
+    self_p = (struct io_mem_t *)arg_p;
+
+    if (fseek(self_p->fmem_p, dst, SEEK_SET) == 0) {
+        if (fwrite(src_p, 1, size, self_p->fmem_p) == size) {
+            return (0);
+        } else {
+            return (-1);
+        }
+    } else {
+        return (-1);
+    }
+}
+
+static int io_mem_erase(void *arg_p, uintptr_t addr, size_t size)
+{
+    struct io_mem_t *self_p;
+    size_t i;
+    uint8_t byte;
+
+    self_p = (struct io_mem_t *)arg_p;
+    ASSERT_EQ(fseek(self_p->fmem_p, addr, SEEK_SET), 0);
+    byte = 0xff;
+
+    for (i = 0; i < size; i++) {
+        ASSERT_EQ(fwrite(&byte, 1, sizeof(byte), self_p->fmem_p), 1);
+    }
 
     return (0);
 }
@@ -216,40 +344,17 @@ static void assert_apply_patch_in_place_resumable(const char *from_p,
     int res;
     const char *memory_p = "assert-apply-patch-in-place.mem";
     FILE *fmem_p;
-    FILE *ffrom_p;
     FILE *fto_p;
     int actual_byte;
     int expected_byte;
     struct stat statbuf;
     int to_size;
-    size_t offset;
-    size_t size;
-    uint8_t buf[512];
 
     ASSERT_EQ(stat(to_p, &statbuf), 0);
     to_size = (int)statbuf.st_size;
 
     if (!resume) {
-        fmem_p = myfopen(memory_p, "wb");
-        ffrom_p = myfopen(from_p, "rb");
-
-        offset = 0;
-
-        while (offset < memory_size) {
-            size = fread(&buf[0], 1, sizeof(buf), ffrom_p);
-
-            if (size == 0) {
-                memset(&buf[0], -1, sizeof(buf));
-                size = MIN(sizeof(buf), memory_size - offset);
-            }
-
-            ASSERT_EQ(fwrite(&buf[0], 1, size, fmem_p), size);
-            offset += size;
-        }
-
-        ASSERT_EQ(fgetc(ffrom_p), EOF);
-        ASSERT_EQ(fclose(fmem_p), 0);
-        ASSERT_EQ(fclose(ffrom_p), 0);
+        create_in_place_memory_file(memory_size, memory_p, from_p);
     }
 
     res = detools_apply_patch_in_place_filenames(memory_p,
@@ -822,6 +927,42 @@ TEST(apply_patch_foo_in_place_from_size_missing)
         -DETOOLS_NOT_ENOUGH_PATCH_DATA);
 }
 
+TEST(apply_patch_foo_in_place_process_one_byte_at_a_time)
+{
+    struct detools_apply_patch_in_place_t apply_patch;
+    struct io_mem_t io;
+    const uint8_t *patch_p;
+    size_t patch_size;
+    size_t offset;
+
+    io_mem_init(&io,
+                3000,
+                "../../tests/files/foo/old",
+                "../../tests/files/foo/new");
+    patch_p = patch_init("../../tests/files/foo/in-place-3000-500.patch",
+                         &patch_size);
+
+    ASSERT_EQ(detools_apply_patch_in_place_init(&apply_patch,
+                                                io_mem_read,
+                                                io_mem_write,
+                                                io_mem_erase,
+                                                NULL,
+                                                NULL,
+                                                patch_size,
+                                                &io),
+              0);
+
+    for (offset = 0; offset < patch_size; offset++) {
+        ASSERT_EQ(detools_apply_patch_in_place_process(&apply_patch,
+                                                       &patch_p[offset],
+                                                       1),
+                  0);
+    }
+
+    ASSERT_EQ(detools_apply_patch_in_place_finalize(&apply_patch), 2780);
+    io_mem_assert_ok(&io);
+}
+
 TEST(apply_patch_foo_incremental)
 {
     struct detools_apply_patch_t apply_patch;
@@ -929,6 +1070,7 @@ TEST(apply_patch_foo_process_one_byte_at_a_time)
     }
 
     ASSERT_EQ(detools_apply_patch_finalize(&apply_patch), 2780);
+    io_assert_to_ok(&io);
 }
 
 TEST(apply_patch_foo_heatshrink_process_one_byte_at_a_time)
@@ -958,6 +1100,7 @@ TEST(apply_patch_foo_heatshrink_process_one_byte_at_a_time)
     }
 
     ASSERT_EQ(detools_apply_patch_finalize(&apply_patch), 2780);
+    io_assert_to_ok(&io);
 }
 
 TEST(error_as_string)
