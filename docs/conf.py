@@ -20,7 +20,7 @@ import re
 
 def find_version():
     return re.search(r"^__version__ = '(.*)'$",
-                     open('detools/version.py', 'r').read(),
+                     open('../detools/version.py', 'r').read(),
                      re.MULTILINE).group(1)
 
 
