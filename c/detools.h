@@ -29,6 +29,10 @@
 #ifndef DETOOLS_H
 #define DETOOLS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Configuration.
  *
@@ -628,5 +632,9 @@ int detools_apply_patch_in_place_filenames(const char *memory_p,
  * @return Error string.
  */
 const char *detools_error_as_string(int error);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
