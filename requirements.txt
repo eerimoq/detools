@@ -5,3 +5,4 @@ zstandard
 lz4
 heatshrink2
 nala
+setuptools
