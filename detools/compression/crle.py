@@ -140,6 +140,8 @@ class CrleDecompressor(object):
         self._indata = b''
         self._outdata = b''
         self._number_of_scattered_bytes_left = 0
+        self._number_of_repeated_bytes_left = 0
+        self._repeated_byte = b''
 
     def decompress(self, data, size):
         """Decompress up to size bytes.
@@ -154,7 +156,28 @@ class CrleDecompressor(object):
 
         self._indata += data
         self._number_of_indata_bytes_left -= len(data)
-        self._outdata += self.decompress_segments()
+        target_size = max(size, 1)
+
+        while len(self._outdata) < target_size:
+            previous_state = (
+                len(self._indata),
+                self._number_of_scattered_bytes_left,
+                self._number_of_repeated_bytes_left
+            )
+
+            try:
+                chunk = self.decompress_segment(target_size - len(self._outdata))
+            except IndexError:
+                break
+
+            self._outdata += chunk
+
+            if previous_state == (
+                    len(self._indata),
+                    self._number_of_scattered_bytes_left,
+                    self._number_of_repeated_bytes_left):
+                break
+
         data = self._outdata[:size]
         self._outdata = self._outdata[size:]
 
@@ -162,65 +185,118 @@ class CrleDecompressor(object):
 
     @property
     def needs_input(self):
-        return len(self._outdata) == 0 and not self.eof
+        return not self.eof and not self._can_make_progress_without_input()
 
     @property
     def eof(self):
         return (self._number_of_indata_bytes_left == 0
+                and self._number_of_scattered_bytes_left == 0
+                and self._number_of_repeated_bytes_left == 0
                 and len(self._outdata) == 0
                 and len(self._indata) == 0)
 
-    def decompress_segments(self):
-        segments = []
+    def _can_make_progress_without_input(self):
+        if len(self._outdata) > 0:
+            return True
 
-        try:
-            while True:
-                segments.append(self.decompress_segment())
-        except IndexError:
-            pass
+        if self._number_of_repeated_bytes_left > 0:
+            return True
 
-        return b''.join(segments)
+        if self._number_of_scattered_bytes_left > 0:
+            return len(self._indata) > 0
 
-    def decompress_segment(self):
+        if len(self._indata) == 0:
+            return False
+
+        kind = self._indata[0]
+
+        if kind == SCATTERED:
+            try:
+                length, offset = unpack_size(self._indata, 1)
+            except IndexError:
+                return False
+
+            return length == 0 or len(self._indata) > offset
+        elif kind == REPEATED:
+            try:
+                _, offset = unpack_size(self._indata, 1)
+            except IndexError:
+                return False
+
+            return len(self._indata) >= offset + 1
+        else:
+            return True
+
+    def decompress_segment(self, size):
         """Try to decompress a segment. Raises IndexError if not enough data
         is available..
 
         """
 
-        if self._number_of_scattered_bytes_left == 0:
-            kind = self._indata[0]
+        if self._number_of_repeated_bytes_left > 0:
+            repetitions = min(size, self._number_of_repeated_bytes_left)
+            self._number_of_repeated_bytes_left -= repetitions
 
-            if kind == SCATTERED:
-                length, offset = unpack_size(self._indata, 1)
-                remaining = (offset + length - len(self._indata))
+            return repetitions * self._repeated_byte
 
-                if remaining > 0:
-                    self._number_of_scattered_bytes_left = remaining
-                    length -= remaining
+        if self._number_of_scattered_bytes_left > 0:
+            if len(self._indata) == 0:
+                raise IndexError
 
-                repetitions = 1
-            elif kind == REPEATED:
-                repetitions, offset = unpack_size(self._indata, 1)
-                length = 1
-            else:
-                raise Error(
-                    'Expected kind scattered(0) or repeated(1), but got {}.'.format(
-                        kind))
-        elif len(self._indata) > 0:
-            length = min(len(self._indata), self._number_of_scattered_bytes_left)
-            offset = 0
-            repetitions = 1
+            length = min(size, len(self._indata), self._number_of_scattered_bytes_left)
+            data = self._indata[:length]
+            self._indata = self._indata[length:]
             self._number_of_scattered_bytes_left -= length
+
+            return data
+
+        if len(self._indata) == 0:
+            raise IndexError
+
+        kind = self._indata[0]
+
+        if kind == SCATTERED:
+            total_length, offset = unpack_size(self._indata, 1)
+
+            if len(self._indata) < offset:
+                raise IndexError
+
+            available = len(self._indata) - offset
+
+            if total_length == 0:
+                self._indata = self._indata[offset:]
+
+                return b''
+
+            if available == 0:
+                raise IndexError
+
+            length = min(size, total_length, available)
+            data = self._indata[offset:offset + length]
+            self._indata = self._indata[offset + length:]
+            self._number_of_scattered_bytes_left = total_length - length
+
+            return data
+        elif kind == REPEATED:
+            repetitions, offset = unpack_size(self._indata, 1)
+
+            if len(self._indata) < offset + 1:
+                raise IndexError
+
+            self._repeated_byte = self._indata[offset:offset + 1]
+            self._indata = self._indata[offset + 1:]
+
+            if repetitions == 0:
+                return b''
+
+            length = min(size, repetitions)
+            self._number_of_repeated_bytes_left = repetitions - length
+
+            return length * self._repeated_byte
         else:
-            raise IndexError
-
-        if len(self._indata) < offset + length:
-            raise IndexError
-
-        data = repetitions * self._indata[offset:offset + length]
-        self._indata = self._indata[offset + length:]
-
-        return data
+            raise Error(
+                'Expected kind scattered(0) or repeated(1), but got {}.'.format(
+                    kind))
 
 
 def pack_size(value):

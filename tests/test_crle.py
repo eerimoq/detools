@@ -3,6 +3,7 @@ import unittest
 import detools
 from detools.create import CrleCompressor
 from detools.apply import CrleDecompressor
+from detools.compression.crle import pack_size
 
 
 class DetoolsCrleTest(unittest.TestCase):
@@ -106,6 +107,21 @@ class DetoolsCrleTest(unittest.TestCase):
 
         self.assertEqual(decompressor.decompress(compressed + b'B', 1), b'A')
         self.assertEqual(decompressor.eof, True)
+
+    def test_decompress_repeated_segment_incrementally(self):
+        compressed = b'\x01' + pack_size(100000) + b'A'
+        decompressor = CrleDecompressor(len(compressed))
+
+        self.assertEqual(decompressor.decompress(compressed, 1), b'A')
+        self.assertEqual(len(decompressor._outdata), 0)
+        self.assertEqual(decompressor.decompress(b'', 1), b'A')
+
+    def test_decompress_scattered_segment_incrementally(self):
+        compressed = b'\x00' + pack_size(100000) + b'A'
+        decompressor = CrleDecompressor(len(compressed))
+
+        self.assertEqual(decompressor.decompress(compressed, 1), b'A')
+        self.assertEqual(len(decompressor._outdata), 0)
 
 
 if __name__ == '__main__':
