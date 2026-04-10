@@ -26,6 +26,7 @@
  */
 
 #include <stdint.h>
+#include <limits.h>
 #include <Python.h>
 #include "sais/sais.h"
 #include "libdivsufsort/divsufsort.h"
@@ -33,6 +34,35 @@
 typedef int32_t (*create_t)(const uint8_t *buf_p,
                             int32_t *suffix_array_p,
                             int32_t length);
+
+static int validate_create_args(Py_buffer *from_view_p,
+                                Py_buffer *suffix_array_view_p)
+{
+    Py_ssize_t required_size;
+
+    if (from_view_p->len > INT32_MAX) {
+        PyErr_SetString(PyExc_ValueError, "from_data is too large.");
+
+        return (-1);
+    }
+
+    if ((suffix_array_view_p->len % (Py_ssize_t)sizeof(int32_t)) != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Suffix array length must be a multiple of 4 bytes.");
+
+        return (-1);
+    }
+
+    required_size = (from_view_p->len + 1) * (Py_ssize_t)sizeof(int32_t);
+
+    if (suffix_array_view_p->len < required_size) {
+        PyErr_SetString(PyExc_ValueError, "Suffix array buffer is too small.");
+
+        return (-1);
+    }
+
+    return (0);
+}
 
 static PyObject *create(PyObject *self_p,
                         PyObject* args_p,
@@ -67,6 +97,12 @@ static PyObject *create(PyObject *self_p,
 
     if (res == -1) {
         goto err1;
+    }
+
+    res = validate_create_args(&from_view, &suffix_array_view);
+
+    if (res != 0) {
+        goto err2;
     }
 
     suffix_array_p = (int32_t *)suffix_array_view.buf;

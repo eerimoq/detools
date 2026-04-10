@@ -1,5 +1,8 @@
 import unittest
 import struct
+import mmap
+import tempfile
+from contextlib import contextmanager
 
 import detools.sais
 
@@ -13,6 +16,18 @@ def suffix_array_list_to_bytearray(suffix_array):
     return bytearray().join([
         struct.pack('=i', value) for value in suffix_array
     ])
+
+
+@contextmanager
+def sparse_mmap(size, access):
+    with tempfile.TemporaryFile() as file_p:
+        file_p.truncate(size)
+        map_p = mmap.mmap(file_p.fileno(), size, access=access)
+
+        try:
+            yield map_p
+        finally:
+            map_p.close()
 
 
 class DetoolsSuffixArrayTest(unittest.TestCase):
@@ -56,6 +71,19 @@ class DetoolsSuffixArrayTest(unittest.TestCase):
 
             detools.suffix_array.divsufsort(data, suffix_array)
             self.assertEqual(suffix_array, expected)
+
+    def test_suffix_array_rejects_too_small_output_buffer(self):
+        with self.assertRaisesRegex(ValueError, 'Suffix array buffer is too small'):
+            detools.suffix_array.sais(b'A', bytearray(4))
+
+    def test_suffix_array_rejects_input_larger_than_int32(self):
+        huge_size = 2 ** 31
+        suffix_array_size = 4 * (huge_size + 1)
+
+        with sparse_mmap(huge_size, mmap.ACCESS_READ) as data:
+            with sparse_mmap(suffix_array_size, mmap.ACCESS_WRITE) as suffix_array:
+                with self.assertRaisesRegex(ValueError, 'from_data is too large'):
+                    detools.suffix_array.divsufsort(data, suffix_array)
 
 
 if __name__ == '__main__':
