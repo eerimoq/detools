@@ -1081,7 +1081,15 @@ static int common_process_size(
         return (res);
     }
 
-    if (to_pos + (size_t)*size_p > to_size) {
+    if (*size_p < 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+
+    if (to_pos > to_size) {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+
+    if (((size_t)*size_p) > (to_size - to_pos)) {
         return (-DETOOLS_CORRUPT_PATCH);
     }
 
@@ -1180,6 +1188,10 @@ static int process_dfpatch_size(struct detools_apply_patch_t *self_p)
 
     if (res != 0) {
         return (res);
+    }
+
+    if (size < 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
     }
 
     if (size > 0) {
@@ -1758,6 +1770,10 @@ static int in_place_process_init_memory_size(
         return (res);
     }
 
+    if (memory_size < 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+
     self_p->memory_size = (size_t)memory_size;
     self_p->init_state = detools_apply_patch_in_place_init_state_segment_size_t;
     self_p->size.state = detools_unpack_usize_state_first_t;
@@ -1775,6 +1791,10 @@ static int in_place_process_init_segment_size(
 
     if (res != 0) {
         return (res);
+    }
+
+    if (segment_size <= 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
     }
 
     self_p->segment_size = (size_t)segment_size;
@@ -1796,6 +1816,10 @@ static int in_place_process_init_shift_size(
         return (res);
     }
 
+    if (shift_size < 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+
     self_p->shift_size = (size_t)shift_size;
     self_p->init_state = detools_apply_patch_in_place_init_state_from_size_t;
     self_p->size.state = detools_unpack_usize_state_first_t;
@@ -1813,6 +1837,10 @@ static int in_place_process_init_from_size(
 
     if (res != 0) {
         return (res);
+    }
+
+    if (from_size < 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
     }
 
     self_p->from_size = (size_t)from_size;
@@ -1844,6 +1872,12 @@ static int in_place_process_init_to_size(
     }
 
     if (to_size < 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+
+    if ((self_p->shift_size > self_p->memory_size)
+        || (self_p->from_size > self_p->memory_size)
+        || ((size_t)to_size > self_p->memory_size)) {
         return (-DETOOLS_CORRUPT_PATCH);
     }
 
@@ -1916,6 +1950,10 @@ static int in_place_process_dfpatch_size(
 
     if (res != 0) {
         return (res);
+    }
+
+    if (size < 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
     }
 
     if (size > 0) {

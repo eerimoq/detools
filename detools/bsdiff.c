@@ -27,10 +27,59 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <limits.h>
 #include <string.h>
 #include <Python.h>
 
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
+static int validate_int32_length(Py_ssize_t size, const char *name_p)
+{
+    if (size > INT32_MAX) {
+        PyErr_Format(PyExc_ValueError, "%s is too large.", name_p);
+
+        return (-1);
+    }
+
+    return (0);
+}
+
+static int validate_suffix_array(Py_buffer *suffix_array_view_p,
+                                 Py_ssize_t from_size)
+{
+    Py_ssize_t count;
+    Py_ssize_t i;
+    int32_t *suffix_array_p;
+
+    if ((suffix_array_view_p->len % (Py_ssize_t)sizeof(int32_t)) != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Suffix array length must be a multiple of 4 bytes.");
+
+        return (-1);
+    }
+
+    count = suffix_array_view_p->len / (Py_ssize_t)sizeof(int32_t);
+
+    if (count < from_size + 1) {
+        PyErr_SetString(PyExc_ValueError, "Suffix array buffer is too small.");
+
+        return (-1);
+    }
+
+    suffix_array_p = suffix_array_view_p->buf;
+
+    for (i = 0; i < from_size + 1; i++) {
+        if ((suffix_array_p[i] < 0) || (suffix_array_p[i] > from_size)) {
+            PyErr_Format(PyExc_ValueError,
+                         "Suffix array entry %zd is out of range.",
+                         i);
+
+            return (-1);
+        }
+    }
+
+    return (0);
+}
 
 static int32_t matchlen(uint8_t *from_p,
                         int32_t from_size,
@@ -492,6 +541,29 @@ static PyObject *m_create_patch(PyObject *self_p, PyObject *args_p)
         return (NULL);
     }
 
+    res = validate_int32_length(from_view.len, "from_data");
+
+    if (res != 0) {
+        goto err1;
+    }
+
+    res = validate_int32_length(to_view.len, "to_data");
+
+    if (res != 0) {
+        goto err1;
+    }
+
+    if (de_view.len < to_view.len) {
+        PyErr_SetString(PyExc_ValueError, "Diff buffer is too small.");
+        goto err1;
+    }
+
+    res = validate_suffix_array(&suffix_array_view, from_view.len);
+
+    if (res != 0) {
+        goto err1;
+    }
+
     list_p = PyList_New(0);
 
     if (list_p == NULL) {
@@ -583,7 +655,7 @@ static PyObject *m_add_bytes(PyObject *self_p, PyObject *args_p)
     if (first_view.len != second_view.len) {
         PyErr_SetString(PyExc_ValueError, "Lengths must be equal.");
 
-        return (NULL);
+        goto err1;
     }
 
     byte_array_p = PyByteArray_FromStringAndSize("", 1);
