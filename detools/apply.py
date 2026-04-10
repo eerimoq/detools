@@ -86,10 +86,33 @@ class PatchReader(object):
         return self.decompressor.eof
 
 
+def ensure_non_negative_size(name, size):
+    if size < 0:
+        raise Error('Expected {} >= 0, but got {}.'.format(name, size))
+
+    return size
+
+
+def ensure_positive_size(name, size):
+    if size <= 0:
+        raise Error('Expected {} > 0, but got {}.'.format(name, size))
+
+    return size
+
+
+def read_exact(fin, size, message):
+    data = fin.read(size)
+
+    if len(data) != size:
+        raise Error(message)
+
+    return data
+
+
 def iter_chunks(patch_reader, to_pos, to_size, message):
     size = unpack_size(patch_reader)
 
-    if to_pos + size > to_size:
+    if size < 0 or to_pos + size > to_size:
         raise Error(message)
 
     offset = 0
@@ -159,7 +182,7 @@ def read_header_sequential(fpatch):
                                                          patch_type))
 
     compression = convert_compression(compression)
-    to_size = unpack_size(fpatch)
+    to_size = ensure_non_negative_size('to size', unpack_size(fpatch))
 
     return compression, to_size
 
@@ -182,8 +205,8 @@ def read_header_hdiffpatch(fpatch):
                                                          patch_type))
 
     compression = convert_compression(compression)
-    to_size = unpack_size(fpatch)
-    patch_size = unpack_size(fpatch)
+    to_size = ensure_non_negative_size('to size', unpack_size(fpatch))
+    patch_size = ensure_non_negative_size('patch size', unpack_size(fpatch))
 
     return compression, to_size, patch_size
 
@@ -206,11 +229,29 @@ def read_header_in_place(fpatch):
                                                          patch_type))
 
     compression = convert_compression(compression)
-    memory_size = unpack_size(fpatch)
-    segment_size = unpack_size(fpatch)
-    shift_size = unpack_size(fpatch)
-    from_size = unpack_size(fpatch)
-    to_size = unpack_size(fpatch)
+    memory_size = ensure_non_negative_size('memory size', unpack_size(fpatch))
+    segment_size = ensure_positive_size('segment size', unpack_size(fpatch))
+    shift_size = ensure_non_negative_size('shift size', unpack_size(fpatch))
+    from_size = ensure_non_negative_size('from size', unpack_size(fpatch))
+    to_size = ensure_non_negative_size('to size', unpack_size(fpatch))
+
+    if shift_size > memory_size:
+        raise Error(
+            'Expected shift size <= memory size, but got {} and {}.'.format(
+                shift_size,
+                memory_size))
+
+    if from_size > memory_size:
+        raise Error(
+            'Expected from size <= memory size, but got {} and {}.'.format(
+                from_size,
+                memory_size))
+
+    if to_size > memory_size:
+        raise Error(
+            'Expected to size <= memory size, but got {} and {}.'.format(
+                to_size,
+                memory_size))
 
     return compression, memory_size, segment_size, shift_size, from_size, to_size
 
@@ -240,6 +281,10 @@ def read_header_bsdiff(fpatch):
     ctrl_size = offtin(fpatch.read(8))
     diff_size = offtin(fpatch.read(8))
     to_size = offtin(fpatch.read(8))
+
+    ensure_non_negative_size('control size', ctrl_size)
+    ensure_non_negative_size('diff size', diff_size)
+    ensure_non_negative_size('to size', to_size)
 
     return ctrl_size, diff_size, to_size
 
@@ -272,7 +317,8 @@ def apply_patch_in_place_segment(fmem,
 
     """
 
-    dfpatch_size = unpack_size(patch_reader)
+    dfpatch_size = ensure_non_negative_size('data format patch size',
+                                            unpack_size(patch_reader))
 
     if dfpatch_size > 0:
         raise NotImplementedError()
@@ -285,7 +331,10 @@ def apply_patch_in_place_segment(fmem,
                                                        to_pos,
                                                        to_size):
             fmem.seek(from_offset, os.SEEK_SET)
-            from_data = fmem.read(chunk_size)
+            from_data = read_exact(
+                fmem,
+                chunk_size,
+                'Patch diff data exceeds available source data.')
             from_offset += chunk_size
             fmem.seek(to_offset + to_pos, os.SEEK_SET)
             fmem.write(bsdiff.add_bytes(patch_data, from_data))
@@ -305,10 +354,11 @@ def apply_patch_in_place_segment(fmem,
 
 
 def create_data_format_readers(patch_reader, ffrom, to_size):
-    dfpatch_size = unpack_size(patch_reader)
+    dfpatch_size = ensure_non_negative_size('data format patch size',
+                                            unpack_size(patch_reader))
 
     if dfpatch_size > 0:
-        data_format = unpack_size(patch_reader)
+        data_format = ensure_non_negative_size('data format', unpack_size(patch_reader))
         patch = patch_reader.decompress(dfpatch_size)
         dfdiff, ffrom = create_readers(data_format, ffrom, patch, to_size)
 
@@ -361,11 +411,17 @@ def apply_patch_sequential(ffrom, fpatch, fto):
         for chunk_size, patch_data in iter_diff_chunks(patch_reader,
                                                        to_pos,
                                                        to_size):
-            from_data = ffrom.read(chunk_size)
+            from_data = read_exact(
+                ffrom,
+                chunk_size,
+                'Patch diff data exceeds available source data.')
             data = bsdiff.add_bytes(patch_data, from_data)
 
             if dfdiff is not None:
-                dfdiff_data = dfdiff.read(chunk_size)
+                dfdiff_data = read_exact(
+                    dfdiff,
+                    chunk_size,
+                    'Patch diff data exceeds available source data.')
                 data = bsdiff.add_bytes(data, dfdiff_data)
 
             fto.write(data)
@@ -378,7 +434,10 @@ def apply_patch_sequential(ffrom, fpatch, fto):
             data = patch_data
 
             if dfdiff is not None:
-                dfdiff_data = dfdiff.read(chunk_size)
+                dfdiff_data = read_exact(
+                    dfdiff,
+                    chunk_size,
+                    'Patch diff data exceeds available source data.')
                 data = bsdiff.add_bytes(data, dfdiff_data)
 
             fto.write(data)
