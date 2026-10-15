@@ -153,6 +153,85 @@ static void test_one(const uint8_t *patch_buf_p,
     }
 }
 
+static uint8_t memory[256];
+
+static bool is_in_memory(uintptr_t address, size_t size)
+{
+    return ((address <= sizeof(memory)) && (size <= (sizeof(memory) - address)));
+}
+
+static int mem_read(void *arg_p, void *dst_p, uintptr_t src, size_t size)
+{
+    (void)arg_p;
+
+    if (!is_in_memory(src, size)) {
+        return (-1);
+    }
+
+    memcpy(dst_p, &memory[src], size);
+
+    return (0);
+}
+
+static int mem_write(void *arg_p, uintptr_t dst, void *src_p, size_t size)
+{
+    (void)arg_p;
+
+    if (!is_in_memory(dst, size)) {
+        return (-1);
+    }
+
+    memcpy(&memory[dst], src_p, size);
+
+    return (0);
+}
+
+static int mem_erase(void *arg_p, uintptr_t addr, size_t size)
+{
+    (void)arg_p;
+
+    if (!is_in_memory(addr, size)) {
+        return (-1);
+    }
+
+    memset(&memory[addr], 0xff, size);
+
+    return (0);
+}
+
+static void test_one_in_place(const uint8_t *patch_buf_p,
+                              size_t patch_size,
+                              int process_res,
+                              int finalize_res)
+{
+    struct detools_apply_patch_in_place_t apply_patch;
+    int res;
+
+    res = detools_apply_patch_in_place_init(&apply_patch,
+                                            mem_read,
+                                            mem_write,
+                                            mem_erase,
+                                            NULL,
+                                            NULL,
+                                            patch_size,
+                                            NULL);
+    ASSERT_EQ(res, 0);
+
+    res = detools_apply_patch_in_place_process(&apply_patch,
+                                               patch_buf_p,
+                                               patch_size);
+
+    WITH_MESSAGE("Failed with '%s' (%d).", detools_error_as_string(res), res) {
+        ASSERT_EQ(res, process_res);
+    }
+
+    res = detools_apply_patch_in_place_finalize(&apply_patch);
+
+    WITH_MESSAGE("Failed with '%s' (%d).", detools_error_as_string(res), res) {
+        ASSERT_EQ(res, finalize_res);
+    }
+}
+
 TEST(size_overflow)
 {
     const uint8_t patch[] = {
@@ -249,4 +328,18 @@ TEST(size_overflow_header)
              sizeof(patch),
              -DETOOLS_CORRUPT_PATCH_OVERFLOW,
              -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(in_place_zero_segment_size)
+{
+    /* Memory size 1, segment size 0, shift size 0, from size 1 and
+       to size 1. */
+    const uint8_t patch[] = {
+        0x10, 0x01, 0x00, 0x00, 0x01, 0x01
+    };
+
+    test_one_in_place(&patch[0],
+                      sizeof(patch),
+                      -DETOOLS_CORRUPT_PATCH,
+                      -DETOOLS_ALREADY_FAILED);
 }

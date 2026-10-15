@@ -1777,6 +1777,10 @@ static int in_place_process_init_segment_size(
         return (res);
     }
 
+    if (segment_size <= 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+
     self_p->segment_size = (size_t)segment_size;
     self_p->init_state = detools_apply_patch_in_place_init_state_shift_size_t;
     self_p->size.state = detools_unpack_usize_state_first_t;
