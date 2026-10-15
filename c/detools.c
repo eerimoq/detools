@@ -1081,6 +1081,10 @@ static int common_process_size(
         return (res);
     }
 
+    if (*size_p < 0) {
+        return (-DETOOLS_CORRUPT_PATCH);
+    }
+
     if (to_pos + (size_t)*size_p > to_size) {
         return (-DETOOLS_CORRUPT_PATCH);
     }
@@ -1132,10 +1136,6 @@ static int process_init_to_size(struct detools_apply_patch_t *self_p)
 
     if (res != 0) {
         return (res);
-    }
-
-    if (to_size < 0) {
-        return (-DETOOLS_CORRUPT_PATCH);
     }
 
     self_p->to_size = (size_t)to_size;
@@ -1822,6 +1822,28 @@ static int in_place_process_init_from_size(
     return (0);
 }
 
+static bool in_place_is_header_valid(
+    struct detools_apply_patch_in_place_t *self_p)
+{
+    if (self_p->segment_size == 0) {
+        return (false);
+    }
+
+    if ((self_p->memory_size % self_p->segment_size) != 0) {
+        return (false);
+    }
+
+    if ((self_p->shift_size % self_p->segment_size) != 0) {
+        return (false);
+    }
+
+    if (self_p->shift_size > self_p->memory_size) {
+        return (false);
+    }
+
+    return (self_p->to_size <= self_p->memory_size);
+}
+
 static int in_place_process_init_to_size(
     struct detools_apply_patch_in_place_t *self_p)
 {
@@ -1843,12 +1865,13 @@ static int in_place_process_init_to_size(
         return (res);
     }
 
-    if (to_size < 0) {
+    self_p->to_pos = 0;
+    self_p->to_size = (size_t)to_size;
+
+    if (!in_place_is_header_valid(self_p)) {
         return (-DETOOLS_CORRUPT_PATCH);
     }
 
-    self_p->to_pos = 0;
-    self_p->to_size = (size_t)to_size;
     self_p->segment.index = 0;
 
     if (to_size > 0) {
@@ -2040,6 +2063,7 @@ static int in_place_process_adjustment(struct detools_apply_patch_in_place_t *se
 {
     int res;
     int offset;
+    int from_offset;
 
     res = patch_reader_unpack_size(&self_p->patch_reader, &offset);
 
@@ -2054,7 +2078,13 @@ static int in_place_process_adjustment(struct detools_apply_patch_in_place_t *se
         res = in_place_next_step(self_p);
         self_p->state = detools_apply_patch_state_dfpatch_size_t;
     } else {
-        self_p->segment.from_offset += offset;
+        from_offset = (self_p->segment.from_offset + offset);
+
+        if ((from_offset < 0) || ((size_t)from_offset > self_p->memory_size)) {
+            return (-DETOOLS_CORRUPT_PATCH);
+        }
+
+        self_p->segment.from_offset = from_offset;
         self_p->state = detools_apply_patch_state_diff_size_t;
     }
 

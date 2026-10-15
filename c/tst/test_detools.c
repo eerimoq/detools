@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -175,11 +176,23 @@ static void io_mem_assert_ok(struct io_mem_t *self_p)
     ASSERT_MEMORY_EQ(actual_p, self_p->to.expected_p, self_p->to.size);
 }
 
+static bool io_mem_is_in_memory(struct io_mem_t *self_p,
+                                uintptr_t address,
+                                size_t size)
+{
+    return ((address <= self_p->memory_size)
+            && (size <= (self_p->memory_size - address)));
+}
+
 static int io_mem_read(void *arg_p, void *dst_p, uintptr_t src, size_t size)
 {
     struct io_mem_t *self_p;
 
     self_p = (struct io_mem_t *)arg_p;
+
+    if (!io_mem_is_in_memory(self_p, src, size)) {
+        return (-1);
+    }
 
     if (fseek(self_p->fmem_p, src, SEEK_SET) == 0) {
         if (fread(dst_p, 1, size, self_p->fmem_p) == size) {
@@ -197,6 +210,10 @@ static int io_mem_write(void *arg_p, uintptr_t dst, void *src_p, size_t size)
     struct io_mem_t *self_p;
 
     self_p = (struct io_mem_t *)arg_p;
+
+    if (!io_mem_is_in_memory(self_p, dst, size)) {
+        return (-1);
+    }
 
     if (fseek(self_p->fmem_p, dst, SEEK_SET) == 0) {
         if (fwrite(src_p, 1, size, self_p->fmem_p) == size) {
@@ -216,6 +233,11 @@ static int io_mem_erase(void *arg_p, uintptr_t addr, size_t size)
     uint8_t byte;
 
     self_p = (struct io_mem_t *)arg_p;
+
+    if (!io_mem_is_in_memory(self_p, addr, size)) {
+        return (-1);
+    }
+
     ASSERT_EQ(fseek(self_p->fmem_p, addr, SEEK_SET), 0);
     byte = 0xff;
 
@@ -224,6 +246,92 @@ static int io_mem_erase(void *arg_p, uintptr_t addr, size_t size)
     }
 
     return (0);
+}
+
+static uint8_t ram[256];
+
+static size_t ram_size;
+
+static bool is_in_ram(uintptr_t address, size_t size)
+{
+    return ((address <= ram_size) && (size <= (ram_size - address)));
+}
+
+static int ram_read(void *arg_p, void *dst_p, uintptr_t src, size_t size)
+{
+    (void)arg_p;
+
+    if (!is_in_ram(src, size)) {
+        return (-1);
+    }
+
+    memcpy(dst_p, &ram[src], size);
+
+    return (0);
+}
+
+static int ram_write(void *arg_p, uintptr_t dst, void *src_p, size_t size)
+{
+    (void)arg_p;
+
+    if (!is_in_ram(dst, size)) {
+        return (-1);
+    }
+
+    memcpy(&ram[dst], src_p, size);
+
+    return (0);
+}
+
+static int ram_erase(void *arg_p, uintptr_t addr, size_t size)
+{
+    (void)arg_p;
+
+    if (!is_in_ram(addr, size)) {
+        return (-1);
+    }
+
+    memset(&ram[addr], 0xff, size);
+
+    return (0);
+}
+
+static void assert_apply_patch_in_place_ram(const uint8_t *patch_buf_p,
+                                            size_t patch_size,
+                                            size_t memory_size,
+                                            int process_res,
+                                            int finalize_res)
+{
+    struct detools_apply_patch_in_place_t apply_patch;
+    int res;
+
+    ASSERT(memory_size <= sizeof(ram));
+    ram_size = memory_size;
+    memset(&ram[0], 0, sizeof(ram));
+
+    res = detools_apply_patch_in_place_init(&apply_patch,
+                                            ram_read,
+                                            ram_write,
+                                            ram_erase,
+                                            NULL,
+                                            NULL,
+                                            patch_size,
+                                            NULL);
+    ASSERT_EQ(res, 0);
+
+    res = detools_apply_patch_in_place_process(&apply_patch,
+                                               patch_buf_p,
+                                               patch_size);
+
+    WITH_MESSAGE("Failed with '%s' (%d).", detools_error_as_string(res), res) {
+        ASSERT_EQ(res, process_res);
+    }
+
+    res = detools_apply_patch_in_place_finalize(&apply_patch);
+
+    WITH_MESSAGE("Failed with '%s' (%d).", detools_error_as_string(res), res) {
+        ASSERT_EQ(res, finalize_res);
+    }
 }
 
 static uint8_t *read_init(const char *name_p, size_t *size_p)
@@ -961,6 +1069,147 @@ TEST(apply_patch_foo_in_place_process_one_byte_at_a_time)
 
     ASSERT_EQ(detools_apply_patch_in_place_finalize(&apply_patch), 2780);
     io_mem_assert_ok(&io);
+}
+
+TEST(apply_patch_in_place_from_offset_before_memory)
+{
+    const uint8_t patch[] = {
+        0x10, 0x08, 0x04, 0x04, 0x04, 0x01, 0x00, 0x00, 0x00, 0x45,
+        0x01, 0x00, 0x00, 0x00
+    };
+
+    assert_apply_patch_in_place_ram(&patch[0],
+                                    sizeof(patch),
+                                    8,
+                                    -DETOOLS_CORRUPT_PATCH,
+                                    -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(apply_patch_in_place_from_read_past_memory)
+{
+    const uint8_t patch[] = {
+        0x10, 0x08, 0x04, 0x04, 0x04, 0x04, 0x00, 0x00, 0x00, 0x01,
+        0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+
+    assert_apply_patch_in_place_ram(&patch[0],
+                                    sizeof(patch),
+                                    8,
+                                    -DETOOLS_IO_FAILED,
+                                    -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(apply_patch_in_place_from_offset_overflow)
+{
+    uint8_t patch[7 + 17 * 6];
+    size_t i;
+
+    memcpy(&patch[0], "\x10\x08\x04\x04\x04\x04\x00", 7);
+
+    for (i = 7; i < sizeof(patch); i += 6) {
+        memcpy(&patch[i], "\x00\x00\xbf\xff\xff\x7f", 6);
+    }
+
+    assert_apply_patch_in_place_ram(&patch[0],
+                                    sizeof(patch),
+                                    8,
+                                    -DETOOLS_CORRUPT_PATCH,
+                                    -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(apply_patch_in_place_segment_size_zero)
+{
+    const uint8_t patch[] = {
+        0x10, 0x08, 0x00, 0x04, 0x04, 0x04
+    };
+
+    assert_apply_patch_in_place_ram(&patch[0],
+                                    sizeof(patch),
+                                    8,
+                                    -DETOOLS_CORRUPT_PATCH,
+                                    -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(apply_patch_in_place_shift_size_bigger_than_memory)
+{
+    const uint8_t patch[] = {
+        0x10, 0x08, 0x04, 0x0c, 0x04, 0x01
+    };
+
+    assert_apply_patch_in_place_ram(&patch[0],
+                                    sizeof(patch),
+                                    8,
+                                    -DETOOLS_CORRUPT_PATCH,
+                                    -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(apply_patch_in_place_memory_size_not_multiple_of_segment_size)
+{
+    const uint8_t patch[] = {
+        0x10, 0x0a, 0x04, 0x04, 0x06, 0x01
+    };
+
+    assert_apply_patch_in_place_ram(&patch[0],
+                                    sizeof(patch),
+                                    10,
+                                    -DETOOLS_CORRUPT_PATCH,
+                                    -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(apply_patch_in_place_shift_size_not_multiple_of_segment_size)
+{
+    const uint8_t patch[] = {
+        0x10, 0x08, 0x04, 0x06, 0x02, 0x01
+    };
+
+    assert_apply_patch_in_place_ram(&patch[0],
+                                    sizeof(patch),
+                                    8,
+                                    -DETOOLS_CORRUPT_PATCH,
+                                    -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(apply_patch_in_place_to_size_bigger_than_memory)
+{
+    const uint8_t patch[] = {
+        0x10, 0x08, 0x04, 0x04, 0x04, 0x0c,
+        0x00, 0x00, 0x04, 0x01, 0x02, 0x03, 0x04, 0x00,
+        0x00, 0x00, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00,
+        0x00, 0x00, 0x04, 0x09, 0x0a, 0x0b, 0x0c, 0x00
+    };
+
+    assert_apply_patch_in_place_ram(&patch[0],
+                                    sizeof(patch),
+                                    8,
+                                    -DETOOLS_CORRUPT_PATCH,
+                                    -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(apply_patch_in_place_negative_extra_size)
+{
+    uint8_t patch[11 + 256];
+
+    memcpy(&patch[0],
+           "\x10\x08\x04\x04\x04\x04\x00\x02\x00\x00\x41",
+           11);
+    memset(&patch[11], 0x55, 256);
+
+    assert_apply_patch_in_place_ram(&patch[0],
+                                    sizeof(patch),
+                                    8,
+                                    -DETOOLS_CORRUPT_PATCH,
+                                    -DETOOLS_ALREADY_FAILED);
+}
+
+TEST(apply_patch_in_place_valid)
+{
+    const uint8_t patch[] = {
+        0x10, 0x08, 0x04, 0x04, 0x04, 0x04,
+        0x00, 0x00, 0x04, 0x01, 0x02, 0x03, 0x04, 0x00
+    };
+
+    assert_apply_patch_in_place_ram(&patch[0], sizeof(patch), 8, 0, 4);
+    ASSERT_MEMORY_EQ(&ram[0], "\x01\x02\x03\x04", 4);
 }
 
 TEST(apply_patch_foo_incremental)
