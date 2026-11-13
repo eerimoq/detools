@@ -64,7 +64,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdbool.h>
 
-#define DETOOLS_VERSION                  "0.53.0"
+#define DETOOLS_VERSION                  "0.53.1"
 
 /* Error codes. */
 #define DETOOLS_OK                                        0
