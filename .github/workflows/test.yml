@@ -31,7 +31,7 @@ jobs:
 
   test-c:
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
@@ -49,7 +49,7 @@ jobs:
 
   release:
     needs: [test-python, test-c]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags')
 
     steps:
