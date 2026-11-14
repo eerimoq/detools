@@ -31,6 +31,7 @@
  */
 
 #include <stdlib.h>
+#include <limits.h>
 #include "detools.h"
 
 /* Patch types. */
@@ -1292,6 +1293,11 @@ static int process_adjustment(struct detools_apply_patch_t *self_p)
 
     if (res != 0) {
         return (res);
+    }
+
+    if (((offset > 0) && (self_p->from_offset > (INT_MAX - offset)))
+        || ((offset < 0) && (self_p->from_offset < (INT_MIN - offset)))) {
+        return (-DETOOLS_CORRUPT_PATCH);
     }
 
     res = self_p->from_seek(self_p->arg_p, offset);

@@ -250,3 +250,20 @@ TEST(size_overflow_header)
              -DETOOLS_CORRUPT_PATCH_OVERFLOW,
              -DETOOLS_ALREADY_FAILED);
 }
+
+TEST(from_offset_overflow)
+{
+    uint8_t patch[3 + 17 * 6];
+    size_t i;
+
+    memcpy(&patch[0], "\x00\x01\x00", 3);
+
+    for (i = 3; i < sizeof(patch); i += 6) {
+        memcpy(&patch[i], "\x00\x00\xbf\xff\xff\x7f", 6);
+    }
+
+    test_one(&patch[0],
+             sizeof(patch),
+             -DETOOLS_CORRUPT_PATCH,
+             -DETOOLS_ALREADY_FAILED);
+}
